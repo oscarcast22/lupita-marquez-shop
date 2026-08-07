@@ -1,0 +1,88 @@
+name: ${COMPOSE_PROJECT_NAME:-lupita_marquez}
+
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-wordpress}
+      MARIADB_USER: ${DB_USER:-wordpress}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-wordpress}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-local-root-only}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  wordpress:
+    image: wordpress:7.0.2-php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${WP_PORT:-8080}:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+      WORDPRESS_DB_USER: ${DB_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wordpress}
+      LM_ENVIA_ENV: ${LM_ENVIA_ENV:-sandbox}
+      LM_ENVIA_TOKEN: ${LM_ENVIA_TOKEN:-}
+      LM_MERCADOPAGO_PUBLIC_KEY: ${LM_MERCADOPAGO_PUBLIC_KEY:-}
+      LM_MERCADOPAGO_ACCESS_TOKEN: ${LM_MERCADOPAGO_ACCESS_TOKEN:-}
+      WORDPRESS_DEBUG: "1"
+      WORDPRESS_CONFIG_EXTRA: |
+        define( 'WP_ENVIRONMENT_TYPE', 'local' );
+        define( 'WP_DEBUG_LOG', true );
+        define( 'WP_DEBUG_DISPLAY', false );
+        define( 'DISALLOW_FILE_EDIT', true );
+        define( 'WP_MEMORY_LIMIT', '256M' );
+        define( 'LM_ENVIA_ENV', getenv( 'LM_ENVIA_ENV' ) ?: 'sandbox' );
+        define( 'LM_ENVIA_TOKEN', getenv( 'LM_ENVIA_TOKEN' ) ?: '' );
+        define( 'LM_MERCADOPAGO_PUBLIC_KEY', getenv( 'LM_MERCADOPAGO_PUBLIC_KEY' ) ?: '' );
+        define( 'LM_MERCADOPAGO_ACCESS_TOKEN', getenv( 'LM_MERCADOPAGO_ACCESS_TOKEN' ) ?: '' );
+        define( 'LM_CLIENT_ASSETS_DIR', '/client-assets' );
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wp-content/themes/lupita-marquez:/var/www/html/wp-content/themes/lupita-marquez
+      - ./wp-content/plugins/lm-commerce:/var/www/html/wp-content/plugins/lm-commerce
+      - ./data:/var/www/html/wp-content/lm-data:ro
+      - ../Lupitamarquez:/client-assets:ro
+
+  wpcli:
+    image: wordpress:cli-2.12.0-php8.3
+    entrypoint: ["wp"]
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_started
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+      WORDPRESS_DB_USER: ${DB_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wordpress}
+      LM_ENVIA_ENV: ${LM_ENVIA_ENV:-sandbox}
+      LM_ENVIA_TOKEN: ${LM_ENVIA_TOKEN:-}
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wp-content/themes/lupita-marquez:/var/www/html/wp-content/themes/lupita-marquez
+      - ./wp-content/plugins/lm-commerce:/var/www/html/wp-content/plugins/lm-commerce
+      - ./data:/var/www/html/wp-content/lm-data:ro
+      - ../Lupitamarquez:/client-assets:ro
+    working_dir: /var/www/html
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+
+volumes:
+  db_data:
+  wordpress_data:

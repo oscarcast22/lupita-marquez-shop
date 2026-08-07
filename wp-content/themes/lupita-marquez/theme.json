@@ -1,0 +1,103 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "appearanceTools": true,
+    "color": {
+      "custom": false,
+      "customDuotone": false,
+      "customGradient": false,
+      "defaultDuotone": false,
+      "defaultGradients": false,
+      "defaultPalette": false,
+      "palette": [
+        { "slug": "ivory", "color": "#fbf7f1", "name": "Marfil" },
+        { "slug": "white", "color": "#ffffff", "name": "Blanco" },
+        { "slug": "charcoal", "color": "#302a27", "name": "Carbón" },
+        { "slug": "wood", "color": "#a46f43", "name": "Madera" },
+        { "slug": "sand", "color": "#e8ddd1", "name": "Arena" },
+        { "slug": "mist", "color": "#f3ece5", "name": "Niebla" },
+        { "slug": "fuchsia", "color": "#d90078", "name": "Fucsia" },
+        { "slug": "muted", "color": "#756b65", "name": "Texto secundario" }
+      ]
+    },
+    "layout": {
+      "contentSize": "760px",
+      "wideSize": "1240px"
+    },
+    "spacing": {
+      "blockGap": true,
+      "margin": true,
+      "padding": true,
+      "units": ["px", "rem", "vw", "%"]
+    },
+    "typography": {
+      "customFontSize": false,
+      "fluid": true,
+      "fontFamilies": [
+        {
+          "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "name": "Interfaz",
+          "slug": "sans"
+        },
+        {
+          "fontFamily": "Iowan Old Style, Baskerville, Georgia, serif",
+          "name": "Editorial",
+          "slug": "serif"
+        }
+      ],
+      "fontSizes": [
+        { "slug": "small", "size": "0.82rem", "name": "Pequeño" },
+        { "slug": "medium", "size": "1rem", "name": "Mediano" },
+        { "slug": "large", "size": "clamp(1.25rem, 1.8vw, 1.6rem)", "name": "Grande" },
+        { "slug": "x-large", "size": "clamp(2rem, 5vw, 4.5rem)", "name": "Título" }
+      ],
+      "lineHeight": true
+    },
+    "useRootPaddingAwareAlignments": true
+  },
+  "styles": {
+    "color": {
+      "background": "var:preset|color|ivory",
+      "text": "var:preset|color|charcoal"
+    },
+    "spacing": {
+      "blockGap": "1.5rem",
+      "padding": {
+        "left": "clamp(1rem, 3vw, 2.5rem)",
+        "right": "clamp(1rem, 3vw, 2.5rem)"
+      }
+    },
+    "typography": {
+      "fontFamily": "var:preset|font-family|sans",
+      "fontSize": "var:preset|font-size|medium",
+      "lineHeight": "1.65"
+    },
+    "elements": {
+      "button": {
+        "border": { "radius": "999px" },
+        "color": { "background": "var:preset|color|charcoal", "text": "var:preset|color|white" },
+        "spacing": { "padding": { "top": "0.8rem", "right": "1.35rem", "bottom": "0.8rem", "left": "1.35rem" } },
+        "typography": { "fontWeight": "700" }
+      },
+      "heading": {
+        "typography": { "fontFamily": "var:preset|font-family|serif", "fontWeight": "500", "lineHeight": "1.08" }
+      },
+      "link": {
+        "color": { "text": "var:preset|color|charcoal" },
+        "typography": { "textDecoration": "none" }
+      }
+    },
+    "blocks": {
+      "core/navigation": { "typography": { "fontSize": "0.92rem", "fontWeight": "650" } },
+      "core/site-title": { "typography": { "fontFamily": "var:preset|font-family|serif", "fontSize": "1.35rem" } },
+      "core/image": { "border": { "radius": "14px" } },
+      "woocommerce/product-price": { "color": { "text": "var:preset|color|fuchsia" }, "typography": { "fontWeight": "700" } }
+    }
+  },
+  "templateParts": [
+    { "area": "header", "name": "header", "title": "Encabezado" },
+    { "area": "footer", "name": "footer", "title": "Pie de página" }
+  ]
+}
+

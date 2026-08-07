@@ -1,0 +1,12 @@
+.env
+.DS_Store
+node_modules/
+vendor/
+.phpunit.cache/
+coverage/
+artifacts/
+wordpress/
+wp-content/uploads/
+wp-content/cache/
+wp-content/upgrade/
+
