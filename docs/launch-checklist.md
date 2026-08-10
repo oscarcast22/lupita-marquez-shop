@@ -16,7 +16,7 @@
 - Crear staging en el hosting administrado y probar PHP, cron/Action Scheduler, correos y HPOS.
 - Configurar HTTPS, backups diarios, caché compatible con carrito y exclusiones de checkout/mi cuenta.
 - Configurar Envia.com primero en sandbox; verificar cotización, guía PDF, cancelación y rastreo con Estafeta.
-- Ejecutar un pedido completo de cada tipo: stock, bajo pedido, producto separado y personalización con imagen.
+- Ejecutar un pedido completo de cada tipo: stock, bajo pedido, producto separado y producto variable.
 - Probar Mercado Pago con tarjetas de prueba y después una transacción real de importe bajo.
 - Verificar impuestos, total, devolución, cupón y envío gratuito.
 - Retirar el aviso de demostración sólo después de aprobar contenido y datos.

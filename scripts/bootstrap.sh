@@ -37,10 +37,13 @@ fi
 "${compose[@]}" run --rm wpcli language core install es_MX --activate
 "${compose[@]}" run --rm wpcli plugin install woocommerce --version=10.9.4 --activate
 "${compose[@]}" run --rm wpcli plugin install woocommerce-mercadopago --version=8.9.1 --activate
+"${compose[@]}" run --rm wpcli language plugin install woocommerce es_MX || true
+"${compose[@]}" run --rm wpcli language plugin install woocommerce-mercadopago es_MX || true
 "${compose[@]}" run --rm wpcli plugin activate lm-commerce
 "${compose[@]}" run --rm wpcli theme activate lupita-marquez
 "${compose[@]}" run --rm wpcli rewrite structure '/%postname%/' --hard
 "${compose[@]}" run --rm wpcli lm demo seed --catalog=/var/www/html/wp-content/lm-data/catalog.csv
+"${compose[@]}" run --rm wpcli media regenerate --yes
 "${compose[@]}" run --rm wpcli rewrite flush --hard
 "${compose[@]}" run --rm wpcli cache flush
 

@@ -1,14 +1,13 @@
-sku,name,slug,category,finishes,price,painted_multiplier,stock_mode,stock_qty,lead_days,weight_kg,length_cm,width_cm,height_cm,ship_separately,personalization,personalization_surcharge,image_glob,status
-LM-ALT-CHI,Altar chico,altar-chico,Altares,Natural|Pintado,599,1.20,stock,5,3,2.0,30,30,30,no,name_image,0,img/Altar Chico/*.jpeg,publish
-LM-ALT-CHI-ARC,Altar chico con arco,altar-chico-con-arco,Altares,Natural|Pintado,749,1.20,made_to_order,0,10,2.4,34,30,32,no,name_image,0,img/altar chico natural/*.jpeg,publish
-LM-ALT-MED,Altar mediano,altar-mediano,Altares,Natural|Pintado,999,1.20,stock,5,5,4.5,45,40,45,yes,name_image,0,img/Altar mediano/*.jpeg,publish
-LM-ALT-MED-ARC,Altar mediano con arco,altar-mediano-con-arco,Altares,Natural|Pintado,1199,1.20,made_to_order,0,10,5.0,50,42,50,yes,name_image,0,img/Altar mediano/*.jpeg,publish
-LM-ALT-GRA,Altar grande,altar-grande,Altares,Natural|Pintado,1599,1.20,made_to_order,0,10,8.0,65,50,65,yes,name_image,0,img/Altar Grande/*.jpeg,publish
-LM-ALT-GRA-ARC,Altar grande con arco,altar-grande-con-arco,Altares,Natural|Pintado,1849,1.20,made_to_order,0,12,9.0,70,55,70,yes,name_image,0,img/Altar Grande/*.jpeg,publish
-LM-ALT-GIG,Altar gigante,altar-gigante,Altares,Natural|Pintado,2499,1.20,made_to_order,0,15,15.0,100,70,100,yes,name_image,0,img/Altar Gigante/*.jpeg,publish
-LM-MAS-ALT,Altar para mascotas,altar-para-mascotas,Memoriales y mascotas,Pintado,899,1.00,made_to_order,0,10,3.5,45,38,55,yes,name_image,0,img/Altar Mascota/*.jpeg,publish
-LM-CRU-ALA,Cruz con alas,cruz-con-alas,Memoriales y mascotas,Natural|Pintado,699,1.20,made_to_order,0,8,2.5,55,40,12,no,none,0,img/Cruz con Alas/*.jpeg,publish
-LM-NIC-001,Nicho personalizado,nicho-personalizado,Memoriales y mascotas,Natural|Pintado,649,1.20,made_to_order,0,8,1.5,30,24,15,no,name_image,0,img/Nicho/*.jpeg,publish
-LM-ROP-MIN,Ropero mini de revelación,ropero-mini-revelacion,Regalos personalizados,Pintado,1199,1.00,made_to_order,0,12,5.0,55,35,20,yes,name_image,0,img/Ropero/*.jpeg,publish
-LM-ALC-AHO,Alcancía reto de ahorro,alcancia-reto-ahorro,Regalos personalizados,Natural|Pintado,499,1.20,made_to_order,0,7,1.0,25,20,12,no,none,0,logo.jpeg,publish
-
+sku,name,slug,category,finishes,price,painted_multiplier,stock_mode,stock_qty,lead_days,weight_kg,length_cm,width_cm,height_cm,ship_separately,image_glob,status
+LM-ALT-CHI,Altar chico,altar-chico,Altares,Natural|Pintado,599,1.20,stock,5,3,2.0,30,30,30,no,img/Altar Chico/*.jpeg,publish
+LM-ALT-CHI-ARC,Altar chico con arco,altar-chico-con-arco,Altares,Natural|Pintado,749,1.20,made_to_order,0,10,2.4,34,30,32,no,img/altar chico natural/*.jpeg,publish
+LM-ALT-MED,Altar mediano,altar-mediano,Altares,Natural|Pintado,999,1.20,stock,5,5,4.5,45,40,45,yes,img/Altar mediano/*.jpeg,publish
+LM-ALT-MED-ARC,Altar mediano con arco,altar-mediano-con-arco,Altares,Natural|Pintado,1199,1.20,made_to_order,0,10,5.0,50,42,50,yes,img/Altar mediano/*.jpeg,publish
+LM-ALT-GRA,Altar grande,altar-grande,Altares,Natural|Pintado,1599,1.20,made_to_order,0,10,8.0,65,50,65,yes,img/Altar Grande/*.jpeg,publish
+LM-ALT-GRA-ARC,Altar grande con arco,altar-grande-con-arco,Altares,Natural|Pintado,1849,1.20,made_to_order,0,12,9.0,70,55,70,yes,img/Altar Grande/*.jpeg,publish
+LM-ALT-GIG,Altar gigante,altar-gigante,Altares,Natural|Pintado,2499,1.20,made_to_order,0,15,15.0,100,70,100,yes,img/Altar Gigante/*.jpeg,publish
+LM-MAS-ALT,Altar para mascotas,altar-para-mascotas,Memoriales y mascotas,Pintado,899,1.00,made_to_order,0,10,3.5,45,38,55,yes,img/Altar Mascota/*.jpeg,publish
+LM-CRU-ALA,Cruz con alas,cruz-con-alas,Memoriales y mascotas,Natural|Pintado,699,1.20,made_to_order,0,8,2.5,55,40,12,no,img/Cruz con Alas/*.jpeg,publish
+LM-NIC-001,Nicho personalizado,nicho-personalizado,Memoriales y mascotas,Natural|Pintado,649,1.20,made_to_order,0,8,1.5,30,24,15,no,img/Nicho/*.jpeg,publish
+LM-ROP-MIN,Ropero mini de revelación,ropero-mini-revelacion,Regalos personalizados,Pintado,1199,1.00,made_to_order,0,12,5.0,55,35,20,yes,img/Ropero/*.jpeg,publish
+LM-ALC-AHO,Alcancía reto de ahorro,alcancia-reto-ahorro,Regalos personalizados,Natural|Pintado,499,1.20,made_to_order,0,7,1.0,25,20,12,no,logo.jpeg,publish

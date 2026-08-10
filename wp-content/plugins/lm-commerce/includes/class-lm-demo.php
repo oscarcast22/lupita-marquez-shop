@@ -122,8 +122,9 @@ final class LM_Demo
             'contacto' => array('Contacto', '<!-- wp:heading --><h2 class="wp-block-heading">Hablemos de tu pieza</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Los datos de WhatsApp, correo y redes sociales se agregarán cuando la clienta los confirme.</p><!-- /wp:paragraph -->'),
             'preguntas-frecuentes' => array('Preguntas frecuentes', '<!-- wp:heading --><h2 class="wp-block-heading">Preguntas frecuentes</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Las piezas disponibles se despachan al confirmar el pago. Las hechas bajo pedido muestran su tiempo estimado de elaboración en la ficha de producto.</p><!-- /wp:paragraph -->'),
             'envios-y-devoluciones' => array('Envíos y devoluciones', '<!-- wp:paragraph --><p><strong>Contenido provisional:</strong> los envíos se realizan dentro de México mediante Estafeta. La política definitiva de cambios, daños y devoluciones debe validarse con la clienta antes de publicar.</p><!-- /wp:paragraph -->'),
-            'aviso-de-privacidad' => array('Aviso de privacidad', '<!-- wp:paragraph --><p><strong>Borrador pendiente de revisión legal.</strong> Las imágenes de personalización se conservan de forma privada y se eliminan automáticamente 90 días después de completar el pedido.</p><!-- /wp:paragraph -->'),
-            'terminos-y-condiciones' => array('Términos y condiciones', '<!-- wp:paragraph --><p><strong>Borrador pendiente de revisión legal.</strong> Los precios, tiempos de elaboración, condiciones de personalización y políticas finales deben ser aprobados antes de producción.</p><!-- /wp:paragraph -->'),
+            'aviso-de-privacidad' => array('Aviso de privacidad', '<!-- wp:paragraph --><p><strong>Borrador pendiente de revisión legal.</strong> El tratamiento de datos de contacto, pago y envío debe validarse antes de publicar la tienda.</p><!-- /wp:paragraph -->'),
+            'terminos-y-condiciones' => array('Términos y condiciones', '<!-- wp:paragraph --><p><strong>Borrador pendiente de revisión legal.</strong> Los precios, tiempos de elaboración y políticas finales deben ser aprobados antes de producción.</p><!-- /wp:paragraph -->'),
+            'guia-de-estilos' => array('Guía de estilos', ''),
         );
         $ids = array();
         foreach ($pages as $slug => [$title, $content]) {
@@ -224,8 +225,11 @@ final class LM_Demo
 
     private static function import_branding(): void
     {
-        $root = defined('LM_CLIENT_ASSETS_DIR') ? (string) LM_CLIENT_ASSETS_DIR : '';
-        $logo = trailingslashit($root) . 'logo.jpeg';
+        $root = defined('LM_CLIENT_ASSETS_DIR')
+            ? (string) LM_CLIENT_ASSETS_DIR
+            : (string) getenv('LM_CLIENT_ASSETS_DIR');
+        $optimized_logo = get_theme_file_path('assets/images/logo-lupita-marquez.png');
+        $logo = is_readable($optimized_logo) ? $optimized_logo : trailingslashit($root) . 'logo.jpeg';
         if (is_readable($logo)) {
             $logo_id = self::media_from_file($logo, 0);
             if ($logo_id) {
@@ -298,8 +302,9 @@ final class LM_Demo
         $product->update_meta_data('_lm_lead_days', absint($row['lead_days']));
         $product->update_meta_data('_lm_stock_mode', sanitize_key((string) $row['stock_mode']));
         $product->update_meta_data('_lm_ship_separately', (string) $row['ship_separately']);
-        $product->update_meta_data('_lm_personalization', sanitize_key((string) $row['personalization']));
-        $product->update_meta_data('_lm_personalization_surcharge', (float) $row['personalization_surcharge']);
+        // Retire known local demo metadata without touching historic order data or uploads.
+        $product->delete_meta_data('_lm_personalization');
+        $product->delete_meta_data('_lm_personalization_surcharge');
         if ($variable) {
             $attribute = new WC_Product_Attribute();
             $attribute->set_id(0);
@@ -353,7 +358,9 @@ final class LM_Demo
             $variation->set_width((string) $row['width_cm']);
             $variation->set_height((string) $row['height_cm']);
             self::stock($variation, $row);
-            foreach (array('_lm_ship_separately', '_lm_personalization', '_lm_personalization_surcharge', '_lm_lead_days', '_lm_stock_mode') as $key) {
+            $variation->delete_meta_data('_lm_personalization');
+            $variation->delete_meta_data('_lm_personalization_surcharge');
+            foreach (array('_lm_ship_separately', '_lm_lead_days', '_lm_stock_mode') as $key) {
                 $variation->update_meta_data($key, $product->get_meta($key));
             }
             $variation->save();
@@ -362,13 +369,19 @@ final class LM_Demo
 
     private static function images(WC_Product $product, array $row): void
     {
-        if ($product->get_image_id()) {
+        if ('logo.jpeg' === trim((string) $row['image_glob'])) {
+            $product->set_image_id(0);
+            $product->set_gallery_image_ids(array());
+            $product->save();
             return;
         }
-        $root = defined('LM_CLIENT_ASSETS_DIR') ? (string) LM_CLIENT_ASSETS_DIR : '';
+        $root = defined('LM_CLIENT_ASSETS_DIR')
+            ? (string) LM_CLIENT_ASSETS_DIR
+            : (string) getenv('LM_CLIENT_ASSETS_DIR');
         $paths = glob(trailingslashit($root) . ltrim((string) $row['image_glob'], '/')) ?: array();
+        natcasesort($paths);
         $ids = array();
-        foreach (array_slice($paths, 0, 6) as $path) {
+        foreach (array_slice(array_values($paths), 0, 6) as $path) {
             $id = self::media_from_file($path, $product->get_id());
             if ($id) {
                 $ids[] = $id;
@@ -420,7 +433,6 @@ final class LM_Demo
 
     private static function short_description(array $row): string
     {
-        $text = 'name_image' === $row['personalization'] ? 'Personalizable con nombre e imagen de referencia. ' : '';
-        return '<p>' . esc_html($text . 'Hecho artesanalmente en madera en México.') . '</p>';
+        return '<p>' . esc_html('Hecho artesanalmente en madera en México.') . '</p>';
     }
 }

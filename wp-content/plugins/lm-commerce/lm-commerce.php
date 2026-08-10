@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: LM Commerce
- * Description: Catálogo, personalización y logística Estafeta para Lupita Márquez.
+ * Description: Catálogo y logística Estafeta para Lupita Márquez.
  * Version: 0.1.0
  * Requires at least: 7.0
  * Requires PHP: 8.3
@@ -24,7 +24,6 @@ define('LM_COMMERCE_FILE', __FILE__);
 define('LM_COMMERCE_DIR', plugin_dir_path(__FILE__));
 
 require_once LM_COMMERCE_DIR . 'includes/class-lm-envia-client.php';
-require_once LM_COMMERCE_DIR . 'includes/class-lm-personalization.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-fulfillment.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-demo.php';
 
@@ -41,7 +40,6 @@ add_action('plugins_loaded', static function (): void {
     }
 
     require_once LM_COMMERCE_DIR . 'includes/class-lm-shipping-method.php';
-    LM_Personalization::init();
     LM_Fulfillment::init();
     LM_Demo::init();
 });

@@ -45,7 +45,7 @@ services:
         define( 'LM_ENVIA_TOKEN', getenv( 'LM_ENVIA_TOKEN' ) ?: '' );
         define( 'LM_MERCADOPAGO_PUBLIC_KEY', getenv( 'LM_MERCADOPAGO_PUBLIC_KEY' ) ?: '' );
         define( 'LM_MERCADOPAGO_ACCESS_TOKEN', getenv( 'LM_MERCADOPAGO_ACCESS_TOKEN' ) ?: '' );
-        define( 'LM_CLIENT_ASSETS_DIR', '/client-assets' );
+        define( 'LM_CLIENT_ASSETS_DIR', getenv( 'LM_CLIENT_ASSETS_DIR' ) ?: '/client-assets' );
     volumes:
       - wordpress_data:/var/www/html
       - ./wp-content/themes/lupita-marquez:/var/www/html/wp-content/themes/lupita-marquez
@@ -69,6 +69,7 @@ services:
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wordpress}
       LM_ENVIA_ENV: ${LM_ENVIA_ENV:-sandbox}
       LM_ENVIA_TOKEN: ${LM_ENVIA_TOKEN:-}
+      LM_CLIENT_ASSETS_DIR: /client-assets
     volumes:
       - wordpress_data:/var/www/html
       - ./wp-content/themes/lupita-marquez:/var/www/html/wp-content/themes/lupita-marquez
