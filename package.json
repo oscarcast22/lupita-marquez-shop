@@ -1,0 +1,18 @@
+{
+  "name": "lupita-marquez-frontend",
+  "version": "0.3.0",
+  "private": true,
+  "scripts": {
+    "build": "wp-scripts build wp-content/themes/lupita-marquez/src/index.js --output-path=wp-content/themes/lupita-marquez/build",
+    "start": "wp-scripts start wp-content/themes/lupita-marquez/src/index.js --output-path=wp-content/themes/lupita-marquez/build",
+    "lint:css": "wp-scripts lint-style 'wp-content/themes/lupita-marquez/src/**/*.css'",
+    "lint:js": "wp-scripts lint-js 'wp-content/themes/lupita-marquez/src/**/*.js' 'scripts/frontend-audit.mjs'",
+    "audit:frontend": "node scripts/frontend-audit.mjs",
+    "test:frontend": "npm run build && npm run lint:css && npm run lint:js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "@wordpress/scripts": "^30.18.0",
+    "typescript": "5.7.3"
+  }
+}

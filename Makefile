@@ -1,6 +1,6 @@
 COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
-.PHONY: up down bootstrap test logs shell reset
+.PHONY: up down bootstrap build watch test audit-frontend logs shell reset
 
 up:
 	$(COMPOSE) up -d
@@ -13,6 +13,15 @@ bootstrap:
 
 test:
 	./scripts/test.sh
+
+build:
+	npm run build
+
+watch:
+	npm run start
+
+audit-frontend:
+	npm run audit:frontend
 
 logs:
 	$(COMPOSE) logs -f wordpress
