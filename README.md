@@ -1,6 +1,6 @@
 # Lupita Márquez Ecommerce
 
-Tienda WooCommerce desarrollada con un tema de bloques propio y un único plugin de negocio para catálogo, personalización y logística Estafeta mediante Envia.com.
+Tienda WooCommerce desarrollada con un tema de bloques propio y un único plugin de negocio para catálogo y logística Estafeta mediante Envia.com.
 
 ## Inicio rápido
 
@@ -24,10 +24,11 @@ Los precios, dimensiones, existencias y datos fiscales son demostrativos. El arc
 - WordPress 7.0.2 / PHP 8.3 / MariaDB 10.11.
 - WooCommerce 10.9.4 y Mercado Pago 8.9.1 fijados para la matriz inicial.
 - Tema FSE `lupita-marquez`, sin tema padre ni constructor visual.
-- Plugin `lm-commerce`: personalización, importación, tarifa Estafeta, guías y estados de pedido.
+- Frontend code-first con fuentes modulares en `src/` y un único build público generado por `@wordpress/scripts`.
+- Plugin `lm-commerce`: importación de catálogo, tarifa Estafeta, guías y estados de pedido.
 - Las credenciales nunca se versionan; se configuran en `.env`.
 
-La tienda incluye checkout de una sola página, carrito/checkout de bloques, inventario mixto (existencias y fabricación bajo pedido), variaciones Natural/Pintado, imágenes privadas para personalización, cupón demo, envío gratuito condicional y tarifa Estafeta con respaldo. Al cambiar un pedido a **Listo para enviar**, el plugin solicita una guía a Envia.com de forma asíncrona e idempotente.
+La tienda incluye checkout de una sola página, carrito/checkout de bloques, inventario mixto (existencias y fabricación bajo pedido), variaciones Natural/Pintado, cupón demo, envío gratuito condicional y tarifa Estafeta con respaldo. Al cambiar un pedido a **Listo para enviar**, el plugin solicita una guía a Envia.com de forma asíncrona e idempotente.
 
 ## Comandos
 
@@ -37,6 +38,17 @@ make down
 make test
 make logs
 ```
+
+Para trabajar en el frontend:
+
+```bash
+npm install
+npm run start           # compilación incremental
+npm run build           # build de producción
+npm run audit:frontend  # capturas y métricas en reports/frontend
+```
+
+El auditor acepta `LM_BASE_URL`, `LM_AUDIT_OUTPUT` y `CHROME_PATH`. Recorre la página antes de capturarla y reporta por viewport (1440, 1024, 768 y 390 px) bordes de bandas anchas, overflow, CLS, consola, imágenes rotas y objetivos táctiles. Carrito, checkout, inventario, variaciones y pagos permanecen en los bloques y APIs oficiales de WooCommerce; el tema no reescribe su DOM.
 
 `make reset` elimina los volúmenes locales y requiere volver a ejecutar `make bootstrap`.
 
