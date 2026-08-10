@@ -1,0 +1,55 @@
+.lm-hero { background: var(--wp--preset--color--mist); overflow: clip; padding-block: clamp(3rem, 8vw, 8rem); position: relative; }
+
+.lm-hero::before { background: var(--wp--preset--color--fuchsia); content: ""; height: clamp(16rem, 42vw, 39rem); position: absolute; right: 0; top: 0; width: min(35vw, 32rem); }
+
+.lm-hero__grid { align-items: center; display: grid; gap: clamp(2rem, 7vw, 7rem); grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr); position: relative; }
+
+.lm-hero__copy { padding-block: 2rem; position: relative; z-index: 2; }
+
+.lm-hero h1 { font-size: clamp(3.2rem, 7.5vw, 7.5rem); line-height: 0.88; margin-block: 0 1.5rem; max-width: 10ch; text-wrap: balance; }
+
+.lm-hero__lede { color: var(--wp--preset--color--muted); font-size: clamp(1.05rem, 2vw, 1.35rem); max-width: 35rem; }
+
+.lm-hero__media { margin: 0; position: relative; transform: rotate(1.5deg); z-index: 1; }
+
+.lm-hero__media::before {
+	border: 1px solid color-mix(in srgb, var(--wp--preset--color--white) 70%, transparent);
+	content: "";
+	inset: -0.8rem 0.8rem 0.8rem -0.8rem;
+	position: absolute;
+}
+
+.lm-hero__media img {
+	aspect-ratio: 4 / 5;
+	background: var(--wp--preset--color--white);
+	box-shadow: var(--lm-shadow-soft);
+	object-fit: contain;
+	position: relative;
+	width: 100%;
+}
+
+.lm-hero__note {
+	background: var(--wp--preset--color--charcoal);
+	bottom: -1.5rem;
+	color: var(--wp--preset--color--white);
+	font-size: var(--wp--preset--font-size--small);
+	left: -2rem;
+	letter-spacing: 0.1em;
+	padding: var(--wp--preset--spacing--20) var(--wp--preset--spacing--25);
+	position: absolute;
+	text-transform: uppercase;
+}
+
+.lm-story-band { background: var(--wp--preset--color--charcoal); color: var(--wp--preset--color--white); }
+
+.lm-collection-band { background: var(--wp--preset--color--white); }
+
+.lm-story-band a { color: var(--wp--preset--color--white); text-decoration: underline; }
+
+.lm-page-header { background: var(--wp--preset--color--mist); border-left: 0.55rem solid var(--wp--preset--color--fuchsia); padding: clamp(2rem, 5vw, 4.5rem); }
+
+.lm-page-header h1 { margin-block: 0; max-width: 12ch; }
+
+.lm-state { margin-inline: auto; max-width: 760px; text-align: center; }
+
+.lm-search-results { display: grid; gap: 2rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }

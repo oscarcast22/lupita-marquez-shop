@@ -1,0 +1,45 @@
+body {
+	margin: 0;
+	overflow-x: clip;
+	text-rendering: optimizelegibility;
+	-webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+img { display: block; height: auto; max-width: 100%; }
+
+a { text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+
+.lm-main a:hover,
+.lm-site-header a:hover,
+.lm-site-footer a:hover { color: var(--wp--preset--color--fuchsia); }
+
+main { min-height: 45vh; }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+	outline: 3px solid var(--wp--preset--color--fuchsia);
+	outline-offset: 3px;
+	scroll-margin-block: calc(var(--lm-header-height) + 1rem);
+}
+
+::selection {
+	background: var(--wp--preset--color--fuchsia);
+	color: var(--wp--preset--color--white);
+}
+
+.lm-section { padding-block: var(--wp--preset--spacing--70); width: 100%; }
+
+.lm-section--compact { padding-block: var(--wp--preset--spacing--50); }
+
+.lm-section--flush { padding-block: 0; }
+
+.lm-shell { margin-inline: auto; max-width: var(--lm-shell); padding-inline: var(--lm-gutter); width: 100%; }
+
+.lm-reading { max-width: var(--lm-reading); }
+
+.lm-main { display: block; }
+
+.lm-main > * { margin-block-start: 0; }
+
+.lm-sr-only { clip: rect(0 0 0 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }

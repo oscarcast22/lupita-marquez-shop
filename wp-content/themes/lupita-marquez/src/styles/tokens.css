@@ -1,0 +1,11 @@
+:root {
+	--lm-radius-sm: 10px;
+	--lm-radius: 16px;
+	--lm-radius-lg: 24px;
+	--lm-border: 1px solid var(--wp--preset--color--sand);
+	--lm-shadow-soft: 0 24px 64px color-mix(in srgb, var(--wp--preset--color--charcoal) 12%, transparent);
+	--lm-shell: 1280px;
+	--lm-reading: 720px;
+	--lm-gutter: clamp(1rem, 3vw, 2.5rem);
+	--lm-header-height: 76px;
+}

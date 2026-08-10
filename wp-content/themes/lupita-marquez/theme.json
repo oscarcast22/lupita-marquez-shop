@@ -13,86 +13,92 @@
       "palette": [
         { "slug": "ivory", "color": "#fbf7f1", "name": "Marfil" },
         { "slug": "white", "color": "#ffffff", "name": "Blanco" },
-        { "slug": "charcoal", "color": "#302a27", "name": "Carbón" },
-        { "slug": "wood", "color": "#a46f43", "name": "Madera" },
-        { "slug": "sand", "color": "#e8ddd1", "name": "Arena" },
-        { "slug": "mist", "color": "#f3ece5", "name": "Niebla" },
-        { "slug": "fuchsia", "color": "#d90078", "name": "Fucsia" },
-        { "slug": "muted", "color": "#756b65", "name": "Texto secundario" }
+        { "slug": "charcoal", "color": "#2d2825", "name": "Carbón" },
+        { "slug": "wood", "color": "#9b623a", "name": "Madera" },
+        { "slug": "sand", "color": "#e7d9cc", "name": "Arena" },
+        { "slug": "mist", "color": "#f3ebe3", "name": "Niebla" },
+        { "slug": "fuchsia", "color": "#c9006f", "name": "Fucsia" },
+        { "slug": "muted", "color": "#6f655f", "name": "Texto secundario" },
+        { "slug": "notice-background", "color": "#fff0b8", "name": "Aviso · fondo" },
+        { "slug": "notice-border", "color": "#c9a93d", "name": "Aviso · borde" },
+        { "slug": "notice-text", "color": "#493c0b", "name": "Aviso · texto" },
+        { "slug": "success", "color": "#27623a", "name": "Éxito" },
+        { "slug": "error", "color": "#a51e31", "name": "Error" },
+        { "slug": "danger", "color": "#96202d", "name": "Peligro" }
       ]
     },
-    "layout": {
-      "contentSize": "760px",
-      "wideSize": "1240px"
-    },
+    "layout": { "contentSize": "720px", "wideSize": "1280px" },
     "spacing": {
       "blockGap": true,
       "margin": true,
       "padding": true,
-      "units": ["px", "rem", "vw", "%"]
+      "units": ["px", "rem", "vw", "%"],
+      "spacingSizes": [
+        { "slug": "05", "size": "0.25rem", "name": "0.5" },
+        { "slug": "10", "size": "0.5rem", "name": "1" },
+        { "slug": "15", "size": "0.75rem", "name": "1.5" },
+        { "slug": "20", "size": "1rem", "name": "2" },
+        { "slug": "25", "size": "1.25rem", "name": "2.5" },
+        { "slug": "30", "size": "1.5rem", "name": "3" },
+        { "slug": "35", "size": "1.75rem", "name": "3.5" },
+        { "slug": "40", "size": "2rem", "name": "4" },
+        { "slug": "45", "size": "2.5rem", "name": "5" },
+        { "slug": "50", "size": "3rem", "name": "6" },
+        { "slug": "55", "size": "3.5rem", "name": "7" },
+        { "slug": "60", "size": "4rem", "name": "8" },
+        { "slug": "65", "size": "5rem", "name": "10" },
+        { "slug": "70", "size": "clamp(4.5rem, 8vw, 8rem)", "name": "Sección" }
+      ]
     },
     "typography": {
       "customFontSize": false,
       "fluid": true,
       "fontFamilies": [
         {
-          "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
-          "name": "Interfaz",
-          "slug": "sans"
+          "fontFamily": "Manrope, ui-sans-serif, system-ui, sans-serif",
+          "name": "Manrope",
+          "slug": "sans",
+          "fontFace": [{ "fontFamily": "Manrope", "fontStyle": "normal", "fontWeight": "200 800", "src": ["file:./assets/fonts/Manrope-Variable.ttf"] }]
         },
         {
-          "fontFamily": "Iowan Old Style, Baskerville, Georgia, serif",
-          "name": "Editorial",
-          "slug": "serif"
+          "fontFamily": "Fraunces, Georgia, serif",
+          "name": "Fraunces",
+          "slug": "serif",
+          "fontFace": [{ "fontFamily": "Fraunces", "fontStyle": "normal", "fontWeight": "100 900", "src": ["file:./assets/fonts/Fraunces-Variable.ttf"] }]
         }
       ],
       "fontSizes": [
-        { "slug": "small", "size": "0.82rem", "name": "Pequeño" },
-        { "slug": "medium", "size": "1rem", "name": "Mediano" },
-        { "slug": "large", "size": "clamp(1.25rem, 1.8vw, 1.6rem)", "name": "Grande" },
-        { "slug": "x-large", "size": "clamp(2rem, 5vw, 4.5rem)", "name": "Título" }
+        { "slug": "small", "size": "clamp(0.78rem, 0.75rem + 0.1vw, 0.84rem)", "name": "Pequeño" },
+        { "slug": "medium", "size": "clamp(0.96rem, 0.92rem + 0.15vw, 1.04rem)", "name": "Mediano" },
+        { "slug": "large", "size": "clamp(1.18rem, 1.05rem + 0.55vw, 1.55rem)", "name": "Grande" },
+        { "slug": "x-large", "size": "clamp(2.4rem, 1.55rem + 4vw, 5.75rem)", "name": "Título" }
       ],
       "lineHeight": true
     },
     "useRootPaddingAwareAlignments": true
   },
   "styles": {
-    "color": {
-      "background": "var:preset|color|ivory",
-      "text": "var:preset|color|charcoal"
-    },
+    "color": { "background": "var:preset|color|ivory", "text": "var:preset|color|charcoal" },
     "spacing": {
       "blockGap": "1.5rem",
-      "padding": {
-        "left": "clamp(1rem, 3vw, 2.5rem)",
-        "right": "clamp(1rem, 3vw, 2.5rem)"
-      }
+      "padding": { "left": "0", "right": "0" }
     },
-    "typography": {
-      "fontFamily": "var:preset|font-family|sans",
-      "fontSize": "var:preset|font-size|medium",
-      "lineHeight": "1.65"
-    },
+    "typography": { "fontFamily": "var:preset|font-family|sans", "fontSize": "var:preset|font-size|medium", "lineHeight": "1.65" },
     "elements": {
       "button": {
         "border": { "radius": "999px" },
         "color": { "background": "var:preset|color|charcoal", "text": "var:preset|color|white" },
-        "spacing": { "padding": { "top": "0.8rem", "right": "1.35rem", "bottom": "0.8rem", "left": "1.35rem" } },
-        "typography": { "fontWeight": "700" }
+        "spacing": { "padding": { "top": "0.72rem", "right": "1.4rem", "bottom": "0.72rem", "left": "1.4rem" } },
+        "typography": { "fontSize": "0.92rem", "fontWeight": "700" }
       },
-      "heading": {
-        "typography": { "fontFamily": "var:preset|font-family|serif", "fontWeight": "500", "lineHeight": "1.08" }
-      },
-      "link": {
-        "color": { "text": "var:preset|color|charcoal" },
-        "typography": { "textDecoration": "none" }
-      }
+      "heading": { "typography": { "fontFamily": "var:preset|font-family|serif", "fontWeight": "560", "letterSpacing": "-0.025em", "lineHeight": "1.08" } },
+      "link": { "color": { "text": "var:preset|color|charcoal" }, "typography": { "textDecoration": "none" } }
     },
     "blocks": {
-      "core/navigation": { "typography": { "fontSize": "0.92rem", "fontWeight": "650" } },
-      "core/site-title": { "typography": { "fontFamily": "var:preset|font-family|serif", "fontSize": "1.35rem" } },
-      "core/image": { "border": { "radius": "14px" } },
-      "woocommerce/product-price": { "color": { "text": "var:preset|color|fuchsia" }, "typography": { "fontWeight": "700" } }
+      "core/navigation": { "typography": { "fontSize": "0.9rem", "fontWeight": "650" } },
+      "core/site-title": { "typography": { "fontFamily": "var:preset|font-family|serif", "fontSize": "clamp(1.35rem, 2vw, 1.8rem)", "fontWeight": "600" } },
+      "core/image": { "border": { "radius": "16px" } },
+      "woocommerce/product-price": { "color": { "text": "var:preset|color|fuchsia" }, "typography": { "fontWeight": "750" } }
     }
   },
   "templateParts": [
@@ -100,4 +106,3 @@
     { "area": "footer", "name": "footer", "title": "Pie de página" }
   ]
 }
-

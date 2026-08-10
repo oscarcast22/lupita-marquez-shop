@@ -1,0 +1,37 @@
+<!-- wp:template-part {"slug":"header","tagName":"header"} /-->
+
+<!-- wp:group {"tagName":"main","className":"lm-product-main lm-main","layout":{"type":"default"}} -->
+<main class="wp-block-group lm-product-main lm-main">
+	<div class="lm-shell">
+		<!-- wp:woocommerce/breadcrumbs /-->
+		<!-- wp:woocommerce/store-notices /-->
+		<div class="lm-product-layout">
+			<div class="lm-product-gallery">
+				<!-- wp:woocommerce/product-image-gallery /-->
+			</div>
+			<div class="lm-product-summary">
+				<!-- wp:post-terms {"term":"product_cat","className":"lm-eyebrow"} /-->
+				<!-- wp:post-title {"level":1,"__woocommerceNamespace":"woocommerce/product-query/product-title"} /-->
+				<!-- wp:woocommerce/product-rating {"isDescendentOfSingleProductTemplate":true} /-->
+				<!-- wp:woocommerce/product-price {"isDescendentOfSingleProductTemplate":true,"fontSize":"large"} /-->
+				<!-- wp:post-excerpt {"__woocommerceNamespace":"woocommerce/product-query/product-summary","excerptLength":100} /-->
+				<!-- wp:woocommerce/add-to-cart-form /-->
+				<!-- wp:woocommerce/product-meta -->
+				<div class="wp-block-woocommerce-product-meta">
+					<!-- wp:group {"layout":{"type":"flex","orientation":"vertical"}} -->
+					<div class="wp-block-group">
+						<!-- wp:woocommerce/product-sku /-->
+						<!-- wp:post-terms {"term":"product_cat","prefix":"Categoría: "} /-->
+					</div>
+					<!-- /wp:group -->
+				</div>
+				<!-- /wp:woocommerce/product-meta -->
+			</div>
+		</div>
+		<!-- wp:woocommerce/product-details {"className":"is-style-minimal"} /-->
+		<!-- wp:pattern {"slug":"woocommerce-blocks/related-products"} /-->
+	</div>
+</main>
+<!-- /wp:group -->
+
+<!-- wp:template-part {"slug":"footer","tagName":"footer"} /-->

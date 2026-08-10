@@ -1,0 +1,39 @@
+<!-- wp:template-part {"slug":"header","tagName":"header"} /-->
+
+<!-- wp:group {"tagName":"main","className":"lm-section lm-section--compact lm-main","layout":{"type":"default"}} -->
+<main class="wp-block-group lm-section lm-section--compact lm-main">
+	<div class="lm-shell">
+		<!-- wp:woocommerce/breadcrumbs /-->
+		<header class="lm-page-header">
+			<p class="lm-eyebrow">Colección artesanal</p>
+			<!-- wp:query-title {"type":"archive","showPrefix":false,"fontSize":"x-large"} /-->
+			<!-- wp:term-description /-->
+		</header>
+		<!-- wp:woocommerce/store-notices /-->
+		<div class="lm-catalog-toolbar">
+			<!-- wp:woocommerce/product-results-count /-->
+			<!-- wp:woocommerce/catalog-sorting /-->
+		</div>
+		<!-- wp:woocommerce/product-collection {"queryId":0,"query":{"woocommerceAttributes":[],"woocommerceStockStatus":["instock","outofstock","onbackorder"],"taxQuery":{},"isProductCollectionBlock":true,"perPage":12,"pages":0,"offset":0,"postType":"product","order":"asc","orderBy":"title","search":"","exclude":[],"inherit":true},"displayLayout":{"type":"flex","columns":4,"shrinkColumns":true},"queryContextIncludes":["collection"]} -->
+		<div class="wp-block-woocommerce-product-collection">
+			<!-- wp:woocommerce/product-template -->
+			<!-- wp:woocommerce/product-image {"showSaleBadge":false,"imageSizing":"thumbnail","isDescendentOfQueryLoop":true} /-->
+			<!-- wp:post-title {"textAlign":"left","level":2,"isLink":true,"fontSize":"large","__woocommerceNamespace":"woocommerce/product-collection/product-title"} /-->
+			<!-- wp:woocommerce/product-price {"textAlign":"left","fontSize":"medium"} /-->
+			<!-- wp:woocommerce/product-button {"textAlign":"left"} /-->
+			<!-- /wp:woocommerce/product-template -->
+			<!-- wp:query-pagination {"layout":{"type":"flex","justifyContent":"center"}} -->
+			<!-- wp:query-pagination-previous /-->
+			<!-- wp:query-pagination-numbers /-->
+			<!-- wp:query-pagination-next /-->
+			<!-- /wp:query-pagination -->
+			<!-- wp:woocommerce/product-collection-no-results -->
+			<p class="lm-state">Todavía no hay piezas en esta categoría.</p>
+			<!-- /wp:woocommerce/product-collection-no-results -->
+		</div>
+		<!-- /wp:woocommerce/product-collection -->
+	</div>
+</main>
+<!-- /wp:group -->
+
+<!-- wp:template-part {"slug":"footer","tagName":"footer"} /-->
