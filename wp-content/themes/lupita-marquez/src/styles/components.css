@@ -38,7 +38,7 @@
 
 .lm-section-heading p:last-child { color: var(--wp--preset--color--muted); max-width: 32rem; }
 
-.lm-category-index { border-top: 1px solid currentcolor; display: grid; grid-template-columns: repeat(3, 1fr); }
+.lm-category-index { border-top: 1px solid currentcolor; display: grid; grid-template-columns: repeat(2, 1fr); }
 
 .lm-category-card { border-bottom: 1px solid currentcolor; min-height: 18rem; padding: 2rem 2rem 2rem 0; position: relative; }
 
