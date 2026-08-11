@@ -51,7 +51,7 @@ services:
       - ./wp-content/themes/lupita-marquez:/var/www/html/wp-content/themes/lupita-marquez
       - ./wp-content/plugins/lm-commerce:/var/www/html/wp-content/plugins/lm-commerce
       - ./data:/var/www/html/wp-content/lm-data:ro
-      - ../Lupitamarquez:/client-assets:ro
+      - ./productos:/client-assets:ro
 
   wpcli:
     image: wordpress:cli-2.12.0-php8.3
@@ -76,7 +76,7 @@ services:
       - ./wp-content/themes/lupita-marquez:/var/www/html/wp-content/themes/lupita-marquez
       - ./wp-content/plugins/lm-commerce:/var/www/html/wp-content/plugins/lm-commerce
       - ./data:/var/www/html/wp-content/lm-data:ro
-      - ../Lupitamarquez:/client-assets:ro
+      - ./productos:/client-assets:ro
     working_dir: /var/www/html
 
   mailpit:

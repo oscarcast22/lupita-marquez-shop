@@ -17,7 +17,7 @@ make bootstrap
 - Usuario demo: `admin`
 - Contraseña demo: `admin-local-only`
 
-Los precios, dimensiones, existencias y datos fiscales son demostrativos. El archivo `data/catalog.csv` es la fuente editable del catálogo y se puede reimportar sin duplicar productos.
+Los precios, dimensiones, existencias, fotografías faltantes y datos fiscales son demostrativos. El archivo `data/catalog.csv` es la fuente repetible del prototipo y se puede reimportar sin duplicar productos.
 
 ## Arquitectura
 
@@ -28,7 +28,7 @@ Los precios, dimensiones, existencias y datos fiscales son demostrativos. El arc
 - Plugin `lm-commerce`: importación de catálogo, tarifa Estafeta, guías y estados de pedido.
 - Las credenciales nunca se versionan; se configuran en `.env`.
 
-La tienda incluye checkout de una sola página, carrito/checkout de bloques, nueve productos simples, inventario mixto (existencias y fabricación bajo pedido), cupón demo, envío gratuito condicional y tarifa Estafeta con respaldo. Al cambiar un pedido a **Listo para enviar**, el plugin solicita una guía a Envia.com de forma asíncrona e idempotente.
+La tienda incluye checkout de una sola página, carrito/checkout de bloques y 12 familias: ocho productos variables con acabados Natural/Pintado y cuatro simples. Las variaciones usan la galería nativa opt-in de WooCommerce 10.9.4, sin plugins ni scripts de galería propios. También incluye inventario mixto, cupón demo, envío gratuito condicional y tarifa Estafeta con respaldo. Al cambiar un pedido a **Listo para enviar**, el plugin solicita una guía a Envia.com de forma asíncrona e idempotente.
 
 ## Comandos
 
@@ -45,6 +45,7 @@ Para trabajar en el frontend:
 npm install
 npm run start           # compilación incremental
 npm run build           # build de producción
+npm run prepare:catalog-images # recrea copias WebP sin tocar los originales
 npm run audit:frontend  # capturas y métricas en reports/frontend
 ```
 
@@ -52,7 +53,9 @@ El auditor acepta `LM_BASE_URL`, `LM_AUDIT_OUTPUT` y `CHROME_PATH`. Recorre la p
 
 `make reset` elimina los volúmenes locales y requiere volver a ejecutar `make bootstrap`.
 
-El catálogo se administra normalmente desde WooCommerce. Para cambios masivos durante esta etapa, edita `data/catalog.csv` y vuelve a ejecutar `make bootstrap`.
+En producción el catálogo se administra desde WooCommerce: la clienta puede cambiar precio, inventario, portada y galería dentro de cada variación sin tocar el CSV ni el tema. `data/catalog.csv` sólo es la fuente repetible del entorno demo; volver a ejecutar `make bootstrap` restaura esos valores.
+
+Las fotografías originales permanecen intactas en `productos/`. Las copias catalogables viven en `productos/catalogo/` como WebP de 800×1000, y Docker monta `./productos` directamente en `/client-assets`; ya no depende de un directorio hermano.
 
 ## Producción
 

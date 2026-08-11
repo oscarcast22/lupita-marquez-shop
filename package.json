@@ -6,7 +6,8 @@
     "build": "wp-scripts build wp-content/themes/lupita-marquez/src/index.js --output-path=wp-content/themes/lupita-marquez/build",
     "start": "wp-scripts start wp-content/themes/lupita-marquez/src/index.js --output-path=wp-content/themes/lupita-marquez/build",
     "lint:css": "wp-scripts lint-style 'wp-content/themes/lupita-marquez/src/**/*.css'",
-    "lint:js": "wp-scripts lint-js 'wp-content/themes/lupita-marquez/src/**/*.js' 'scripts/frontend-audit.mjs'",
+    "lint:js": "wp-scripts lint-js 'wp-content/themes/lupita-marquez/src/**/*.js' 'scripts/*.mjs'",
+    "prepare:catalog-images": "node scripts/prepare-catalog-images.mjs",
     "audit:frontend": "node scripts/frontend-audit.mjs",
     "test:frontend": "npm run build && npm run lint:css && npm run lint:js"
   },

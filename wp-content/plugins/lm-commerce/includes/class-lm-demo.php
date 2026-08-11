@@ -15,8 +15,18 @@ final class LM_Demo
 {
     private const CATALOG_MARKER = '_lm_demo_catalog_managed';
 
+    private const FEATURED_CATALOG_ORDER = array(
+        'LM-ALT-CHI' => 1,
+        'LM-ALT-GIG' => 2,
+        'LM-ALT-MED' => 3,
+        'LM-MAS-ALT' => 4,
+        'LM-NIC-001' => 5,
+        'LM-CRU-ALA' => 6,
+    );
+
     private const LEGACY_CATALOG_SKUS = array(
         'LM-ALT-CHI',
+        'LM-ALT-CHI-NAT',
         'LM-ALT-CHI-ARC',
         'LM-ALT-MED',
         'LM-ALT-MED-ARC',
@@ -28,10 +38,6 @@ final class LM_Demo
         'LM-NIC-001',
         'LM-ROP-MIN',
         'LM-ALC-AHO',
-    );
-
-    private const LEGACY_SKU_RENAMES = array(
-        'LM-ALT-CHI-NAT' => 'LM-ALT-CHI-ARC',
     );
 
     public static function init(): void
@@ -88,7 +94,8 @@ final class LM_Demo
             'Tema Lupita Márquez activo' => 'lupita-marquez' === get_stylesheet(),
             'Página de tienda' => (int) get_option('woocommerce_shop_page_id') > 0,
             'Checkout de bloques' => has_block('woocommerce/checkout', (int) get_option('woocommerce_checkout_page_id')),
-            'Catálogo simple de 9 productos' => self::catalog_is_valid(),
+            'Catálogo de 12 familias (8 variables y 4 simples)' => self::catalog_is_valid(),
+            'Galerías por variación activas' => 'yes' === get_option('wc_feature_woocommerce_additional_variation_images_enabled'),
             'Zona México configurada' => self::shipping_exists(),
             'HPOS habilitable' => class_exists(Automattic\WooCommerce\Utilities\OrderUtil::class),
         );
@@ -125,6 +132,7 @@ final class LM_Demo
             'woocommerce_manage_stock' => 'yes',
             'woocommerce_hold_stock_minutes' => '60',
             'woocommerce_custom_orders_table_enabled' => 'yes',
+            'wc_feature_woocommerce_additional_variation_images_enabled' => 'yes',
         );
         foreach ($options as $key => $value) {
             update_option($key, $value);
@@ -301,19 +309,17 @@ final class LM_Demo
     {
         $sku = (string) $row['sku'];
         $existing_id = wc_get_product_id_by_sku($sku);
-        if (! $existing_id && isset(self::LEGACY_SKU_RENAMES[$sku])) {
-            $existing_id = wc_get_product_id_by_sku(self::LEGACY_SKU_RENAMES[$sku]);
-        }
-        $existing = $existing_id ? wc_get_product($existing_id) : false;
-        if ($existing_id) {
-            self::delete_variations((int) $existing_id);
-        }
-        $product = $existing_id ? new WC_Product_Simple((int) $existing_id) : new WC_Product_Simple();
+        $type = sanitize_key((string) $row['type']);
+        $product = 'variable' === $type
+            ? new WC_Product_Variable($existing_id ?: 0)
+            : new WC_Product_Simple($existing_id ?: 0);
         $product->set_name((string) $row['name']);
         $product->set_slug((string) $row['slug']);
         $product->set_sku($sku);
         $product->set_status((string) $row['status']);
         $product->set_catalog_visibility('visible');
+        $product->set_featured(isset(self::FEATURED_CATALOG_ORDER[$sku]));
+        $product->set_menu_order(self::FEATURED_CATALOG_ORDER[$sku] ?? 100);
         $product->set_description(self::description($row));
         $product->set_short_description(self::short_description($row));
         $product->set_tax_status('taxable');
@@ -336,22 +342,76 @@ final class LM_Demo
         // Retire known local demo metadata without touching historic order data or uploads.
         $product->delete_meta_data('_lm_personalization');
         $product->delete_meta_data('_lm_personalization_surcharge');
-        $finish = trim((string) ($row['finish'] ?? ''));
-        if ('' !== $finish) {
+        if ('variable' === $type) {
+            $finishes = array_values(array_filter(array_map('trim', explode('|', (string) $row['finishes']))));
             $attribute = new WC_Product_Attribute();
             $attribute->set_id(0);
             $attribute->set_name('Acabado');
-            $attribute->set_options(array($finish));
+            $attribute->set_options($finishes);
             $attribute->set_position(0);
             $attribute->set_visible(true);
-            $attribute->set_variation(false);
+            $attribute->set_variation(true);
             $product->set_attributes(array($attribute));
+            $product->set_default_attributes(array(
+                'acabado' => (string) $row['default_finish'],
+            ));
+            $product->set_regular_price('');
         } else {
+            if ($existing_id) {
+                self::delete_variations((int) $existing_id);
+            }
             $product->set_attributes(array());
+            $product->set_regular_price((string) $row['price']);
         }
-        $product->set_regular_price((string) $row['price']);
         $product->save();
-        self::images($product, $row);
+        self::images($product, $row, 'variable' === $type ? (string) $row['default_finish'] : '');
+
+        if ('variable' === $type) {
+            self::upsert_variations($product, $row, $finishes);
+        }
+    }
+
+    private static function upsert_variations(WC_Product_Variable $parent, array $row, array $finishes): void
+    {
+        $kept_ids = array();
+        foreach ($finishes as $finish) {
+            $suffix = 'Natural' === $finish ? 'NAT' : 'PIN';
+            $sku = (string) $row['sku'] . '-' . $suffix;
+            $variation_id = wc_get_product_id_by_sku($sku);
+            $existing = $variation_id ? wc_get_product($variation_id) : false;
+
+            // The former standalone "Altar chico natural" used the variation SKU.
+            if ($existing && ! $existing instanceof WC_Product_Variation) {
+                $existing->set_sku('');
+                $existing->save();
+                self::delete_variations((int) $variation_id);
+                wp_trash_post((int) $variation_id);
+                $variation_id = 0;
+            }
+
+            $variation = new WC_Product_Variation($variation_id ?: 0);
+            $variation->set_parent_id($parent->get_id());
+            $variation->set_status('publish');
+            $variation->set_sku($sku);
+            $variation->set_attributes(array('acabado' => $finish));
+            $price_key = 'Natural' === $finish ? 'natural_price' : 'painted_price';
+            $variation->set_regular_price((string) $row[$price_key]);
+            $variation->set_manage_stock(false);
+            $variation->set_stock_status($parent->get_stock_status());
+            $variation->set_backorders('no');
+            $variation->set_description(sprintf('Acabado %s. Precio provisional pendiente de validación.', $finish));
+            $variation->save();
+            self::images($variation, $row, $finish);
+            $kept_ids[] = $variation->get_id();
+        }
+
+        foreach ($parent->get_children() as $child_id) {
+            if (! in_array((int) $child_id, $kept_ids, true)) {
+                wp_delete_post((int) $child_id, true);
+            }
+        }
+        WC_Product_Variable::sync($parent->get_id());
+        wc_delete_product_transients($parent->get_id());
     }
 
     private static function stock(WC_Product $product, array $row): void
@@ -394,7 +454,8 @@ final class LM_Demo
         ));
         foreach (self::LEGACY_CATALOG_SKUS as $legacy_sku) {
             $legacy_id = wc_get_product_id_by_sku($legacy_sku);
-            if ($legacy_id) {
+            $legacy_product = $legacy_id ? wc_get_product($legacy_id) : false;
+            if ($legacy_product && ! $legacy_product instanceof WC_Product_Variation) {
                 $managed_ids[] = $legacy_id;
             }
         }
@@ -418,17 +479,38 @@ final class LM_Demo
 
     private static function catalog_is_valid(): bool
     {
+        global $wpdb;
+        $duplicate_sku = $wpdb->get_var(
+            "SELECT pm.meta_value
+            FROM {$wpdb->postmeta} pm
+            INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+            WHERE pm.meta_key = '_sku'
+                AND pm.meta_value <> ''
+                AND p.post_type IN ('product', 'product_variation')
+                AND p.post_status = 'publish'
+            GROUP BY pm.meta_value
+            HAVING COUNT(*) > 1
+            LIMIT 1"
+        );
+        if ($duplicate_sku) {
+            return false;
+        }
+
         $expected_categories = array(
             'LM-ALT-CHI' => 'altares',
-            'LM-ALT-CHI-NAT' => 'altares',
+            'LM-ALT-CHI-ARC' => 'altares',
             'LM-ALT-MED' => 'altares',
+            'LM-ALT-MED-ARC' => 'altares',
             'LM-ALT-GRA' => 'altares',
+            'LM-ALT-GRA-ARC' => 'altares',
             'LM-ALT-GIG' => 'altares',
-            'LM-MAS-ALT' => 'altares',
             'LM-NIC-001' => 'altares',
+            'LM-MAS-ALT' => 'altares',
             'LM-CRU-ALA' => 'otras-piezas',
             'LM-ROP-MIN' => 'otras-piezas',
+            'LM-ALC-AHO' => 'otras-piezas',
         );
+        $variable_skus = array_slice(array_keys($expected_categories), 0, 8);
         $managed_ids = get_posts(array(
             'fields' => 'ids',
             'meta_key' => self::CATALOG_MARKER,
@@ -443,54 +525,82 @@ final class LM_Demo
 
         foreach ($expected_categories as $sku => $expected_category) {
             $product = wc_get_product(wc_get_product_id_by_sku($sku));
-            if (! $product instanceof WC_Product_Simple || 'publish' !== $product->get_status()) {
+            $expected_class = in_array($sku, $variable_skus, true) ? WC_Product_Variable::class : WC_Product_Simple::class;
+            if (! $product instanceof $expected_class || 'publish' !== $product->get_status()) {
                 return false;
             }
             $category_slugs = wp_get_post_terms($product->get_id(), 'product_cat', array('fields' => 'slugs'));
             if (array($expected_category) !== $category_slugs) {
                 return false;
             }
-            if (get_posts(array(
-                'fields' => 'ids',
-                'numberposts' => 1,
-                'post_parent' => $product->get_id(),
-                'post_status' => 'any',
-                'post_type' => 'product_variation',
-            ))) {
-                return false;
+            if ($product instanceof WC_Product_Variable) {
+                $children = $product->get_children();
+                if (2 !== count($children)) {
+                    return false;
+                }
+                $expected_variation_skus = array($sku . '-NAT', $sku . '-PIN');
+                $actual_variation_skus = array();
+                foreach ($children as $child_id) {
+                    $variation = wc_get_product($child_id);
+                    if (! $variation instanceof WC_Product_Variation || 'publish' !== $variation->get_status()) {
+                        return false;
+                    }
+                    $actual_variation_skus[] = $variation->get_sku();
+                    if (! $variation->get_image_id()) {
+                        return false;
+                    }
+                }
+                sort($expected_variation_skus);
+                sort($actual_variation_skus);
+                if ($expected_variation_skus !== $actual_variation_skus) {
+                    return false;
+                }
             }
         }
-        return true;
+
+        $published_old_product = get_page_by_path('altar-chico-natural', OBJECT, 'product');
+        return ! ($published_old_product instanceof WP_Post && 'publish' === $published_old_product->post_status);
     }
 
-    private static function images(WC_Product $product, array $row): void
+    private static function images(WC_Product $product, array $row, string $finish = ''): void
     {
-        if ('logo.jpeg' === trim((string) $row['image_glob'])) {
-            $product->set_image_id(0);
-            $product->set_gallery_image_ids(array());
-            $product->save();
-            return;
-        }
         $root = defined('LM_CLIENT_ASSETS_DIR')
             ? (string) LM_CLIENT_ASSETS_DIR
             : (string) getenv('LM_CLIENT_ASSETS_DIR');
-        $paths = glob(trailingslashit($root) . ltrim((string) $row['image_glob'], '/')) ?: array();
-        natcasesort($paths);
+        $field = '' === $finish
+            ? 'images'
+            : ('Natural' === $finish ? 'natural_images' : 'painted_images');
+        $relative_paths = array_values(array_filter(array_map('trim', explode('|', (string) ($row[$field] ?? '')))));
         $ids = array();
-        foreach (array_slice(array_values($paths), 0, 6) as $path) {
-            $id = self::media_from_file($path, $product->get_id());
+        foreach ($relative_paths as $relative_path) {
+            $path = trailingslashit($root) . ltrim($relative_path, '/');
+            if (! is_readable($path)) {
+                WP_CLI::warning('Imagen no encontrada: ' . $relative_path);
+                continue;
+            }
+            $id = self::media_from_file($path, $product->get_id(), self::image_alt($row, $finish, $relative_path));
             if ($id) {
                 $ids[] = $id;
             }
         }
         if ($ids) {
-            $product->set_image_id(array_shift($ids));
+            $image_id = array_shift($ids);
+            $product->set_image_id($image_id);
+            // A one-image variation repeats its featured ID in the official gallery
+            // field. Core de-duplicates it when rendering, while the non-empty field
+            // explicitly prevents fallback to the parent's different finish.
+            if ($product instanceof WC_Product_Variation && ! $ids) {
+                $ids = array($image_id);
+            }
             $product->set_gallery_image_ids($ids);
-            $product->save();
+        } else {
+            $product->set_image_id(0);
+            $product->set_gallery_image_ids(array());
         }
+        $product->save();
     }
 
-    private static function media_from_file(string $path, int $post_id): int
+    private static function media_from_file(string $path, int $post_id, string $alt = ''): int
     {
         global $wpdb;
         $existing = $wpdb->get_var($wpdb->prepare(
@@ -498,6 +608,9 @@ final class LM_Demo
             $path
         ));
         if ($existing) {
+            if ('' !== $alt) {
+                update_post_meta((int) $existing, '_wp_attachment_image_alt', $alt);
+            }
             return (int) $existing;
         }
         require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -515,7 +628,26 @@ final class LM_Demo
             return 0;
         }
         update_post_meta($id, '_lm_source_asset', $path);
+        if ('' !== $alt) {
+            update_post_meta($id, '_wp_attachment_image_alt', $alt);
+        }
         return (int) $id;
+    }
+
+    private static function image_alt(array $row, string $finish, string $relative_path): string
+    {
+        $name = (string) $row['name'];
+        if (str_contains($relative_path, 'foto-proximamente')) {
+            return '' === $finish
+                ? $name . ': foto próximamente'
+                : sprintf('%s, acabado %s: foto próximamente', $name, strtolower($finish));
+        }
+        $view = pathinfo($relative_path, PATHINFO_FILENAME);
+        $view = preg_replace('/^\d+-/', '', $view);
+        $view = str_replace('-', ' ', (string) $view);
+        return '' === $finish
+            ? sprintf('%s, vista %s', $name, $view)
+            : sprintf('%s, acabado %s, vista %s', $name, strtolower($finish), $view);
     }
 
     private static function description(array $row): string
