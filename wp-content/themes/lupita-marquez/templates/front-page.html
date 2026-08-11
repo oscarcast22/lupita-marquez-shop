@@ -1,93 +1,48 @@
 <!-- wp:template-part {"slug":"header","tagName":"header"} /-->
 
-<!-- wp:group {"tagName":"main","className":"lm-main","layout":{"type":"default"}} -->
-<main class="wp-block-group lm-main">
-	<!-- wp:group {"className":"lm-hero","layout":{"type":"default"}} -->
-	<div class="wp-block-group lm-hero">
-		<div class="lm-shell lm-hero__grid">
+<!-- wp:group {"tagName":"main","className":"lm-main lm-home","layout":{"type":"default"}} -->
+<main class="wp-block-group lm-main lm-home">
+	<!-- wp:group {"className":"lm-hero lm-section lm-section--flush","layout":{"type":"default"}} -->
+	<div class="wp-block-group lm-hero lm-section lm-section--flush">
+		<picture class="lm-hero__picture">
+			<source media="(max-width: 782px)" srcset="/wp-content/themes/lupita-marquez/assets/images/hero-mobile.jpg">
+			<img src="/wp-content/themes/lupita-marquez/assets/images/hero-desktop.jpg" alt="Altar artesanal de madera rodeado de flores de cempasúchil y velas" width="1672" height="941" fetchpriority="high" decoding="async">
+		</picture>
+		<div class="lm-shell lm-hero__inner">
 			<div class="lm-hero__copy">
-				<p class="lm-eyebrow">Hecho a mano en México</p>
-				<h1>Objetos que guardan lo que importa.</h1>
-				<p class="lm-hero__lede">Altares y piezas especiales en madera creados con calma, color y atención a cada historia.</p>
+				<p class="lm-eyebrow">Colecciones únicas</p>
+				<h1>Un hogar con color, memoria y tradición.</h1>
+				<p class="lm-hero__lede">Piezas artesanales que llenan de color, tradición y armonía cada espacio.</p>
 				<!-- wp:buttons -->
-				<div class="wp-block-buttons">
-					<!-- wp:button -->
-					<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="/tienda/">Explorar la colección</a></div>
-					<!-- /wp:button -->
-					<!-- wp:button {"className":"is-style-outline"} -->
-					<div class="wp-block-button is-style-outline"><a class="wp-block-button__link wp-element-button" href="/nosotros/">Conocer el taller</a></div>
-					<!-- /wp:button -->
-				</div>
+				<div class="wp-block-buttons"><!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="/tienda/">Descubre la colección</a></div><!-- /wp:button --></div>
 				<!-- /wp:buttons -->
 			</div>
-			<figure class="lm-hero__media">
-				<img src="/wp-content/uploads/lm-demo/hero.jpg" alt="Altar artesanal de madera elaborado por Lupita Márquez" width="908" height="1280" fetchpriority="high">
-				<figcaption class="lm-hero__note">Madera · color · memoria</figcaption>
-			</figure>
 		</div>
 	</div>
 	<!-- /wp:group -->
 
-	<!-- wp:group {"className":"lm-section","layout":{"type":"default"}} -->
-	<div class="wp-block-group lm-section">
-		<div class="lm-shell">
-			<div class="lm-section-heading">
-				<div>
-					<p class="lm-eyebrow">Encuentra tu pieza</p>
-					<h2>Una colección para cada forma de recordar.</h2>
-				</div>
-				<p>Diseñamos objetos que habitan la casa con naturalidad y conservan cerca las historias personales.</p>
-			</div>
-			<div class="lm-category-index">
-				<article class="lm-category-card"><span class="lm-eyebrow">01</span><h3>Altares</h3><p>Altares, nichos y piezas para mascotas creados para honrar los vínculos y conservar los recuerdos.</p><a href="/categoria-producto/altares/"><strong>Ver altares</strong></a></article>
-				<article class="lm-category-card"><span class="lm-eyebrow">02</span><h3>Otras piezas</h3><p>Objetos especiales en madera para acompañar celebraciones y momentos que merecen permanecer.</p><a href="/categoria-producto/otras-piezas/"><strong>Ver otras piezas</strong></a></article>
-			</div>
-		</div>
-	</div>
-	<!-- /wp:group -->
-
-	<!-- wp:group {"className":"lm-section lm-collection-band","layout":{"type":"default"}} -->
-	<div class="wp-block-group lm-section lm-collection-band">
-		<div class="lm-shell">
-			<div class="lm-section-heading">
-				<div>
-					<p class="lm-eyebrow">Selección del taller</p>
-					<h2>Piezas con historia propia.</h2>
-				</div>
-				<p>Series pequeñas, materiales honestos y acabados que celebran las huellas del proceso.</p>
-			</div>
-			<!-- wp:woocommerce/product-collection {"queryId":0,"query":{"perPage":8,"pages":0,"offset":0,"postType":"product","order":"asc","orderBy":"title","search":"","exclude":[],"inherit":false,"taxQuery":{},"isProductCollectionBlock":true},"displayLayout":{"type":"flex","columns":4,"shrinkColumns":true},"collection":"woocommerce/product-collection/new-arrivals","hideControls":["inherit","filterable"]} -->
+	<!-- wp:group {"className":"lm-featured-section lm-section","layout":{"type":"default"}} -->
+	<div class="wp-block-group lm-featured-section lm-section"><div class="lm-shell">
+		<header class="lm-featured-heading"><h2>Colección destacada</h2><svg aria-hidden="true" viewBox="0 0 160 24"><path d="M2 12h52M106 12h52"></path><path d="M80 4c4 3 4 7 0 8-4-1-4-5 0-8Zm0 16c-4-3-4-7 0-8 4 1 4 5 0 8Zm-8-8c3-4 7-4 8 0-1 4-5 4-8 0Zm16 0c-3 4-7 4-8 0 1-4 5-4 8 0Z"></path><circle cx="80" cy="12" r="2"></circle></svg></header>
+		<div class="lm-featured-collection">
+			<!-- wp:woocommerce/product-collection {"queryId":0,"query":{"perPage":6,"pages":0,"offset":0,"postType":"product","order":"asc","orderBy":"menu_order","search":"","exclude":[],"inherit":false,"taxQuery":{},"isProductCollectionBlock":true},"displayLayout":{"type":"flex","columns":3,"shrinkColumns":true},"collection":"woocommerce/product-collection/featured","hideControls":["inherit","filterable"]} -->
 			<div class="wp-block-woocommerce-product-collection">
 				<!-- wp:woocommerce/product-template -->
 				<!-- wp:woocommerce/product-image {"showSaleBadge":false,"imageSizing":"thumbnail"} /-->
 				<!-- wp:post-title {"textAlign":"left","level":3,"isLink":true,"fontSize":"large","__woocommerceNamespace":"woocommerce/product-collection/product-title"} /-->
-				<!-- wp:woocommerce/product-price {"textAlign":"left","fontSize":"medium"} /-->
-				<!-- wp:woocommerce/product-button {"textAlign":"left"} /-->
+				<!-- wp:woocommerce/product-price {"textAlign":"left","fontSize":"small"} /-->
+				<!-- wp:woocommerce/product-button {"textAlign":"center"} /-->
 				<!-- /wp:woocommerce/product-template -->
 				<!-- wp:woocommerce/product-collection-no-results -->
-				<p>La colección se está preparando.</p>
+				<p class="lm-state">La selección destacada se está preparando.</p>
 				<!-- /wp:woocommerce/product-collection-no-results -->
 			</div>
 			<!-- /wp:woocommerce/product-collection -->
 		</div>
-	</div>
-	<!-- /wp:group -->
-
-	<!-- wp:group {"className":"lm-section lm-story-band","layout":{"type":"default"}} -->
-	<div class="wp-block-group lm-section lm-story-band">
-		<div class="lm-shell lm-workshop">
-			<div>
-				<p class="lm-eyebrow">Desde el taller</p>
-				<p class="lm-workshop__statement">Dar forma a lo que merece permanecer.</p>
-			</div>
-			<div class="lm-benefits">
-				<article class="lm-benefit"><div><h3>Hecho a mano</h3><p>Cada veta y cada matiz hacen que ninguna pieza sea exactamente igual.</p></div></article>
-				<article class="lm-benefit"><div><h3>Pensado para acompañarte</h3><p>Diseñamos piezas personales con una estética clara y duradera.</p></div></article>
-				<article class="lm-benefit"><div><h3>Creado en México</h3><p>Diseñamos y fabricamos localmente, cuidando el proceso de principio a fin.</p></div></article>
-				<p><a href="/nosotros/"><strong>Conoce nuestra historia →</strong></a></p>
-			</div>
-		</div>
-	</div>
+		<!-- wp:buttons {"className":"lm-featured-cta","layout":{"type":"flex","justifyContent":"center"}} -->
+		<div class="wp-block-buttons lm-featured-cta"><!-- wp:button {"className":"is-style-outline"} --><div class="wp-block-button is-style-outline"><a class="wp-block-button__link wp-element-button" href="/tienda/">Ver toda la colección</a></div><!-- /wp:button --></div>
+		<!-- /wp:buttons -->
+	</div></div>
 	<!-- /wp:group -->
 </main>
 <!-- /wp:group -->

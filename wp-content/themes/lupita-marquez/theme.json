@@ -11,14 +11,15 @@
       "defaultGradients": false,
       "defaultPalette": false,
       "palette": [
-        { "slug": "ivory", "color": "#fbf7f1", "name": "Marfil" },
+        { "slug": "ivory", "color": "#fbf8f2", "name": "Marfil" },
         { "slug": "white", "color": "#ffffff", "name": "Blanco" },
-        { "slug": "charcoal", "color": "#2d2825", "name": "Carbón" },
-        { "slug": "wood", "color": "#9b623a", "name": "Madera" },
-        { "slug": "sand", "color": "#e7d9cc", "name": "Arena" },
-        { "slug": "mist", "color": "#f3ebe3", "name": "Niebla" },
-        { "slug": "fuchsia", "color": "#c9006f", "name": "Fucsia" },
-        { "slug": "muted", "color": "#6f655f", "name": "Texto secundario" },
+        { "slug": "charcoal", "color": "#292522", "name": "Carbón" },
+        { "slug": "wood", "color": "#a47d36", "name": "Oro artesanal" },
+        { "slug": "olive", "color": "#514a31", "name": "Olivo profundo" },
+        { "slug": "sand", "color": "#e5d7c6", "name": "Arena" },
+        { "slug": "mist", "color": "#f5ede2", "name": "Niebla" },
+        { "slug": "fuchsia", "color": "#bd155d", "name": "Fucsia" },
+        { "slug": "muted", "color": "#6b625c", "name": "Texto secundario" },
         { "slug": "notice-background", "color": "#fff0b8", "name": "Aviso · fondo" },
         { "slug": "notice-border", "color": "#c9a93d", "name": "Aviso · borde" },
         { "slug": "notice-text", "color": "#493c0b", "name": "Aviso · texto" },
@@ -52,7 +53,8 @@
     },
     "typography": {
       "customFontSize": false,
-      "fluid": true,
+      "defaultFontSizes": false,
+      "fluid": { "minViewportWidth": "320px", "maxViewportWidth": "1280px" },
       "fontFamilies": [
         {
           "fontFamily": "Manrope, ui-sans-serif, system-ui, sans-serif",
@@ -68,10 +70,10 @@
         }
       ],
       "fontSizes": [
-        { "slug": "small", "size": "clamp(0.78rem, 0.75rem + 0.1vw, 0.84rem)", "name": "Pequeño" },
-        { "slug": "medium", "size": "clamp(0.96rem, 0.92rem + 0.15vw, 1.04rem)", "name": "Mediano" },
-        { "slug": "large", "size": "clamp(1.18rem, 1.05rem + 0.55vw, 1.55rem)", "name": "Grande" },
-        { "slug": "x-large", "size": "clamp(2.4rem, 1.55rem + 4vw, 5.75rem)", "name": "Título" }
+        { "slug": "small", "size": "0.84375rem", "fluid": { "min": "0.78125rem", "max": "0.84375rem" }, "name": "Pequeño" },
+        { "slug": "medium", "size": "1rem", "fluid": { "min": "0.9375rem", "max": "1rem" }, "name": "Mediano" },
+        { "slug": "large", "size": "1.125rem", "fluid": { "min": "1rem", "max": "1.125rem" }, "name": "Grande" },
+        { "slug": "x-large", "size": "2.75rem", "fluid": { "min": "2rem", "max": "2.75rem" }, "name": "Título" }
       ],
       "lineHeight": true
     },
@@ -86,16 +88,15 @@
     "typography": { "fontFamily": "var:preset|font-family|sans", "fontSize": "var:preset|font-size|medium", "lineHeight": "1.65" },
     "elements": {
       "button": {
-        "border": { "radius": "999px" },
-        "color": { "background": "var:preset|color|charcoal", "text": "var:preset|color|white" },
+        "color": { "background": "var:preset|color|fuchsia", "text": "var:preset|color|white" },
         "spacing": { "padding": { "top": "0.72rem", "right": "1.4rem", "bottom": "0.72rem", "left": "1.4rem" } },
-        "typography": { "fontSize": "0.92rem", "fontWeight": "700" }
+        "typography": { "fontSize": "0.84rem", "fontWeight": "700" }
       },
       "heading": { "typography": { "fontFamily": "var:preset|font-family|serif", "fontWeight": "560", "letterSpacing": "-0.025em", "lineHeight": "1.08" } },
       "link": { "color": { "text": "var:preset|color|charcoal" }, "typography": { "textDecoration": "none" } }
     },
     "blocks": {
-      "core/navigation": { "typography": { "fontSize": "0.9rem", "fontWeight": "650" } },
+      "core/navigation": { "typography": { "fontSize": "0.84rem", "fontWeight": "650" } },
       "core/site-title": { "typography": { "fontFamily": "var:preset|font-family|serif", "fontSize": "clamp(1.35rem, 2vw, 1.8rem)", "fontWeight": "600" } },
       "core/image": { "border": { "radius": "16px" } },
       "woocommerce/product-price": { "color": { "text": "var:preset|color|fuchsia" }, "typography": { "fontWeight": "750" } }

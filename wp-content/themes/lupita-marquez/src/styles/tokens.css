@@ -1,11 +1,22 @@
 :root {
+	--lm-radius-xs: 4px;
 	--lm-radius-sm: 10px;
 	--lm-radius: 16px;
 	--lm-radius-lg: 24px;
 	--lm-border: 1px solid var(--wp--preset--color--sand);
+	--lm-shadow-card: 0 8px 28px color-mix(in srgb, var(--wp--preset--color--charcoal) 8%, transparent);
 	--lm-shadow-soft: 0 24px 64px color-mix(in srgb, var(--wp--preset--color--charcoal) 12%, transparent);
 	--lm-shell: 1280px;
 	--lm-reading: 720px;
 	--lm-gutter: clamp(1rem, 3vw, 2.5rem);
-	--lm-header-height: 76px;
+	--lm-header-height: 74px;
+	--lm-control-height: 46px;
+	--lm-icon-button: 44px;
+	--lm-icon-glyph: 21px;
+	--lm-icon-glyph-small: 12px;
+	--lm-social-glyph: 17px;
+	--lm-social-mark: 34px;
+	--lm-trust-icon: 36px;
+	--lm-mobile-gallery-gutter-offset: 2.5rem;
+	--lm-mobile-gallery-thumbnails: 7.25rem;
 }

@@ -9,10 +9,6 @@
 	box-shadow: 0 0 0 4px color-mix(in srgb, var(--wp--preset--color--fuchsia) 14%, transparent);
 }
 
-.lm-interactions-ready .lm-hero__media:hover img {
-	box-shadow: 0 28px 72px color-mix(in srgb, var(--wp--preset--color--charcoal) 18%, transparent);
-}
-
 .lm-interactions-ready.lm-drawer-is-open body {
 	overflow: hidden;
 }
