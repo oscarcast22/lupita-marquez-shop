@@ -70,6 +70,7 @@ services:
       LM_ENVIA_ENV: ${LM_ENVIA_ENV:-sandbox}
       LM_ENVIA_TOKEN: ${LM_ENVIA_TOKEN:-}
       LM_CLIENT_ASSETS_DIR: /client-assets
+      WP_ENVIRONMENT_TYPE: local
     volumes:
       - wordpress_data:/var/www/html
       - ./wp-content/themes/lupita-marquez:/var/www/html/wp-content/themes/lupita-marquez

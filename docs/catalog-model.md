@@ -1,10 +1,12 @@
-# Modelo de catálogo propuesto
+# Modelo de catálogo
 
-El inventario se organiza por **modelo/tamaño** como producto y por **acabado** como variación. Esto evita mezclar piezas con pesos, embalajes y tiempos de fabricación distintos.
+El inventario refleja las nueve carpetas de producto entregadas por la clienta. Cada carpeta corresponde a un **producto simple** y sus fotografías forman una sola galería; no se generan variantes de acabado.
 
-- Categorías: Altares; Memoriales y mascotas; Regalos personalizados.
-- Acabados: Natural y Pintado cuando existen ambos.
+- Categorías: Altares; Otras piezas.
+- Altares reúne los altares por tamaño, el altar para mascotas y el nicho personalizado.
+- Otras piezas reúne Cruz con alas y Ropero mini de revelación.
+- `finish` es un dato informativo opcional, nunca un selector. Sólo Altar chico natural declara el acabado Natural porque así se identifica en el material fuente.
 - Estado de inventario: `stock` descuenta unidades; `made_to_order` permanece vendible y muestra días de elaboración.
 - Envío separado: piezas medianas, grandes o frágiles generan bultos independientes para cotización.
 
-`data/catalog.csv` contiene 12 familias normalizadas desde el material recibido. Precios, medidas, pesos, existencias y asignación de imágenes son valores demo visibles como tales hasta que la clienta los valide.
+`data/catalog.csv` es la fuente editable y exacta de esos nueve productos. Precios, medidas, pesos y existencias continúan como datos demo visibles hasta que la clienta los valide.

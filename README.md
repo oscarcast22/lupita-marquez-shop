@@ -28,7 +28,7 @@ Los precios, dimensiones, existencias y datos fiscales son demostrativos. El arc
 - Plugin `lm-commerce`: importación de catálogo, tarifa Estafeta, guías y estados de pedido.
 - Las credenciales nunca se versionan; se configuran en `.env`.
 
-La tienda incluye checkout de una sola página, carrito/checkout de bloques, inventario mixto (existencias y fabricación bajo pedido), variaciones Natural/Pintado, cupón demo, envío gratuito condicional y tarifa Estafeta con respaldo. Al cambiar un pedido a **Listo para enviar**, el plugin solicita una guía a Envia.com de forma asíncrona e idempotente.
+La tienda incluye checkout de una sola página, carrito/checkout de bloques, nueve productos simples, inventario mixto (existencias y fabricación bajo pedido), cupón demo, envío gratuito condicional y tarifa Estafeta con respaldo. Al cambiar un pedido a **Listo para enviar**, el plugin solicita una guía a Envia.com de forma asíncrona e idempotente.
 
 ## Comandos
 
@@ -48,7 +48,7 @@ npm run build           # build de producción
 npm run audit:frontend  # capturas y métricas en reports/frontend
 ```
 
-El auditor acepta `LM_BASE_URL`, `LM_AUDIT_OUTPUT` y `CHROME_PATH`. Recorre la página antes de capturarla y reporta por viewport (1440, 1024, 768 y 390 px) bordes de bandas anchas, overflow, CLS, consola, imágenes rotas y objetivos táctiles. Carrito, checkout, inventario, variaciones y pagos permanecen en los bloques y APIs oficiales de WooCommerce; el tema no reescribe su DOM.
+El auditor acepta `LM_BASE_URL`, `LM_AUDIT_OUTPUT` y `CHROME_PATH`. Recorre la página antes de capturarla y reporta por viewport (1440, 1024, 768 y 390 px) bordes de bandas anchas, overflow, CLS, consola, imágenes rotas y objetivos táctiles. Carrito, checkout, inventario y pagos permanecen en los bloques y APIs oficiales de WooCommerce; el tema no reescribe su DOM.
 
 `make reset` elimina los volúmenes locales y requiere volver a ejecutar `make bootstrap`.
 

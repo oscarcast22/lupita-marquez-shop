@@ -13,6 +13,27 @@ if (! defined('ABSPATH')) {
 
 final class LM_Demo
 {
+    private const CATALOG_MARKER = '_lm_demo_catalog_managed';
+
+    private const LEGACY_CATALOG_SKUS = array(
+        'LM-ALT-CHI',
+        'LM-ALT-CHI-ARC',
+        'LM-ALT-MED',
+        'LM-ALT-MED-ARC',
+        'LM-ALT-GRA',
+        'LM-ALT-GRA-ARC',
+        'LM-ALT-GIG',
+        'LM-MAS-ALT',
+        'LM-CRU-ALA',
+        'LM-NIC-001',
+        'LM-ROP-MIN',
+        'LM-ALC-AHO',
+    );
+
+    private const LEGACY_SKU_RENAMES = array(
+        'LM-ALT-CHI-NAT' => 'LM-ALT-CHI-ARC',
+    );
+
     public static function init(): void
     {
         if (defined('WP_CLI') && WP_CLI) {
@@ -39,6 +60,10 @@ final class LM_Demo
      */
     public static function seed(array $args, array $assoc_args): void
     {
+        if ('local' !== wp_get_environment_type()) {
+            WP_CLI::error('La sincronización del catálogo demo sólo está disponible en el entorno local.');
+        }
+
         $catalog = (string) ($assoc_args['catalog'] ?? '');
         if ('' === $catalog || ! is_readable($catalog)) {
             WP_CLI::error('No se puede leer el catálogo: ' . $catalog);
@@ -63,7 +88,7 @@ final class LM_Demo
             'Tema Lupita Márquez activo' => 'lupita-marquez' === get_stylesheet(),
             'Página de tienda' => (int) get_option('woocommerce_shop_page_id') > 0,
             'Checkout de bloques' => has_block('woocommerce/checkout', (int) get_option('woocommerce_checkout_page_id')),
-            'Catálogo cargado' => (int) wp_count_posts('product')->publish >= 12,
+            'Catálogo simple de 9 productos' => self::catalog_is_valid(),
             'Zona México configurada' => self::shipping_exists(),
             'HPOS habilitable' => class_exists(Automattic\WooCommerce\Utilities\OrderUtil::class),
         );
@@ -253,6 +278,7 @@ final class LM_Demo
         }
         $headers = fgetcsv($handle);
         $count = 0;
+        $skus = array();
         while (($values = fgetcsv($handle)) !== false) {
             if (array(null) === $values || array('') === $values) {
                 continue;
@@ -261,27 +287,31 @@ final class LM_Demo
                 WP_CLI::warning('Fila omitida por número incorrecto de columnas.');
                 continue;
             }
-            self::upsert_product(array_combine($headers, $values));
+            $row = array_combine($headers, $values);
+            self::upsert_product($row);
+            $skus[] = (string) $row['sku'];
             ++$count;
         }
         fclose($handle);
+        self::prune_catalog($skus);
         return $count;
     }
 
     private static function upsert_product(array $row): void
     {
-        $finishes = array_values(array_filter(array_map('trim', explode('|', (string) $row['finishes']))));
-        $variable = count($finishes) > 1;
-        $existing_id = wc_get_product_id_by_sku((string) $row['sku']);
-        $existing = $existing_id ? wc_get_product($existing_id) : false;
-        if ($variable) {
-            $product = $existing instanceof WC_Product_Variable ? $existing : new WC_Product_Variable();
-        } else {
-            $product = $existing instanceof WC_Product_Simple ? $existing : new WC_Product_Simple();
+        $sku = (string) $row['sku'];
+        $existing_id = wc_get_product_id_by_sku($sku);
+        if (! $existing_id && isset(self::LEGACY_SKU_RENAMES[$sku])) {
+            $existing_id = wc_get_product_id_by_sku(self::LEGACY_SKU_RENAMES[$sku]);
         }
+        $existing = $existing_id ? wc_get_product($existing_id) : false;
+        if ($existing_id) {
+            self::delete_variations((int) $existing_id);
+        }
+        $product = $existing_id ? new WC_Product_Simple((int) $existing_id) : new WC_Product_Simple();
         $product->set_name((string) $row['name']);
         $product->set_slug((string) $row['slug']);
-        $product->set_sku((string) $row['sku']);
+        $product->set_sku($sku);
         $product->set_status((string) $row['status']);
         $product->set_catalog_visibility('visible');
         $product->set_description(self::description($row));
@@ -302,27 +332,26 @@ final class LM_Demo
         $product->update_meta_data('_lm_lead_days', absint($row['lead_days']));
         $product->update_meta_data('_lm_stock_mode', sanitize_key((string) $row['stock_mode']));
         $product->update_meta_data('_lm_ship_separately', (string) $row['ship_separately']);
+        $product->update_meta_data(self::CATALOG_MARKER, 'yes');
         // Retire known local demo metadata without touching historic order data or uploads.
         $product->delete_meta_data('_lm_personalization');
         $product->delete_meta_data('_lm_personalization_surcharge');
-        if ($variable) {
+        $finish = trim((string) ($row['finish'] ?? ''));
+        if ('' !== $finish) {
             $attribute = new WC_Product_Attribute();
             $attribute->set_id(0);
             $attribute->set_name('Acabado');
-            $attribute->set_options($finishes);
+            $attribute->set_options(array($finish));
             $attribute->set_position(0);
             $attribute->set_visible(true);
-            $attribute->set_variation(true);
+            $attribute->set_variation(false);
             $product->set_attributes(array($attribute));
         } else {
-            $product->set_regular_price((string) $row['price']);
+            $product->set_attributes(array());
         }
-        $id = $product->save();
+        $product->set_regular_price((string) $row['price']);
+        $product->save();
         self::images($product, $row);
-        if ($variable) {
-            self::variations($product, $finishes, $row);
-            WC_Product_Variable::sync($id);
-        }
     }
 
     private static function stock(WC_Product $product, array $row): void
@@ -339,32 +368,99 @@ final class LM_Demo
         }
     }
 
-    private static function variations(WC_Product_Variable $product, array $finishes, array $row): void
+    private static function delete_variations(int $product_id): void
     {
-        foreach ($finishes as $finish) {
-            $slug = sanitize_title($finish);
-            $sku = (string) $row['sku'] . '-' . strtoupper(substr($slug, 0, 3));
-            $variation_id = wc_get_product_id_by_sku($sku);
-            $variation = $variation_id ? wc_get_product($variation_id) : false;
-            $variation = $variation instanceof WC_Product_Variation ? $variation : new WC_Product_Variation();
-            $variation->set_parent_id($product->get_id());
-            $variation->set_sku($sku);
-            $variation->set_attributes(array('acabado' => $finish));
-            $multiplier = 'pintado' === $slug ? (float) $row['painted_multiplier'] : 1.0;
-            $variation->set_regular_price((string) round((float) $row['price'] * $multiplier, 2));
-            $variation->set_status('publish');
-            $variation->set_weight((string) $row['weight_kg']);
-            $variation->set_length((string) $row['length_cm']);
-            $variation->set_width((string) $row['width_cm']);
-            $variation->set_height((string) $row['height_cm']);
-            self::stock($variation, $row);
-            $variation->delete_meta_data('_lm_personalization');
-            $variation->delete_meta_data('_lm_personalization_surcharge');
-            foreach (array('_lm_ship_separately', '_lm_lead_days', '_lm_stock_mode') as $key) {
-                $variation->update_meta_data($key, $product->get_meta($key));
-            }
-            $variation->save();
+        $variation_ids = get_posts(array(
+            'fields' => 'ids',
+            'numberposts' => -1,
+            'post_parent' => $product_id,
+            'post_status' => 'any',
+            'post_type' => 'product_variation',
+        ));
+        foreach ($variation_ids as $variation_id) {
+            wp_delete_post((int) $variation_id, true);
         }
+    }
+
+    private static function prune_catalog(array $current_skus): void
+    {
+        $managed_ids = get_posts(array(
+            'fields' => 'ids',
+            'meta_key' => self::CATALOG_MARKER,
+            'meta_value' => 'yes',
+            'numberposts' => -1,
+            'post_status' => array('publish', 'draft', 'pending', 'private'),
+            'post_type' => 'product',
+        ));
+        foreach (self::LEGACY_CATALOG_SKUS as $legacy_sku) {
+            $legacy_id = wc_get_product_id_by_sku($legacy_sku);
+            if ($legacy_id) {
+                $managed_ids[] = $legacy_id;
+            }
+        }
+
+        foreach (array_unique(array_map('intval', $managed_ids)) as $product_id) {
+            $product = wc_get_product($product_id);
+            if (! $product || in_array($product->get_sku(), $current_skus, true)) {
+                continue;
+            }
+            self::delete_variations($product_id);
+            wp_trash_post($product_id);
+        }
+
+        foreach (array('memoriales-y-mascotas', 'regalos-personalizados') as $slug) {
+            $term = get_term_by('slug', $slug, 'product_cat');
+            if ($term instanceof WP_Term && 0 === (int) $term->count) {
+                wp_delete_term($term->term_id, 'product_cat');
+            }
+        }
+    }
+
+    private static function catalog_is_valid(): bool
+    {
+        $expected_categories = array(
+            'LM-ALT-CHI' => 'altares',
+            'LM-ALT-CHI-NAT' => 'altares',
+            'LM-ALT-MED' => 'altares',
+            'LM-ALT-GRA' => 'altares',
+            'LM-ALT-GIG' => 'altares',
+            'LM-MAS-ALT' => 'altares',
+            'LM-NIC-001' => 'altares',
+            'LM-CRU-ALA' => 'otras-piezas',
+            'LM-ROP-MIN' => 'otras-piezas',
+        );
+        $managed_ids = get_posts(array(
+            'fields' => 'ids',
+            'meta_key' => self::CATALOG_MARKER,
+            'meta_value' => 'yes',
+            'numberposts' => -1,
+            'post_status' => 'publish',
+            'post_type' => 'product',
+        ));
+        if (count($expected_categories) !== count($managed_ids)) {
+            return false;
+        }
+
+        foreach ($expected_categories as $sku => $expected_category) {
+            $product = wc_get_product(wc_get_product_id_by_sku($sku));
+            if (! $product instanceof WC_Product_Simple || 'publish' !== $product->get_status()) {
+                return false;
+            }
+            $category_slugs = wp_get_post_terms($product->get_id(), 'product_cat', array('fields' => 'slugs'));
+            if (array($expected_category) !== $category_slugs) {
+                return false;
+            }
+            if (get_posts(array(
+                'fields' => 'ids',
+                'numberposts' => 1,
+                'post_parent' => $product->get_id(),
+                'post_status' => 'any',
+                'post_type' => 'product_variation',
+            ))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static function images(WC_Product $product, array $row): void
