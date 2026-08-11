@@ -8,15 +8,15 @@ const outputDirectory = path.resolve(
 	process.env.LM_AUDIT_OUTPUT || 'reports/frontend'
 );
 const chromePath = process.env.CHROME_PATH;
-const widths = [ 1440, 1024, 768, 390 ];
+const widths = [ 1440, 1280, 1024, 768, 390 ];
 const routes = [
 	[ 'inicio', '/' ],
 	[ 'tienda', '/tienda/' ],
 	[ 'categoria-altares', '/categoria-producto/altares/' ],
 	[ 'categoria-otras', '/categoria-producto/otras-piezas/' ],
 	[ 'carrito-vacio', '/carrito/' ],
-	[ 'producto-stock', '/producto/altar-chico/' ],
-	[ 'producto-bajo-pedido', '/producto/nicho-personalizado/' ],
+	[ 'producto-variable', '/producto/altar-chico/', 'audit-variations' ],
+	[ 'producto-bajo-pedido', '/producto/nicho/' ],
 	[ 'carrito-lleno', '/carrito/', 'fill-cart' ],
 	[ 'checkout', '/finalizar-compra/' ],
 	[ 'cuenta', '/mi-cuenta/' ],
@@ -25,7 +25,7 @@ const routes = [
 ];
 const requiredContent = {
 	'carrito-vacio': '.wp-block-woocommerce-empty-cart-block',
-	'producto-stock': '.single_add_to_cart_button',
+	'producto-variable': '.single_add_to_cart_button',
 	'producto-bajo-pedido': '.single_add_to_cart_button',
 	'carrito-lleno': '.wc-block-cart-item__product',
 	checkout: '.wc-block-components-checkout-place-order-button',
@@ -94,6 +94,18 @@ for ( const file of motionSourceFiles ) {
 	const source = await fs.readFile( file, 'utf8' );
 	for ( const [ label, pattern ] of sourceContractPatterns ) {
 		for ( const match of source.matchAll( pattern ) ) {
+			const precedingLines = source
+				.slice( 0, match.index )
+				.split( '\n' )
+				.slice( -3 );
+			if (
+				label === '!important' &&
+				precedingLines.some( ( line ) =>
+					line.includes( 'Documented exception:' )
+				)
+			) {
+				continue;
+			}
 			sourceContractViolations.push( {
 				file: path.relative( process.cwd(), file ),
 				line: source.slice( 0, match.index ).split( '\n' ).length,
@@ -149,6 +161,7 @@ for ( const width of widths ) {
 		const page = await context.newPage();
 		const messages = [];
 		const pageErrors = [];
+		let variationAudit = null;
 
 		page.on( 'console', ( message ) => {
 			if ( message.type() === 'error' || message.type() === 'warning' ) {
@@ -212,6 +225,95 @@ for ( const width of widths ) {
 			waitUntil: 'networkidle',
 			timeout: 45_000,
 		} );
+		if ( setup === 'audit-variations' ) {
+			const finishSelect = page.locator(
+				'select[name="attribute_acabado"]'
+			);
+			await finishSelect.waitFor( { state: 'visible', timeout: 15_000 } );
+			const defaultFinish = await finishSelect.inputValue();
+
+			const selectAndRead = async ( label, expectedPrice ) => {
+				await finishSelect.selectOption( { label } );
+				await page.waitForFunction(
+					( price ) =>
+						Number(
+							document.querySelector(
+								'input[name="variation_id"]'
+							)?.value
+						) > 0 &&
+						document
+							.querySelector( '.woocommerce-variation-price' )
+							?.textContent.includes( price ),
+					expectedPrice,
+					{ timeout: 15_000 }
+				);
+				await page.waitForTimeout( 100 );
+				return page.evaluate( () => ( {
+					variationId: Number(
+						document.querySelector( 'input[name="variation_id"]' )
+							?.value
+					),
+					gallery: [
+						...new Set(
+							[
+								...document.querySelectorAll(
+									'.woocommerce-product-gallery img, .wp-block-woocommerce-product-gallery img, .wp-block-woocommerce-product-image-gallery img, .lm-product-gallery img'
+								),
+							]
+								.map(
+									( image ) => image.currentSrc || image.src
+								)
+								.filter( ( source ) =>
+									source.includes( '/uploads/' )
+								)
+						),
+					],
+					priceText:
+						document
+							.querySelector( '.woocommerce-variation-price' )
+							?.textContent.trim() || '',
+				} ) );
+			};
+
+			const natural = await selectAndRead( 'Natural', '599' );
+			const painted = await selectAndRead( 'Pintado', '719' );
+			await page.locator( '.single_add_to_cart_button' ).click();
+			await page.waitForLoadState( 'networkidle' );
+			const cart = await page.evaluate( async () =>
+				fetch( '/wp-json/wc/store/v1/cart' ).then( ( result ) =>
+					result.json()
+				)
+			);
+			const cartItem = cart.items?.find(
+				( item ) => item.sku === 'LM-ALT-CHI-PIN'
+			);
+			variationAudit = {
+				defaultFinish,
+				natural,
+				painted,
+				cartSku: cartItem?.sku || '',
+				cartPrice: cartItem?.prices?.price || '',
+				cartFinish:
+					cartItem?.variation?.find(
+						( attribute ) => attribute.attribute === 'Acabado'
+					)?.value || '',
+			};
+			variationAudit.passed = Boolean(
+				defaultFinish.toLowerCase() === 'pintado' &&
+					natural.variationId &&
+					painted.variationId &&
+					natural.variationId !== painted.variationId &&
+					natural.gallery.length &&
+					painted.gallery.length &&
+					natural.priceText.includes( '599' ) &&
+					painted.priceText.includes( '719' ) &&
+					JSON.stringify( natural.gallery ) !==
+						JSON.stringify( painted.gallery ) &&
+					variationAudit.cartSku === 'LM-ALT-CHI-PIN' &&
+					variationAudit.cartPrice === '71900' &&
+					variationAudit.cartFinish === 'Pintado'
+			);
+		}
 		if ( name === 'carrito-lleno' || name === 'checkout' ) {
 			await page
 				.locator( '.wc-block-components-skeleton' )
@@ -373,7 +475,7 @@ for ( const width of widths ) {
 			).filter( Boolean );
 			const controls = [
 				...document.querySelectorAll(
-					'a, button, input, select, textarea, [role="button"]'
+					'a, button, input, select, summary, textarea, [role="button"]'
 				),
 			].filter( visible );
 			const hasAccessibleName = ( element ) => {
@@ -445,6 +547,78 @@ for ( const width of widths ) {
 				( level, index ) =>
 					index > 0 && level > headingLevels[ index - 1 ] + 1
 			);
+			const featuredCards = [
+				...document.querySelectorAll(
+					'.lm-featured-collection .wc-block-product'
+				),
+			].filter( visible );
+			const featuredRows = featuredCards.reduce( ( rows, card ) => {
+				const top = Math.round( card.getBoundingClientRect().top );
+				const row = rows.find(
+					( item ) => Math.abs( item.top - top ) <= 2
+				);
+				const button = card.querySelector(
+					'.wp-block-woocommerce-product-button'
+				);
+				if ( row ) {
+					row.bottoms.push(
+						button?.getBoundingClientRect().bottom || 0
+					);
+				} else {
+					rows.push( {
+						top,
+						bottoms: [
+							button?.getBoundingClientRect().bottom || 0,
+						],
+					} );
+				}
+				return rows;
+			}, [] );
+			const featuredButtonSpread = featuredRows.length
+				? Math.max(
+						...featuredRows.map(
+							( row ) =>
+								Math.max( ...row.bottoms ) -
+								Math.min( ...row.bottoms )
+						)
+				  )
+				: 0;
+			const heroImage = document.querySelector( '.lm-hero__picture img' );
+			const heroImageSource =
+				heroImage?.currentSrc || heroImage?.src || '';
+			const rounded = ( value ) =>
+				typeof value === 'number' ? +value.toFixed( 2 ) : null;
+			const fontSize = ( selector ) => {
+				const element = document.querySelector( selector );
+				return element && visible( element )
+					? rounded(
+							Number.parseFloat(
+								window.getComputedStyle( element ).fontSize
+							)
+					  )
+					: null;
+			};
+			const dimensions = ( selector ) => {
+				const element = document.querySelector( selector );
+				if ( ! element || ! visible( element ) ) {
+					return null;
+				}
+				const bounds = element.getBoundingClientRect();
+				return {
+					height: rounded( bounds.height ),
+					width: rounded( bounds.width ),
+				};
+			};
+			const maximumFontSize = ( selector ) => {
+				const sizes = [ ...document.querySelectorAll( selector ) ]
+					.filter( visible )
+					.map( ( element ) =>
+						Number.parseFloat(
+							window.getComputedStyle( element ).fontSize
+						)
+					);
+				return sizes.length ? rounded( Math.max( ...sizes ) ) : null;
+			};
 
 			return {
 				title: document.title,
@@ -474,6 +648,54 @@ for ( const width of widths ) {
 				mainLandmarks: document.querySelectorAll( 'main' ).length,
 				missingH1: ! document.querySelector( 'h1' ),
 				headingLevelJumps,
+				homeLayout: {
+					featuredProductCount: featuredCards.length,
+					featuredButtonSpread: +featuredButtonSpread.toFixed( 2 ),
+					heroAssetCorrect: heroImage
+						? heroImageSource.includes(
+								window.innerWidth <= 782
+									? 'hero-mobile.jpg'
+									: 'hero-desktop.jpg'
+						  )
+						: false,
+				},
+				uiScale: {
+					body: fontSize( 'body' ),
+					navigation: fontSize(
+						'.lm-site-header .wp-block-navigation-item__content'
+					),
+					heroTitle: fontSize( '.lm-hero h1' ),
+					featuredTitle: fontSize( '.lm-featured-heading h2' ),
+					pageTitle: fontSize( '.lm-page-header h1' ),
+					singleProductTitle: fontSize( '.lm-product-summary h1' ),
+					maximumProductTitle: maximumFontSize(
+						'.wc-block-product .wp-block-post-title'
+					),
+					maximumProductPrice: maximumFontSize(
+						'.wc-block-product .wp-block-woocommerce-product-price'
+					),
+					controls: {
+						search: dimensions( '.lm-header-search summary' ),
+						account: dimensions(
+							'.lm-site-header .wc-block-customer-account__link, .lm-site-header .wc-block-customer-account__toggle'
+						),
+						cart: dimensions(
+							'.lm-site-header .wc-block-mini-cart__button'
+						),
+					},
+					glyphs: {
+						search: dimensions( '.lm-header-search summary svg' ),
+						account: dimensions(
+							'.lm-site-header .wc-block-customer-account__account-icon'
+						),
+						cart: dimensions(
+							'.lm-site-header .wc-block-mini-cart__icon'
+						),
+						chevron: dimensions(
+							'.lm-site-header .wp-block-navigation__submenu-icon svg'
+						),
+					},
+				},
 				legacyMotionHooks: document.querySelectorAll(
 					'[data-lm-reveal], [data-lm-stagger], [data-lm-gallery]'
 				).length,
@@ -551,6 +773,7 @@ for ( const width of widths ) {
 			console: messages,
 			pageErrors,
 			requiredContentMissing,
+			variationAudit,
 			...metrics,
 		} );
 		await page.close();
@@ -602,6 +825,32 @@ await fs.writeFile(
 	`${ JSON.stringify( report, null, 2 ) }\n`
 );
 
+const outside = ( value, minimum, maximum ) =>
+	typeof value === 'number' && ( value < minimum || value > maximum );
+const undersized = ( dimensions ) =>
+	dimensions && ( dimensions.width < 43.5 || dimensions.height < 43.5 );
+const oversized = ( dimensions, maximum ) =>
+	dimensions && ( dimensions.width > maximum || dimensions.height > maximum );
+const hasScaleFailure = ( page ) =>
+	outside( page.uiScale.body, 14.9, 16.1 ) ||
+	outside( page.uiScale.maximumProductTitle, 15.9, 18.1 ) ||
+	outside( page.uiScale.maximumProductPrice, 12.4, 13.6 ) ||
+	outside( page.uiScale.heroTitle, 39.9, page.width <= 520 ? 48.1 : 64.1 ) ||
+	outside(
+		page.uiScale.featuredTitle,
+		31.9,
+		page.width <= 520 ? 36.1 : 42.1
+	) ||
+	outside( page.uiScale.pageTitle, 31.9, 44.1 ) ||
+	outside( page.uiScale.singleProductTitle, 35.9, 56.1 ) ||
+	undersized( page.uiScale.controls.search ) ||
+	undersized( page.uiScale.controls.account ) ||
+	undersized( page.uiScale.controls.cart ) ||
+	oversized( page.uiScale.glyphs.search, 22 ) ||
+	oversized( page.uiScale.glyphs.account, 22 ) ||
+	oversized( page.uiScale.glyphs.cart, 22 ) ||
+	oversized( page.uiScale.glyphs.chevron, 13 );
+
 const failures = report.pages.filter(
 	( page ) =>
 		( page.status >= 400 && page.name !== 'error-404' ) ||
@@ -610,6 +859,11 @@ const failures = report.pages.filter(
 		page.pageErrors.length ||
 		page.console.some( ( message ) => message.type === 'error' ) ||
 		page.requiredContentMissing ||
+		( page.name === 'inicio' &&
+			( page.homeLayout.featuredProductCount !== 6 ||
+				page.homeLayout.featuredButtonSpread > 1 ||
+				! page.homeLayout.heroAssetCorrect ) ) ||
+		( page.variationAudit && ! page.variationAudit.passed ) ||
 		page.missingImageAlt.length ||
 		page.unnamedControls.length ||
 		page.criticalSmallTargets.length ||
@@ -617,6 +871,7 @@ const failures = report.pages.filter(
 		page.mainLandmarks !== 1 ||
 		page.missingH1 ||
 		page.headingLevelJumps.length ||
+		hasScaleFailure( page ) ||
 		page.legacyMotionHooks ||
 		! page.themeScriptInitialized ||
 		page.shellEdgeSpread > 1 ||
