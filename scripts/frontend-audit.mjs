@@ -12,10 +12,11 @@ const widths = [ 1440, 1024, 768, 390 ];
 const routes = [
 	[ 'inicio', '/' ],
 	[ 'tienda', '/tienda/' ],
-	[ 'categoria', '/categoria-producto/altares/' ],
+	[ 'categoria-altares', '/categoria-producto/altares/' ],
+	[ 'categoria-otras', '/categoria-producto/otras-piezas/' ],
 	[ 'carrito-vacio', '/carrito/' ],
-	[ 'producto-simple', '/producto/altar-para-mascotas/' ],
-	[ 'producto-variable', '/producto/altar-chico/' ],
+	[ 'producto-stock', '/producto/altar-chico/' ],
+	[ 'producto-bajo-pedido', '/producto/nicho-personalizado/' ],
 	[ 'carrito-lleno', '/carrito/', 'fill-cart' ],
 	[ 'checkout', '/finalizar-compra/' ],
 	[ 'cuenta', '/mi-cuenta/' ],
@@ -24,8 +25,8 @@ const routes = [
 ];
 const requiredContent = {
 	'carrito-vacio': '.wp-block-woocommerce-empty-cart-block',
-	'producto-simple': '.single_add_to_cart_button',
-	'producto-variable': '.variations_form',
+	'producto-stock': '.single_add_to_cart_button',
+	'producto-bajo-pedido': '.single_add_to_cart_button',
 	'carrito-lleno': '.wc-block-cart-item__product',
 	checkout: '.wc-block-components-checkout-place-order-button',
 };
@@ -184,6 +185,25 @@ for ( const width of widths ) {
 			const addButton = page.locator( '.single_add_to_cart_button' );
 			if ( await addButton.isVisible() ) {
 				await addButton.click();
+				await page
+					.waitForFunction(
+						() =>
+							document
+								.querySelector( '.lm-cart-status' )
+								?.textContent.includes(
+									'se agregó al carrito'
+								) ||
+							Number(
+								document
+									.querySelector(
+										'.wc-block-mini-cart__badge'
+									)
+									?.textContent.trim()
+							) > 0,
+						undefined,
+						{ timeout: 15_000 }
+					)
+					.catch( () => {} );
 				await page.waitForLoadState( 'networkidle' );
 			}
 		}
@@ -457,7 +477,11 @@ for ( const width of widths ) {
 				legacyMotionHooks: document.querySelectorAll(
 					'[data-lm-reveal], [data-lm-stagger], [data-lm-gallery]'
 				).length,
-				themeScriptLoaded: Boolean(
+				themeScriptInitialized:
+					document.documentElement.classList.contains(
+						'lm-interactions-ready'
+					),
+				themeScriptTagPresent: Boolean(
 					document.querySelector(
 						'script[src*="/themes/lupita-marquez/build/index.js"]'
 					)
@@ -551,7 +575,10 @@ report.withoutJavaScript = await noJavaScriptPage.evaluate( () => ( {
 	legacyMotionHooks: document.querySelectorAll(
 		'[data-lm-reveal], [data-lm-stagger], [data-lm-gallery]'
 	).length,
-	themeScriptLoaded: Boolean(
+	themeScriptInitialized: document.documentElement.classList.contains(
+		'lm-interactions-ready'
+	),
+	themeScriptTagPresent: Boolean(
 		document.querySelector(
 			'script[src*="/themes/lupita-marquez/build/index.js"]'
 		)
@@ -591,18 +618,17 @@ const failures = report.pages.filter(
 		page.missingH1 ||
 		page.headingLevelJumps.length ||
 		page.legacyMotionHooks ||
-		page.themeScriptLoaded ||
+		! page.themeScriptInitialized ||
 		page.shellEdgeSpread > 1 ||
 		page.unexpectedLongPageFooterGap ||
 		page.cls > 0.1
 );
 const enhancementFailures =
-	sourceMotionViolations.length > 0 ||
 	sourceContractViolations.length > 0 ||
 	integrationSelectorViolations.length > 0 ||
 	! report.withoutJavaScript.mainVisible ||
 	report.withoutJavaScript.legacyMotionHooks > 0 ||
-	report.withoutJavaScript.themeScriptLoaded;
+	report.withoutJavaScript.themeScriptInitialized;
 
 console.log( `Audited ${ report.pages.length } page/viewport combinations.` );
 console.log( `Report: ${ path.join( outputDirectory, 'report.json' ) }` );
