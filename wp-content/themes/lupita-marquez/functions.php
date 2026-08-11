@@ -68,6 +68,17 @@ add_action('wp_enqueue_scripts', static function (): void {
         array(),
         $asset['version']
     );
+
+    $script_file = get_theme_file_path('build/index.js');
+    if (file_exists($script_file)) {
+        wp_enqueue_script(
+            'lupita-marquez-interactions',
+            get_theme_file_uri('build/index.js'),
+            $asset['dependencies'],
+            $asset['version'],
+            true
+        );
+    }
 });
 
 add_filter('woocommerce_enqueue_styles', static function (array $styles): array {

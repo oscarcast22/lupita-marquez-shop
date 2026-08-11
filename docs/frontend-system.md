@@ -17,9 +17,9 @@ El shell mide hasta 1280 px con gutter fluido de 16 a 40 px. La columna de lectu
 
 ## Interacción
 
-El tema no carga JavaScript propio ni aplica animaciones, transiciones o desplazamiento suave mientras el diseño visual siga en definición. Los estados de hover, foco, selección y disponibilidad son inmediatos y no dependen del movimiento.
+El tema usa una capa pequeña de JavaScript progresivo para coordinar estados confirmados por WooCommerce: agregar al carrito, actualización del contador, apertura del mini-carrito y avisos de error. El DOM y las APIs oficiales de carrito y checkout permanecen intactos.
 
-GSAP no forma parte del proyecto todavía. Cuando se apruebe el diseño final, el sistema de movimiento deberá definir hooks estables, funcionar como mejora progresiva y ofrecer una experiencia equivalente con `prefers-reduced-motion`.
+El movimiento aprobado es editorial y sutil: transiciones cortas de color, opacidad, transform y drawer. No se usan parallax, desplazamiento suave ni animaciones de entrada por scroll. GSAP no forma parte del proyecto. Toda interacción conserva una alternativa inmediata con `prefers-reduced-motion` y funciona sin el bundle propio cuando JavaScript está deshabilitado.
 
 ## Edición y verificación
 
