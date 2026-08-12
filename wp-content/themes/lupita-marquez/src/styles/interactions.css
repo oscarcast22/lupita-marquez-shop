@@ -1,5 +1,123 @@
+.lm-interactions-ready {
+	--lm-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--lm-motion-fast: 140ms;
+	--lm-motion-base: 200ms;
+	--lm-motion-slow: 240ms;
+	--lm-motion-drawer: 280ms;
+}
+
+@media (max-width: 960px) {
+
+	.lm-interactions-ready .lm-mobile-menu-toggle__line {
+		transition: opacity var(--lm-motion-fast) ease-out,
+			transform var(--lm-motion-base) var(--lm-ease-out);
+	}
+
+	.lm-interactions-ready .lm-mobile-menu-backdrop {
+		transition: opacity 160ms ease-out,
+			visibility 0s linear 160ms;
+	}
+
+	.lm-interactions-ready .lm-mobile-drawer {
+		transition: box-shadow var(--lm-motion-drawer) var(--lm-ease-out),
+			transform var(--lm-motion-drawer) var(--lm-ease-out),
+			visibility 0s linear var(--lm-motion-drawer);
+	}
+
+	.lm-interactions-ready.lm-mobile-menu-is-open .lm-mobile-menu-backdrop,
+	.lm-interactions-ready.lm-mobile-menu-is-open .lm-mobile-drawer {
+		transition-delay: 0s;
+		visibility: visible;
+	}
+
+	.lm-interactions-ready.lm-mobile-menu-is-open .lm-mobile-menu-backdrop { opacity: 1; }
+
+	.lm-interactions-ready.lm-mobile-menu-is-open .lm-mobile-drawer {
+		box-shadow: var(--lm-shadow-soft);
+		transform: translateX(0);
+	}
+
+	.lm-interactions-ready.lm-mobile-menu-is-open .lm-mobile-menu-toggle__line:first-child {
+		transform: translateY(6px) rotate(45deg);
+	}
+
+	.lm-interactions-ready.lm-mobile-menu-is-open .lm-mobile-menu-toggle__line:nth-child(2) {
+		opacity: 0;
+		transform: scaleX(0);
+	}
+
+	.lm-interactions-ready.lm-mobile-menu-is-open .lm-mobile-menu-toggle__line:last-child {
+		transform: translateY(-6px) rotate(-45deg);
+	}
+
+	.lm-interactions-ready .lm-mobile-drawer__navigation a {
+		transition: background-color var(--lm-motion-fast) ease-out,
+			color var(--lm-motion-fast) ease-out;
+	}
+}
+
+.lm-interactions-ready .lm-hero__copy a,
+.lm-interactions-ready .lm-featured-cta a,
+.lm-interactions-ready .lm-footer-social svg {
+	transition: background-color var(--lm-motion-fast) ease-out,
+		border-color var(--lm-motion-fast) ease-out,
+		box-shadow var(--lm-motion-base) var(--lm-ease-out),
+		color var(--lm-motion-fast) ease-out,
+		transform var(--lm-motion-base) var(--lm-ease-out);
+}
+
+.lm-interactions-ready .lm-site-footer nav a {
+	background-image: linear-gradient(currentcolor, currentcolor);
+	background-position: left calc(100% - 1px);
+	background-repeat: no-repeat;
+	background-size: 0 1px;
+	transition: background-size var(--lm-motion-base) var(--lm-ease-out),
+		color var(--lm-motion-fast) ease-out;
+}
+
 .lm-interactions-ready .lm-category-card:hover {
 	background: color-mix(in srgb, var(--wp--preset--color--mist) 44%, transparent);
+}
+
+.lm-interactions-ready .lm-hero__copy a:focus-visible,
+.lm-interactions-ready .lm-featured-cta a:focus-visible,
+.lm-interactions-ready .lm-footer-social a:focus-visible svg {
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--wp--preset--color--fuchsia) 18%, transparent);
+}
+
+.lm-interactions-ready .lm-hero__copy a:active,
+.lm-interactions-ready .lm-featured-cta a:active,
+.lm-interactions-ready .lm-footer-social a:active svg {
+	transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+
+	.lm-interactions-ready .lm-hero__copy a:hover,
+	.lm-interactions-ready .lm-featured-cta a:hover {
+		box-shadow: var(--lm-shadow-card);
+		transform: translateY(-2px);
+	}
+
+	.lm-interactions-ready .lm-hero__copy a:hover {
+		background: var(--wp--preset--color--charcoal);
+		border-color: var(--wp--preset--color--charcoal);
+	}
+
+	.lm-interactions-ready .lm-featured-cta a:hover {
+		background: var(--wp--preset--color--fuchsia);
+		border-color: var(--wp--preset--color--fuchsia);
+		color: var(--wp--preset--color--white);
+	}
+
+	.lm-interactions-ready .lm-site-footer nav a:hover {
+		background-size: 100% 1px;
+	}
+
+	.lm-interactions-ready .lm-footer-social a:hover svg {
+		box-shadow: var(--lm-shadow-card);
+		transform: translateY(-2px) scale(1.03);
+	}
 }
 
 .lm-interactions-ready .lm-main input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):focus,
@@ -11,4 +129,31 @@
 
 .lm-interactions-ready.lm-drawer-is-open body {
 	overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.lm-interactions-ready .lm-mobile-menu-toggle__line,
+	.lm-interactions-ready .lm-mobile-menu-backdrop,
+	.lm-interactions-ready .lm-mobile-drawer,
+	.lm-interactions-ready .lm-mobile-drawer__navigation a,
+	.lm-interactions-ready .lm-hero__copy a,
+	.lm-interactions-ready .lm-featured-cta a,
+	.lm-interactions-ready .lm-site-footer nav a,
+	.lm-interactions-ready .lm-footer-social svg {
+		animation: none;
+		transition: none;
+	}
+
+	.lm-interactions-ready .lm-hero__copy a,
+	.lm-interactions-ready .lm-hero__copy a:hover,
+	.lm-interactions-ready .lm-hero__copy a:active,
+	.lm-interactions-ready .lm-featured-cta a,
+	.lm-interactions-ready .lm-featured-cta a:hover,
+	.lm-interactions-ready .lm-featured-cta a:active,
+	.lm-interactions-ready .lm-footer-social svg,
+	.lm-interactions-ready .lm-footer-social a:hover svg,
+	.lm-interactions-ready .lm-footer-social a:active svg {
+		transform: none;
+	}
 }

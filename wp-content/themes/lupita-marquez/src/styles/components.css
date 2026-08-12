@@ -32,66 +32,9 @@
 
 .lm-header-actions { align-items: center; display: flex; flex: 0 0 auto; gap: 0.15rem; position: relative; }
 
-.lm-nav-account-link { display: none; }
-
-.lm-header-search { position: relative; }
-
-.lm-header-search summary {
-	align-items: center;
-	border-radius: 50%;
-	cursor: pointer;
-	display: flex;
-	height: var(--lm-icon-button);
-	justify-content: center;
-	list-style: none;
-	width: var(--lm-icon-button);
-}
-
-.lm-header-search summary::-webkit-details-marker { display: none; }
-
-.lm-header-search summary:hover,
-.lm-header-search[open] summary { background: var(--wp--preset--color--mist); color: var(--wp--preset--color--fuchsia); }
-
-.lm-header-search summary svg { fill: none; height: var(--lm-icon-glyph); stroke: currentcolor; stroke-linecap: round; stroke-width: 1.75; width: var(--lm-icon-glyph); }
-
-.lm-header-search form {
-	background: var(--wp--preset--color--white);
-	border: var(--lm-border);
-	border-radius: var(--lm-radius-sm);
-	box-shadow: var(--lm-shadow-card);
-	padding: 1rem;
-	position: absolute;
-	right: 0;
-	top: calc(100% + 0.65rem);
-	width: min(22rem, calc(100vw - 2rem));
-}
-
-.lm-header-search label { display: block; font-size: 0.78rem; font-weight: 750; margin-bottom: 0.45rem; }
-
-.lm-header-search form div { display: flex; }
-
-.lm-header-search input[type="search"] {
-	border: 1px solid var(--wp--preset--color--sand);
-	border-radius: var(--lm-radius-xs) 0 0 var(--lm-radius-xs);
-	font: inherit;
-	min-height: var(--lm-control-height);
-	min-width: 0;
-	padding: 0.65rem 0.75rem;
-	width: 100%;
-}
-
-.lm-header-search button {
-	background: var(--wp--preset--color--fuchsia);
-	border: 1px solid var(--wp--preset--color--fuchsia);
-	border-radius: 0 var(--lm-radius-xs) var(--lm-radius-xs) 0;
-	color: var(--wp--preset--color--white);
-	cursor: pointer;
-	font: inherit;
-	font-size: 0.78rem;
-	font-weight: 750;
-	min-height: var(--lm-control-height);
-	padding-inline: 1rem;
-}
+.lm-mobile-menu-toggle,
+.lm-mobile-menu-backdrop,
+.lm-mobile-drawer { display: none; }
 
 .lm-eyebrow { color: var(--wp--preset--color--fuchsia); font-size: 0.76rem; font-weight: 800; letter-spacing: 0.16em; margin-bottom: 1rem; text-transform: uppercase; }
 

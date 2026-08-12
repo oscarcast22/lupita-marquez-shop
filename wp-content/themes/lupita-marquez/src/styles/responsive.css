@@ -1,8 +1,168 @@
 @media (max-width: 960px) {
 
-	.lm-site-header .lm-nav-account-link { display: flex; }
+	.lm-interactions-ready .lm-site-header__inner {
+		display: grid;
+		gap: 0;
+		grid-template-columns: var(--lm-mobile-header-side) minmax(0, 1fr) var(--lm-mobile-header-side);
+	}
 
-	.lm-header-actions { order: 1; }
+	.lm-interactions-ready .lm-mobile-menu-toggle {
+		align-items: center;
+		appearance: none;
+		background: transparent;
+		border: 0;
+		border-radius: 50%;
+		color: var(--wp--preset--color--charcoal);
+		cursor: pointer;
+		display: flex;
+		flex-direction: column;
+		grid-column: 1;
+		height: var(--lm-icon-button);
+		justify-content: center;
+		justify-self: start;
+		padding: 0;
+		position: relative;
+		width: var(--lm-icon-button);
+		z-index: 4;
+	}
+
+	.lm-mobile-menu-toggle__line {
+		background: currentcolor;
+		display: block;
+		height: 1.5px;
+		margin-block: 2.25px;
+		transform-origin: center;
+		width: 22px;
+	}
+
+	.lm-interactions-ready .lm-brand {
+		grid-column: 2;
+		justify-content: center;
+		justify-self: stretch;
+	}
+
+	.lm-interactions-ready .lm-brand__mark {
+		mask-position: center;
+		-webkit-mask-position: center;
+	}
+
+	.lm-interactions-ready .lm-primary-nav { display: none; }
+
+	.lm-interactions-ready .lm-header-actions {
+		grid-column: 3;
+		justify-content: flex-end;
+		justify-self: end;
+		order: initial;
+		z-index: 4;
+	}
+
+	.lm-interactions-ready .lm-mobile-menu-backdrop {
+		background: color-mix(in srgb, var(--wp--preset--color--charcoal) 34%, transparent);
+		bottom: 0;
+		display: block;
+		left: 0;
+		opacity: 0;
+		position: fixed;
+		right: 0;
+		top: var(--lm-mobile-header-bottom, var(--lm-header-height));
+		visibility: hidden;
+		z-index: 1;
+	}
+
+	.lm-interactions-ready .lm-mobile-drawer {
+		background: var(--wp--preset--color--ivory);
+		bottom: 0;
+		display: block;
+		left: 0;
+		overflow: hidden auto;
+		position: fixed;
+		top: var(--lm-mobile-header-bottom, var(--lm-header-height));
+		transform: translateX(-100%);
+		visibility: hidden;
+		width: var(--lm-mobile-drawer-width);
+		z-index: 2;
+	}
+
+	.lm-mobile-drawer::after {
+		background: var(--wp--preset--color--wood);
+		bottom: 0;
+		content: "";
+		height: 10rem;
+		mask: url(/wp-content/themes/lupita-marquez/assets/images/botanical-corner.svg) center / contain no-repeat;
+		opacity: 0.14;
+		pointer-events: none;
+		position: absolute;
+		right: 0;
+		width: 10rem;
+	}
+
+	.lm-mobile-drawer__inner {
+		display: flex;
+		flex-direction: column;
+		min-height: 100%;
+		padding: clamp(1.5rem, 6vw, 2.25rem) clamp(1.5rem, 7vw, 2.25rem) 2rem;
+		position: relative;
+		z-index: 1;
+	}
+
+	.lm-mobile-drawer__navigation { display: flex; flex-direction: column; }
+
+	.lm-mobile-drawer__navigation a {
+		align-items: center;
+		border-bottom: var(--lm-border);
+		color: var(--wp--preset--color--charcoal);
+		display: grid;
+		font-family: var(--wp--preset--font-family--serif);
+		font-size: clamp(1.15rem, 5vw, 1.35rem);
+		font-weight: 650;
+		gap: 1rem;
+		grid-template-columns: minmax(0, 1fr) 0.75rem;
+		line-height: 1.2;
+		min-height: 58px;
+		padding: 0.55rem 0.75rem;
+		text-decoration: none;
+	}
+
+	.lm-mobile-drawer__navigation a::after {
+		border: 1px solid currentcolor;
+		content: "";
+		height: 0.38rem;
+		opacity: 0;
+		transform: rotate(45deg);
+		width: 0.38rem;
+	}
+
+	.lm-mobile-drawer__navigation a:hover,
+	.lm-mobile-drawer__navigation a[aria-current="page"] {
+		background: color-mix(in srgb, var(--wp--preset--color--mist) 66%, transparent);
+		color: var(--wp--preset--color--fuchsia);
+	}
+
+	.lm-mobile-drawer__navigation a[aria-current="page"]::after { opacity: 1; }
+
+	.lm-mobile-drawer__navigation a:focus-visible {
+		background: var(--wp--preset--color--mist);
+		outline: 2px solid var(--wp--preset--color--fuchsia);
+		outline-offset: -2px;
+	}
+
+	.lm-mobile-drawer__signature {
+		color: var(--wp--preset--color--muted);
+		font-size: 0.72rem;
+		letter-spacing: 0.04em;
+		margin: auto 0 0;
+		max-width: 15rem;
+		padding-top: 3rem;
+	}
+
+	.lm-mobile-menu-is-open body {
+		inset-inline: 0;
+		overflow: hidden;
+		padding-inline-end: var(--lm-mobile-scrollbar-compensation, 0);
+		position: fixed;
+		top: var(--lm-mobile-scroll-lock-offset, 0);
+		width: 100%;
+	}
 
 	.lm-product-layout { grid-template-columns: 1fr; }
 
@@ -54,8 +214,6 @@
 	:root { --lm-header-height: 64px; }
 
 	.lm-topbar { font-size: 0.68rem; }
-
-	.lm-site-header__inner { gap: 0.25rem; }
 
 	.lm-header-actions { gap: 0; }
 
