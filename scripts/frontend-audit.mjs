@@ -45,14 +45,6 @@ const collectFiles = async ( directory ) => {
 const motionPatterns = [
 	[ 'legacy data hook', /data-lm-(?:reveal|stagger|gallery)/g ],
 	[ 'legacy JavaScript class', /\blm-has-js\b/g ],
-	[ 'IntersectionObserver', /\bIntersectionObserver\b/g ],
-	[ 'Web Animations API', /\.animate\s*\(/g ],
-	[
-		'animation or transition property',
-		/\b(?:animation|transition)(?:-[a-z-]+)?\s*:/g,
-	],
-	[ 'smooth scroll', /scroll-behavior\s*:\s*smooth/g ],
-	[ 'motion token', /--lm-(?:motion|ease)[a-z-]*/g ],
 ];
 
 const themeRoot = path.resolve( 'wp-content/themes/lupita-marquez' );
@@ -161,6 +153,9 @@ for ( const width of widths ) {
 		const page = await context.newPage();
 		const messages = [];
 		const pageErrors = [];
+		let interactionAudit = null;
+		let mobileNavigationAudit = null;
+		let stickyHeaderAudit = null;
 		let variationAudit = null;
 
 		page.on( 'console', ( message ) => {
@@ -586,6 +581,19 @@ for ( const width of widths ) {
 			const heroImage = document.querySelector( '.lm-hero__picture img' );
 			const heroImageSource =
 				heroImage?.currentSrc || heroImage?.src || '';
+			const chevron = document.querySelector(
+				'.lm-site-header .wp-block-navigation__submenu-icon svg'
+			);
+			const chevronItem = chevron?.closest( '.wp-block-navigation-item' );
+			const nextNavigationItem = chevronItem?.nextElementSibling;
+			const navigationChevronGap =
+				chevron &&
+				nextNavigationItem &&
+				visible( chevron ) &&
+				visible( nextNavigationItem )
+					? nextNavigationItem.getBoundingClientRect().left -
+					  chevron.getBoundingClientRect().right
+					: null;
 			const rounded = ( value ) =>
 				typeof value === 'number' ? +value.toFixed( 2 ) : null;
 			const fontSize = ( selector ) => {
@@ -661,6 +669,7 @@ for ( const width of widths ) {
 				},
 				uiScale: {
 					body: fontSize( 'body' ),
+					navigationChevronGap: rounded( navigationChevronGap ),
 					navigation: fontSize(
 						'.lm-site-header .wp-block-navigation-item__content'
 					),
@@ -675,7 +684,6 @@ for ( const width of widths ) {
 						'.wc-block-product .wp-block-woocommerce-product-price'
 					),
 					controls: {
-						search: dimensions( '.lm-header-search summary' ),
 						account: dimensions(
 							'.lm-site-header .wc-block-customer-account__link, .lm-site-header .wc-block-customer-account__toggle'
 						),
@@ -684,7 +692,6 @@ for ( const width of widths ) {
 						),
 					},
 					glyphs: {
-						search: dimensions( '.lm-header-search summary svg' ),
 						account: dimensions(
 							'.lm-site-header .wc-block-customer-account__account-icon'
 						),
@@ -756,6 +763,408 @@ for ( const width of widths ) {
 					: null,
 			};
 		} );
+		if ( name === 'inicio' ) {
+			const header = page.locator( '.lm-site-header' );
+			const headerIsVisible = () =>
+				header.evaluate( ( element ) => {
+					const bounds = element.getBoundingClientRect();
+					return bounds.bottom > 0 && bounds.top < window.innerHeight;
+				} );
+			await page.evaluate( () => window.scrollTo( 0, 0 ) );
+			await page.waitForTimeout( 350 );
+			const initialVisible = await headerIsVisible();
+			await page.evaluate( () => window.scrollTo( 0, 600 ) );
+			await page.waitForTimeout( 100 );
+			const scrolledState = await header.evaluate( ( element ) => ( {
+				headerStayedVisible: element.getBoundingClientRect().bottom > 0,
+				headerPinnedToTop:
+					Math.abs( element.getBoundingClientRect().top ) <= 1,
+				topbarOutsideViewport:
+					element.ownerDocument
+						.querySelector( '.lm-topbar' )
+						?.getBoundingClientRect().bottom <= 0,
+			} ) );
+			await page.evaluate( () => window.scrollTo( 0, 0 ) );
+			await page.waitForTimeout( 100 );
+			stickyHeaderAudit = {
+				initialVisible,
+				...scrolledState,
+			};
+			interactionAudit = {
+				accountIconVisible: await page
+					.locator(
+						'.lm-site-header .wc-block-customer-account__link, .lm-site-header .wc-block-customer-account__toggle'
+					)
+					.first()
+					.isVisible(),
+				accountTextLinkCount: await page
+					.locator( '.lm-site-header .lm-nav-account-link' )
+					.count(),
+				desktop: null,
+				headerSearchCount: await page
+					.locator( '.lm-site-header .lm-header-search' )
+					.count(),
+			};
+
+			if ( width <= 960 ) {
+				const mobileMenuToggle = page.locator(
+					'.lm-mobile-menu-toggle'
+				);
+				await mobileMenuToggle.click();
+				await page.waitForTimeout( 350 );
+				mobileNavigationAudit = await page.evaluate( () => {
+					const headerElement =
+						document.querySelector( '.lm-site-header' );
+					const toggle = document.querySelector(
+						'.lm-mobile-menu-toggle'
+					);
+					const brand = document.querySelector( '.lm-brand' );
+					const drawer =
+						document.querySelector( '.lm-mobile-drawer' );
+					const backdrop = document.querySelector(
+						'.lm-mobile-menu-backdrop'
+					);
+					const navigation = drawer?.querySelector(
+						'.lm-mobile-drawer__navigation'
+					);
+					const visible = ( element ) => {
+						if ( ! element ) {
+							return false;
+						}
+						const rect = element.getBoundingClientRect();
+						const style = window.getComputedStyle( element );
+						return (
+							style.display !== 'none' &&
+							style.visibility !== 'hidden' &&
+							rect.width > 0 &&
+							rect.height > 0
+						);
+					};
+					const links = navigation
+						? [
+								...navigation.querySelectorAll( 'a[href]' ),
+						  ].filter( visible )
+						: [];
+					const bounds = ( element ) =>
+						element?.getBoundingClientRect();
+					const headerBounds = bounds( headerElement );
+					const brandBounds = bounds( brand );
+					const drawerBounds = bounds( drawer );
+					const linkBounds = links.map( bounds );
+					const brandCenteredDifference = brandBounds
+						? Math.abs(
+								brandBounds.left +
+									brandBounds.width / 2 -
+									window.innerWidth / 2
+						  )
+						: Number.POSITIVE_INFINITY;
+					const targetMinimum = linkBounds.length
+						? Math.min(
+								...linkBounds.map( ( item ) => item.height )
+						  )
+						: 0;
+					const visibleDestinations = links.map( ( link ) =>
+						link.textContent.trim()
+					);
+					const expectedDestinations = [
+						'Inicio',
+						'Todas las piezas',
+						'Altares',
+						'Otras piezas',
+						'Nosotros',
+						'Contacto',
+					];
+					const currentLinks = navigation?.querySelectorAll(
+						'a[aria-current="page"]'
+					);
+					const backdropStyle = window.getComputedStyle( backdrop );
+					const toggleLines = [
+						...toggle.querySelectorAll(
+							'.lm-mobile-menu-toggle__line'
+						),
+					];
+					const lineStyles = toggleLines.map( ( line ) =>
+						window.getComputedStyle( line )
+					);
+
+					return {
+						backdropVisible:
+							backdropStyle.visibility === 'visible' &&
+							Number( backdropStyle.opacity ) > 0.95,
+						brandCenteredDifference,
+						drawerTopDifference: Math.abs(
+							drawerBounds.top - headerBounds.bottom
+						),
+						drawerOverflow: Math.max(
+							0,
+							drawer.scrollHeight - drawer.clientHeight
+						),
+						drawerWidth: drawerBounds.width,
+						hasNumbering: Boolean(
+							navigation?.querySelector( '[data-lm-index]' )
+						),
+						hamburgerTransformed:
+							lineStyles[ 0 ].transform !== 'none' &&
+							Number( lineStyles[ 1 ].opacity ) === 0 &&
+							lineStyles[ 2 ].transform !== 'none',
+						passed:
+							brandCenteredDifference <= 1.5 &&
+							Math.abs( drawerBounds.left ) <= 0.5 &&
+							drawerBounds.right < window.innerWidth &&
+							drawerBounds.width <= 380.5 &&
+							Math.abs(
+								drawerBounds.width -
+									Math.min( window.innerWidth * 0.86, 380 )
+							) <= 1 &&
+							Math.abs(
+								drawerBounds.top - headerBounds.bottom
+							) <= 1 &&
+							drawer.scrollHeight - drawer.clientHeight <= 1 &&
+							targetMinimum >= 57.5 &&
+							visibleDestinations.join( '|' ) ===
+								expectedDestinations.join( '|' ) &&
+							currentLinks?.length === 1 &&
+							! navigation?.querySelector( '[data-lm-index]' ) &&
+							toggle.getAttribute( 'aria-expanded' ) === 'true' &&
+							drawer.getAttribute( 'aria-hidden' ) === 'false' &&
+							backdropStyle.visibility === 'visible' &&
+							Number( backdropStyle.opacity ) > 0.95 &&
+							lineStyles[ 0 ].transform !== 'none' &&
+							Number( lineStyles[ 1 ].opacity ) === 0 &&
+							lineStyles[ 2 ].transform !== 'none',
+						targetMinimum,
+						visibleDestinations,
+					};
+				} );
+				if ( name === 'inicio' && width === 390 ) {
+					await page.screenshot( {
+						path: path.join(
+							outputDirectory,
+							'inicio-mobile-menu-390.png'
+						),
+					} );
+				}
+				await page.keyboard.press( 'Escape' );
+				await page.waitForTimeout( 300 );
+				mobileNavigationAudit.closedWithEscape =
+					( await mobileMenuToggle.getAttribute(
+						'aria-expanded'
+					) ) === 'false' &&
+					( await mobileMenuToggle.evaluate(
+						( element ) =>
+							element === element.ownerDocument.activeElement
+					) );
+				mobileNavigationAudit.passed =
+					mobileNavigationAudit.passed &&
+					mobileNavigationAudit.closedWithEscape;
+				await mobileMenuToggle.click();
+				await page.waitForTimeout( 50 );
+				await page.locator( '.lm-mobile-menu-backdrop' ).click( {
+					position: { x: width - 8, y: 20 },
+				} );
+				await page.waitForTimeout( 300 );
+				mobileNavigationAudit.closedWithBackdrop =
+					( await mobileMenuToggle.getAttribute(
+						'aria-expanded'
+					) ) === 'false';
+				mobileNavigationAudit.passed =
+					mobileNavigationAudit.passed &&
+					mobileNavigationAudit.closedWithBackdrop;
+
+				await page.evaluate( () => window.scrollTo( 0, 600 ) );
+				await page.waitForTimeout( 100 );
+				const scrollBeforeScrolledOpen = await page.evaluate(
+					() => window.scrollY
+				);
+				await mobileMenuToggle.click();
+				await page.waitForTimeout( 350 );
+				mobileNavigationAudit.scrolledOpenStable = await page.evaluate(
+					( expectedScroll ) => {
+						const headerBounds = document
+							.querySelector( '.lm-site-header' )
+							.getBoundingClientRect();
+						const drawerBounds = document
+							.querySelector( '.lm-mobile-drawer' )
+							.getBoundingClientRect();
+						const bodyStyle = window.getComputedStyle(
+							document.body
+						);
+						return (
+							Math.abs( headerBounds.top ) <= 1 &&
+							Math.abs(
+								drawerBounds.top - headerBounds.bottom
+							) <= 1 &&
+							bodyStyle.position === 'fixed' &&
+							Math.abs(
+								Number.parseFloat( bodyStyle.top ) +
+									expectedScroll
+							) <= 1
+						);
+					},
+					scrollBeforeScrolledOpen
+				);
+				await page.keyboard.press( 'Escape' );
+				await page.waitForTimeout( 300 );
+				mobileNavigationAudit.scrollPositionRestored =
+					await page.evaluate(
+						( expectedScroll ) =>
+							Math.abs( window.scrollY - expectedScroll ) <= 1 &&
+							Math.abs(
+								document
+									.querySelector( '.lm-site-header' )
+									.getBoundingClientRect().top
+							) <= 1,
+						scrollBeforeScrolledOpen
+					);
+				mobileNavigationAudit.passed =
+					mobileNavigationAudit.passed &&
+					mobileNavigationAudit.scrolledOpenStable &&
+					mobileNavigationAudit.scrollPositionRestored;
+				await page.evaluate( () => window.scrollTo( 0, 0 ) );
+				await page.waitForTimeout( 100 );
+
+				if ( name === 'inicio' && width === 390 ) {
+					await mobileMenuToggle.click();
+					await page
+						.locator(
+							'.lm-site-header .wc-block-mini-cart__button'
+						)
+						.click();
+					await page.waitForTimeout( 500 );
+					mobileNavigationAudit.cartReplacedMenu =
+						( await mobileMenuToggle.getAttribute(
+							'aria-expanded'
+						) ) === 'false' &&
+						( await page
+							.locator(
+								'.wc-block-components-drawer__screen-overlay.is-open, .wc-block-components-drawer__screen-overlay--with-slide-in'
+							)
+							.count() ) > 0;
+					mobileNavigationAudit.passed =
+						mobileNavigationAudit.passed &&
+						mobileNavigationAudit.cartReplacedMenu;
+					await page.keyboard.press( 'Escape' );
+					await page.waitForTimeout( 300 );
+
+					await page.setViewportSize( { width: 390, height: 560 } );
+					await mobileMenuToggle.click();
+					await page.waitForTimeout( 350 );
+					mobileNavigationAudit.compactViewportScrollable =
+						await page.evaluate( () => {
+							const drawer =
+								document.querySelector( '.lm-mobile-drawer' );
+							const overflow =
+								drawer.scrollHeight - drawer.clientHeight;
+							drawer.scrollTop = Math.min( 40, overflow );
+							return (
+								overflow > 1 &&
+								window.getComputedStyle( drawer ).overflowY ===
+									'auto' &&
+								drawer.scrollTop > 0
+							);
+						} );
+					mobileNavigationAudit.passed =
+						mobileNavigationAudit.passed &&
+						mobileNavigationAudit.compactViewportScrollable;
+					await page.keyboard.press( 'Escape' );
+					await page.setViewportSize( { width: 390, height: 900 } );
+					await page.waitForTimeout( 300 );
+				}
+			}
+
+			if ( width === 1280 ) {
+				const readMotion = ( locator ) =>
+					locator.evaluate( ( element ) => {
+						const style = window.getComputedStyle( element );
+						return {
+							boxShadow: style.boxShadow,
+							opacity: Number.parseFloat( style.opacity ),
+							transform: style.transform,
+							visibility: style.visibility,
+						};
+					} );
+				const submenuToggle = page
+					.locator(
+						'.lm-site-header .wp-block-navigation__submenu-icon'
+					)
+					.first();
+				const submenu = page
+					.locator(
+						'.lm-site-header .wp-block-navigation__submenu-container'
+					)
+					.first();
+				const chevron = submenuToggle.locator( 'svg' );
+
+				await page.evaluate( () => window.scrollTo( 0, 0 ) );
+				await submenuToggle.hover();
+				await page.waitForTimeout( 280 );
+				const submenuOpen = await readMotion( submenu );
+				const chevronOpen = await readMotion( chevron );
+				const expandedAfterHover =
+					( await submenuToggle.getAttribute( 'aria-expanded' ) ) ===
+					'true';
+				await page.screenshot( {
+					path: path.join(
+						outputDirectory,
+						'inicio-dropdown-1280.png'
+					),
+				} );
+				await page.mouse.move( width - 4, 400 );
+				await page.waitForTimeout( 280 );
+				const submenuClosed = await readMotion( submenu );
+
+				const heroCta = page.locator( '.lm-hero__copy a' ).first();
+				await heroCta.hover();
+				await page.waitForTimeout( 280 );
+				const heroHover = await readMotion( heroCta );
+
+				const featuredCard = page
+					.locator( '.lm-featured-collection .wc-block-product' )
+					.first();
+				await featuredCard.scrollIntoViewIfNeeded();
+				await page.evaluate( () => window.scrollBy( 0, -120 ) );
+				await featuredCard.hover();
+				await page.waitForTimeout( 300 );
+				const cardHover = await readMotion( featuredCard );
+				await page.screenshot( {
+					path: path.join(
+						outputDirectory,
+						'inicio-product-hover-1280.png'
+					),
+				} );
+
+				const socialMark = page
+					.locator( '.lm-footer-social a svg' )
+					.first();
+				await socialMark.scrollIntoViewIfNeeded();
+				await socialMark.hover();
+				await page.waitForTimeout( 280 );
+				const socialHover = await readMotion( socialMark );
+
+				interactionAudit.desktop = {
+					cardStable:
+						cardHover.transform === 'none' &&
+						cardHover.boxShadow !== 'none',
+					chevronRotated: chevronOpen.transform !== 'none',
+					expandedAfterHover,
+					heroRaised:
+						heroHover.transform !== 'none' &&
+						heroHover.boxShadow !== 'none',
+					socialRaised:
+						socialHover.transform !== 'none' &&
+						socialHover.boxShadow !== 'none',
+					submenuClosed:
+						submenuClosed.opacity === 0 &&
+						submenuClosed.visibility === 'hidden',
+					submenuOpened:
+						submenuOpen.opacity === 1 &&
+						submenuOpen.visibility === 'visible',
+				};
+				await page.evaluate( () => window.scrollTo( 0, 0 ) );
+				await page.mouse.move( width - 4, 400 );
+				await page.waitForTimeout( 280 );
+			}
+		}
 		const requiredSelector = requiredContent[ name ];
 		const requiredContentMissing = requiredSelector
 			? ! ( await page.locator( requiredSelector ).first().isVisible() )
@@ -773,6 +1182,9 @@ for ( const width of widths ) {
 			console: messages,
 			pageErrors,
 			requiredContentMissing,
+			interactionAudit,
+			mobileNavigationAudit,
+			stickyHeaderAudit,
 			variationAudit,
 			...metrics,
 		} );
@@ -781,6 +1193,89 @@ for ( const width of widths ) {
 
 	await context.close();
 }
+
+const reducedMotionContext = await browser.newContext( {
+	viewport: { width: 1280, height: 900 },
+	reducedMotion: 'reduce',
+} );
+const reducedMotionPage = await reducedMotionContext.newPage();
+await reducedMotionPage.goto( new URL( '/', baseURL ).href, {
+	waitUntil: 'networkidle',
+	timeout: 45_000,
+} );
+const reducedMotionSamples = {};
+const readReducedMotion = async ( name, locator ) => {
+	const style = await locator.evaluate( ( element ) => {
+		const computed = window.getComputedStyle( element );
+		return {
+			animationDuration: computed.animationDuration,
+			transform: computed.transform,
+			transitionDuration: computed.transitionDuration,
+		};
+	} );
+	reducedMotionSamples[ name ] = style;
+};
+const reducedHeroCta = reducedMotionPage.locator( '.lm-hero__copy a' ).first();
+await reducedHeroCta.hover();
+await readReducedMotion( 'heroCta', reducedHeroCta );
+const reducedCard = reducedMotionPage
+	.locator( '.lm-featured-collection .wc-block-product' )
+	.first();
+await reducedCard.scrollIntoViewIfNeeded();
+await reducedCard.hover();
+await readReducedMotion( 'featuredCard', reducedCard );
+const reducedSocial = reducedMotionPage
+	.locator( '.lm-footer-social a svg' )
+	.first();
+await reducedSocial.scrollIntoViewIfNeeded();
+await reducedSocial.hover();
+await readReducedMotion( 'socialMark', reducedSocial );
+await reducedMotionPage.evaluate( () => window.scrollTo( 0, 0 ) );
+const reducedSubmenuToggle = reducedMotionPage
+	.locator( '.lm-site-header .wp-block-navigation__submenu-icon' )
+	.first();
+await reducedSubmenuToggle.hover();
+await readReducedMotion( 'chevron', reducedSubmenuToggle.locator( 'svg' ) );
+await reducedMotionPage.evaluate( () => window.scrollTo( 0, 600 ) );
+await reducedMotionPage.waitForTimeout( 100 );
+const durationIsZero = ( value ) =>
+	value.split( ',' ).every( ( duration ) => duration.trim() === '0s' );
+const motionDisabled = Object.values( reducedMotionSamples ).every(
+	( sample ) =>
+		durationIsZero( sample.animationDuration ) &&
+		durationIsZero( sample.transitionDuration ) &&
+		sample.transform === 'none'
+);
+report.reducedMotion = await reducedMotionPage.evaluate( () => ( {
+	headerStayedVisible: ( () => {
+		const header = document.querySelector( '.lm-site-header' );
+		const bounds = header.getBoundingClientRect();
+		return bounds.bottom > 0 && bounds.top < window.innerHeight;
+	} )(),
+} ) );
+report.reducedMotion.motionDisabled = motionDisabled;
+report.reducedMotion.samples = reducedMotionSamples;
+await reducedMotionPage.setViewportSize( { width: 390, height: 900 } );
+await reducedMotionPage.evaluate( () => window.scrollTo( 0, 0 ) );
+await reducedMotionPage.locator( '.lm-mobile-menu-toggle' ).click();
+report.reducedMotion.mobileMenuTransitionDisabled =
+	await reducedMotionPage.evaluate( () => {
+		const selectors = [
+			'.lm-mobile-menu-toggle__line',
+			'.lm-mobile-menu-backdrop',
+			'.lm-mobile-drawer',
+			'.lm-mobile-drawer__navigation a',
+		];
+		return selectors.every( ( selector ) => {
+			const style = window.getComputedStyle(
+				document.querySelector( selector )
+			);
+			return style.transitionDuration
+				.split( ',' )
+				.every( ( duration ) => duration.trim() === '0s' );
+		} );
+	} );
+await reducedMotionContext.close();
 
 const noJavaScriptContext = await browser.newContext( {
 	viewport: { width: 390, height: 900 },
@@ -791,7 +1286,14 @@ await noJavaScriptPage.goto( new URL( '/', baseURL ).href, {
 	waitUntil: 'networkidle',
 	timeout: 45_000,
 } );
+await noJavaScriptPage.evaluate( () => window.scrollTo( 0, 600 ) );
 report.withoutJavaScript = await noJavaScriptPage.evaluate( () => ( {
+	headerStayedVisible:
+		document.querySelector( '.lm-site-header' ).getBoundingClientRect()
+			.bottom > 0,
+	topbarOutsideViewport:
+		document.querySelector( '.lm-topbar' ).getBoundingClientRect().bottom <=
+		0,
 	mainVisible: Boolean(
 		document.querySelector( 'main' )?.getBoundingClientRect().height
 	),
@@ -806,6 +1308,13 @@ report.withoutJavaScript = await noJavaScriptPage.evaluate( () => ( {
 			'script[src*="/themes/lupita-marquez/build/index.js"]'
 		)
 	),
+	customMenuHidden:
+		document.querySelector( '.lm-mobile-menu-toggle' ).getClientRects()
+			.length === 0,
+	nativeMenuAvailable:
+		document
+			.querySelector( '.wp-block-navigation__responsive-container-open' )
+			.getClientRects().length > 0,
 	runtimeGeneratedClasses: {
 		alignfull: document.querySelectorAll( '.alignfull' ).length,
 		alignwide: document.querySelectorAll( '.alignwide' ).length,
@@ -843,10 +1352,9 @@ const hasScaleFailure = ( page ) =>
 	) ||
 	outside( page.uiScale.pageTitle, 31.9, 44.1 ) ||
 	outside( page.uiScale.singleProductTitle, 35.9, 56.1 ) ||
-	undersized( page.uiScale.controls.search ) ||
+	outside( page.uiScale.navigationChevronGap, 23, 25 ) ||
 	undersized( page.uiScale.controls.account ) ||
 	undersized( page.uiScale.controls.cart ) ||
-	oversized( page.uiScale.glyphs.search, 22 ) ||
 	oversized( page.uiScale.glyphs.account, 22 ) ||
 	oversized( page.uiScale.glyphs.cart, 22 ) ||
 	oversized( page.uiScale.glyphs.chevron, 13 );
@@ -862,7 +1370,23 @@ const failures = report.pages.filter(
 		( page.name === 'inicio' &&
 			( page.homeLayout.featuredProductCount !== 6 ||
 				page.homeLayout.featuredButtonSpread > 1 ||
-				! page.homeLayout.heroAssetCorrect ) ) ||
+				! page.homeLayout.heroAssetCorrect ||
+				page.interactionAudit?.accountTextLinkCount !== 0 ||
+				! page.interactionAudit?.accountIconVisible ||
+				page.interactionAudit?.headerSearchCount !== 0 ||
+				( page.width <= 960 && ! page.mobileNavigationAudit?.passed ) ||
+				( page.width === 1280 &&
+					( ! page.interactionAudit?.desktop?.cardStable ||
+						! page.interactionAudit?.desktop?.chevronRotated ||
+						! page.interactionAudit?.desktop?.expandedAfterHover ||
+						! page.interactionAudit?.desktop?.heroRaised ||
+						! page.interactionAudit?.desktop?.socialRaised ||
+						! page.interactionAudit?.desktop?.submenuClosed ||
+						! page.interactionAudit?.desktop?.submenuOpened ) ) ||
+				! page.stickyHeaderAudit?.initialVisible ||
+				! page.stickyHeaderAudit?.headerStayedVisible ||
+				! page.stickyHeaderAudit?.headerPinnedToTop ||
+				! page.stickyHeaderAudit?.topbarOutsideViewport ) ) ||
 		( page.variationAudit && ! page.variationAudit.passed ) ||
 		page.missingImageAlt.length ||
 		page.unnamedControls.length ||
@@ -879,9 +1403,17 @@ const failures = report.pages.filter(
 		page.cls > 0.1
 );
 const enhancementFailures =
+	sourceMotionViolations.length > 0 ||
 	sourceContractViolations.length > 0 ||
 	integrationSelectorViolations.length > 0 ||
 	! report.withoutJavaScript.mainVisible ||
+	! report.withoutJavaScript.headerStayedVisible ||
+	! report.withoutJavaScript.topbarOutsideViewport ||
+	! report.withoutJavaScript.customMenuHidden ||
+	! report.withoutJavaScript.nativeMenuAvailable ||
+	! report.reducedMotion.headerStayedVisible ||
+	! report.reducedMotion.motionDisabled ||
+	! report.reducedMotion.mobileMenuTransitionDisabled ||
 	report.withoutJavaScript.legacyMotionHooks > 0 ||
 	report.withoutJavaScript.themeScriptInitialized;
 
