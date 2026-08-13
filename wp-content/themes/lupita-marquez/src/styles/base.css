@@ -36,9 +36,9 @@ main { min-height: 45vh; }
 
 .lm-section--flush { padding-block: 0; }
 
-.lm-shell { margin-inline: auto; max-width: var(--lm-shell); padding-inline: var(--lm-gutter); width: 100%; }
+.lm-shell { margin-inline: auto; max-width: var(--wp--style--global--wide-size); padding-inline: var(--wp--preset--spacing--gutter); width: 100%; }
 
-.lm-reading { max-width: var(--lm-reading); }
+.lm-reading { max-width: var(--wp--style--global--content-size); }
 
 .lm-main { display: block; }
 

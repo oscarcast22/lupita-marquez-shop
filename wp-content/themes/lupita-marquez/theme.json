@@ -48,7 +48,13 @@
         { "slug": "55", "size": "3.5rem", "name": "7" },
         { "slug": "60", "size": "4rem", "name": "8" },
         { "slug": "65", "size": "5rem", "name": "10" },
-        { "slug": "70", "size": "clamp(4.5rem, 8vw, 8rem)", "name": "Sección" }
+        { "slug": "70", "size": "clamp(4.5rem, 8vw, 8rem)", "name": "Sección" },
+        { "slug": "gutter", "size": "clamp(1rem, 3vw, 2.5rem)", "name": "Margen lateral" },
+        { "slug": "content-gap", "size": "clamp(1.25rem, 2.5vw, 2rem)", "name": "Ritmo de contenido" },
+        { "slug": "section-heading", "size": "clamp(2rem, 5vw, 4.5rem)", "name": "Encabezado de sección" },
+        { "slug": "editorial-gap", "size": "clamp(2rem, 6vw, 6rem)", "name": "Ritmo editorial" },
+        { "slug": "footer-gap", "size": "clamp(2rem, 7vw, 6rem)", "name": "Ritmo de pie" },
+        { "slug": "drawer-padding", "size": "clamp(1.5rem, 6vw, 2.25rem)", "name": "Relleno de cajón" }
       ]
     },
     "typography": {
@@ -70,10 +76,21 @@
         }
       ],
       "fontSizes": [
-        { "slug": "small", "size": "0.84375rem", "fluid": { "min": "0.78125rem", "max": "0.84375rem" }, "name": "Pequeño" },
+        { "slug": "micro", "size": "0.75rem", "name": "Micro" },
+        { "slug": "caption", "size": "0.8125rem", "name": "Pie de foto" },
+        { "slug": "small", "size": "0.875rem", "fluid": { "min": "0.8125rem", "max": "0.875rem" }, "name": "Pequeño" },
         { "slug": "medium", "size": "1rem", "fluid": { "min": "0.9375rem", "max": "1rem" }, "name": "Mediano" },
         { "slug": "large", "size": "1.125rem", "fluid": { "min": "1rem", "max": "1.125rem" }, "name": "Grande" },
-        { "slug": "x-large", "size": "2.75rem", "fluid": { "min": "2rem", "max": "2.75rem" }, "name": "Título" }
+        { "slug": "lead", "size": "1.125rem", "fluid": { "min": "1rem", "max": "1.125rem" }, "name": "Introducción" },
+        { "slug": "menu", "size": "0.875rem", "name": "Navegación" },
+        { "slug": "card-title", "size": "1.125rem", "name": "Título de tarjeta" },
+        { "slug": "category-link-icon", "size": "3.3rem", "fluid": { "min": "2.4rem", "max": "3.3rem" }, "name": "Icono de enlace de categoría" },
+        { "slug": "drawer-link", "size": "1.35rem", "fluid": { "min": "1.15rem", "max": "1.35rem" }, "name": "Enlace de menú móvil" },
+        { "slug": "section-title", "size": "2.625rem", "fluid": { "min": "2rem", "max": "2.625rem" }, "name": "Título de sección" },
+        { "slug": "x-large", "size": "2.75rem", "fluid": { "min": "2rem", "max": "2.75rem" }, "name": "Título" },
+        { "slug": "product-title", "size": "3.5rem", "fluid": { "min": "2.25rem", "max": "3.5rem" }, "name": "Título de producto" },
+        { "slug": "price", "size": "1.6rem", "fluid": { "min": "1.25rem", "max": "1.6rem" }, "name": "Precio" },
+        { "slug": "display", "size": "4rem", "fluid": { "min": "2.5rem", "max": "4rem" }, "name": "Portada" }
       ],
       "lineHeight": true
     },
@@ -82,23 +99,23 @@
   "styles": {
     "color": { "background": "var:preset|color|ivory", "text": "var:preset|color|charcoal" },
     "spacing": {
-      "blockGap": "1.5rem",
+      "blockGap": "var:preset|spacing|30",
       "padding": { "left": "0", "right": "0" }
     },
     "typography": { "fontFamily": "var:preset|font-family|sans", "fontSize": "var:preset|font-size|medium", "lineHeight": "1.65" },
     "elements": {
       "button": {
         "color": { "background": "var:preset|color|fuchsia", "text": "var:preset|color|white" },
-        "spacing": { "padding": { "top": "0.72rem", "right": "1.4rem", "bottom": "0.72rem", "left": "1.4rem" } },
-        "typography": { "fontSize": "0.84rem", "fontWeight": "700" }
+        "spacing": { "padding": { "top": "var:preset|spacing|15", "right": "var:preset|spacing|30", "bottom": "var:preset|spacing|15", "left": "var:preset|spacing|30" } },
+        "typography": { "fontSize": "var:preset|font-size|menu", "fontWeight": "700" }
       },
       "heading": { "typography": { "fontFamily": "var:preset|font-family|serif", "fontWeight": "560", "letterSpacing": "-0.025em", "lineHeight": "1.08" } },
       "link": { "color": { "text": "var:preset|color|charcoal" }, "typography": { "textDecoration": "none" } }
     },
     "blocks": {
-      "core/navigation": { "typography": { "fontSize": "0.84rem", "fontWeight": "650" } },
-      "core/site-title": { "typography": { "fontFamily": "var:preset|font-family|serif", "fontSize": "clamp(1.35rem, 2vw, 1.8rem)", "fontWeight": "600" } },
-      "core/image": { "border": { "radius": "16px" } },
+      "core/navigation": { "typography": { "fontSize": "var:preset|font-size|menu", "fontWeight": "650" } },
+      "core/site-title": { "typography": { "fontFamily": "var:preset|font-family|serif", "fontSize": "var:preset|font-size|section-title", "fontWeight": "600" } },
+      "core/image": { "border": { "radius": "var:preset|spacing|20" } },
       "woocommerce/product-price": { "color": { "text": "var:preset|color|fuchsia" }, "typography": { "fontWeight": "750" } }
     }
   },

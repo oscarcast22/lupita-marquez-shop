@@ -38,7 +38,7 @@
 	}
 
 	.lm-interactions-ready.lm-mobile-menu-is-open .lm-mobile-menu-toggle__line:first-child {
-		transform: translateY(6px) rotate(45deg);
+		transform: translateY(var(--lm-menu-line-shift)) rotate(45deg);
 	}
 
 	.lm-interactions-ready.lm-mobile-menu-is-open .lm-mobile-menu-toggle__line:nth-child(2) {
@@ -47,7 +47,7 @@
 	}
 
 	.lm-interactions-ready.lm-mobile-menu-is-open .lm-mobile-menu-toggle__line:last-child {
-		transform: translateY(-6px) rotate(-45deg);
+		transform: translateY(calc(var(--lm-menu-line-shift) * -1)) rotate(-45deg);
 	}
 
 	.lm-interactions-ready .lm-mobile-drawer__navigation a {
@@ -82,7 +82,7 @@
 .lm-interactions-ready .lm-hero__copy a:focus-visible,
 .lm-interactions-ready .lm-featured-cta a:focus-visible,
 .lm-interactions-ready .lm-footer-social a:focus-visible svg {
-	box-shadow: 0 0 0 4px color-mix(in srgb, var(--wp--preset--color--fuchsia) 18%, transparent);
+	box-shadow: 0 0 0 var(--lm-focus-ring-size) color-mix(in srgb, var(--wp--preset--color--fuchsia) 18%, transparent);
 }
 
 .lm-interactions-ready .lm-hero__copy a:active,
@@ -96,7 +96,7 @@
 	.lm-interactions-ready .lm-hero__copy a:hover,
 	.lm-interactions-ready .lm-featured-cta a:hover {
 		box-shadow: var(--lm-shadow-card);
-		transform: translateY(-2px);
+		transform: translateY(calc(var(--lm-button-lift) * -1));
 	}
 
 	.lm-interactions-ready .lm-hero__copy a:hover {
@@ -116,7 +116,7 @@
 
 	.lm-interactions-ready .lm-footer-social a:hover svg {
 		box-shadow: var(--lm-shadow-card);
-		transform: translateY(-2px) scale(1.03);
+		transform: translateY(calc(var(--lm-button-lift) * -1)) scale(1.03);
 	}
 }
 
@@ -124,7 +124,7 @@
 .lm-interactions-ready .lm-main select:focus,
 .lm-interactions-ready .lm-main textarea:focus {
 	border-color: var(--wp--preset--color--fuchsia);
-	box-shadow: 0 0 0 4px color-mix(in srgb, var(--wp--preset--color--fuchsia) 14%, transparent);
+	box-shadow: 0 0 0 var(--lm-focus-ring-size) color-mix(in srgb, var(--wp--preset--color--fuchsia) 14%, transparent);
 }
 
 .lm-interactions-ready.lm-drawer-is-open body {
