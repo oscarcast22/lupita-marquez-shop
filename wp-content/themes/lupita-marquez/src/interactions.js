@@ -10,6 +10,8 @@ const ADD_CONTROL_SELECTOR = [
 const MINI_CART_SELECTOR =
 	'.wp-block-woocommerce-mini-cart, .wc-block-mini-cart';
 const MINI_CART_BUTTON_SELECTOR = '.wc-block-mini-cart__button';
+const PRODUCT_CART_LABEL_SELECTOR =
+	'.wc-block-product .wc-block-components-product-button__button';
 const ERROR_SELECTOR = [
 	'.woocommerce-error',
 	'.wc-block-components-notice-banner.is-error',
@@ -19,6 +21,7 @@ const ERROR_SELECTOR = [
 const pendingControls = new Set();
 const originalControlState = new WeakMap();
 const pendingTimers = new WeakMap();
+const pendingLabelTimers = new WeakMap();
 let liveRegion;
 let miniCartRoot;
 let miniCartObserver;
@@ -32,6 +35,7 @@ let mobileMenuFrame;
 let mobileMenuScrollY = 0;
 
 const MOBILE_MENU_BREAKPOINT = 960;
+const PENDING_LABEL_DELAY = 280;
 
 const isElement = ( value ) => value instanceof Element;
 
@@ -256,6 +260,12 @@ const setControlLabel = ( control, label ) => {
 		return;
 	}
 
+	const labelElement = control.querySelector( '[data-wp-text]' );
+	if ( labelElement ) {
+		labelElement.textContent = label;
+		return;
+	}
+
 	control.textContent = label;
 };
 
@@ -280,13 +290,24 @@ const setControlState = ( control, state ) => {
 	if ( state === 'pending' ) {
 		control.setAttribute( 'aria-busy', 'true' );
 		setControlLabel( control, 'Agregando…' );
-	} else if ( state === 'success' ) {
-		control.removeAttribute( 'aria-busy' );
-		setControlLabel( control, 'Agregado' );
 	} else if ( state === 'error' ) {
 		control.removeAttribute( 'aria-busy' );
 		setControlLabel( control, 'No se pudo agregar' );
+	} else if ( state === 'success' ) {
+		// WooCommerce owns the reactive label, including the persistent cart quantity.
+		control.removeAttribute( 'aria-busy' );
 	}
+};
+
+const clearControlFeedback = ( control ) => {
+	if ( ! control ) {
+		return;
+	}
+
+	control.classList.remove( 'lm-is-pending', 'lm-is-success', 'lm-is-error' );
+	delete control.dataset.lmState;
+	control.removeAttribute( 'aria-busy' );
+	originalControlState.delete( control );
 };
 
 const restoreControl = ( control ) => {
@@ -309,6 +330,7 @@ const restoreControl = ( control ) => {
 	} else {
 		control.innerHTML = original.html;
 	}
+	originalControlState.delete( control );
 };
 
 const clearPendingTimer = ( control ) => {
@@ -316,6 +338,12 @@ const clearPendingTimer = ( control ) => {
 	if ( timer ) {
 		window.clearTimeout( timer );
 		pendingTimers.delete( control );
+	}
+
+	const labelTimer = pendingLabelTimers.get( control );
+	if ( labelTimer ) {
+		window.clearTimeout( labelTimer );
+		pendingLabelTimers.delete( control );
 	}
 };
 
@@ -336,7 +364,16 @@ const finishControl = ( control, state ) => {
 		pendingControls.delete( control );
 		setControlState( control, state );
 		window.setTimeout(
-			() => restoreControl( control ),
+			() => {
+				if ( state === 'success' ) {
+					if ( control.dataset.lmState === 'success' ) {
+						clearControlFeedback( control );
+					}
+					return;
+				}
+
+				restoreControl( control );
+			},
 			state === 'success' ? 1800 : 2200
 		);
 		return;
@@ -391,8 +428,112 @@ const getBadgeText = () =>
 		?.querySelector( '.wc-block-mini-cart__badge' )
 		?.textContent.trim() || '';
 
+const syncCartButtonLabels = () => {
+	document
+		.querySelectorAll( PRODUCT_CART_LABEL_SELECTOR )
+		.forEach( ( control ) => {
+			const labelElement = control.querySelector( '[data-wp-text]' );
+			const currentLabel = labelElement?.textContent.trim() || '';
+			const quantity =
+				currentLabel.match( /^(\d+)\s+in\s+cart$/i )?.[ 1 ];
+
+			if ( ! labelElement || ! quantity ) {
+				return;
+			}
+
+			labelElement.textContent = `${ quantity } en carrito`;
+		} );
+};
+
+const getDefaultCartButtonLabel = ( control ) => {
+	const contextElement = control.closest( '[data-wp-context]' );
+	if ( contextElement ) {
+		try {
+			const context = JSON.parse(
+				contextElement.getAttribute( 'data-wp-context' ) || '{}'
+			);
+			if ( context.addToCartText ) {
+				return context.addToCartText;
+			}
+		} catch {
+			// Fall back to the theme label when the block context is unavailable.
+		}
+	}
+
+	return 'Agregar al carrito';
+};
+
+const syncCartButtonQuantities = async (
+	retryCount = 0,
+	shouldRetry = false
+) => {
+	const controls = [
+		...document.querySelectorAll( PRODUCT_CART_LABEL_SELECTOR ),
+	].filter( ( control ) =>
+		control.classList.contains( 'product_type_simple' )
+	);
+
+	if ( ! controls.length ) {
+		return;
+	}
+
+	try {
+		const response = await fetch(
+			`${ window.location.origin }/wp-json/wc/store/v1/cart`,
+			{ cache: 'no-store', credentials: 'same-origin' }
+		);
+		if ( ! response.ok ) {
+			return;
+		}
+
+		const cart = await response.json();
+		const quantities = new Map(
+			( cart.items || [] ).map( ( item ) => [
+				String( item.id ),
+				Number( item.quantity ),
+			] )
+		);
+
+		controls.forEach( ( control ) => {
+			const labelElement = control.querySelector( '[data-wp-text]' );
+			const productId =
+				control.getAttribute( 'data-product_id' ) ||
+				control.getAttribute( 'data-product-id' );
+
+			if ( ! labelElement || ! productId ) {
+				return;
+			}
+
+			const quantity = quantities.get( productId );
+			if ( quantity > 0 ) {
+				labelElement.textContent = `${ quantity } en carrito`;
+				return;
+			}
+
+			if (
+				/^\d+\s+en\s+carrito$/i.test( labelElement.textContent.trim() )
+			) {
+				labelElement.textContent = getDefaultCartButtonLabel( control );
+			}
+		} );
+
+		if ( shouldRetry && retryCount < 3 ) {
+			window.setTimeout(
+				() => syncCartButtonQuantities( retryCount + 1, true ),
+				600 * ( retryCount + 1 )
+			);
+		}
+	} catch {
+		// The native WooCommerce state remains the fallback if the Store API is unavailable.
+	}
+};
+
 const observeBadge = () => {
+	syncCartButtonLabels();
 	const nextBadgeText = getBadgeText();
+	if ( hasBadgeSnapshot && nextBadgeText !== lastBadgeText ) {
+		syncCartButtonQuantities( 0, true );
+	}
 	if (
 		hasBadgeSnapshot &&
 		nextBadgeText !== lastBadgeText &&
@@ -442,7 +583,15 @@ const markPending = ( control ) => {
 	}
 
 	pendingControls.add( control );
-	setControlState( control, 'pending' );
+	saveControlState( control );
+	control.setAttribute( 'aria-busy', 'true' );
+	const labelTimer = window.setTimeout( () => {
+		pendingLabelTimers.delete( control );
+		if ( pendingControls.has( control ) ) {
+			setControlState( control, 'pending' );
+		}
+	}, PENDING_LABEL_DELAY );
+	pendingLabelTimers.set( control, labelTimer );
 	const timer = window.setTimeout( () => {
 		if ( hasVisibleError() ) {
 			finishControl( control, 'error' );
@@ -543,6 +692,8 @@ const handleSuccessfulAdd = ( ...values ) => {
 	const control = resolveEventControl( values );
 	const productName = getProductName( control );
 	finishControl( control, 'success' );
+	syncCartButtonLabels();
+	syncCartButtonQuantities();
 	announce( `${ productName } se agregó al carrito.` );
 	openMiniCart();
 };
@@ -614,6 +765,7 @@ const handleSimpleSubmit = ( event ) => {
 
 const handleBodyMutation = () => {
 	connectMiniCart();
+	syncCartButtonLabels();
 	if ( pendingControls.size && hasVisibleError() ) {
 		handleFailedAdd();
 	}
@@ -644,6 +796,10 @@ const bindWooEvents = () => {
 			event.detail?.control
 		)
 	);
+	body.addEventListener( 'wc-blocks_removed_from_cart', () => {
+		syncCartButtonLabels();
+		syncCartButtonQuantities( 0, true );
+	} );
 	body.addEventListener( 'wc-blocks_add_to_cart_failed', handleFailedAdd );
 	body.addEventListener( 'click', handleInteraction, true );
 	body.addEventListener( 'submit', handleSimpleSubmit, true );
@@ -661,6 +817,8 @@ const initInteractions = () => {
 	liveRegion.setAttribute( 'aria-atomic', 'true' );
 	document.body.append( liveRegion );
 
+	syncCartButtonLabels();
+	syncCartButtonQuantities();
 	connectMiniCart();
 	bindWooEvents();
 	initMobileMenu();

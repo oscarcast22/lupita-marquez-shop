@@ -53,8 +53,16 @@ add_filter('woocommerce_product_add_to_cart_text', static function (string $text
 add_filter('woocommerce_product_single_add_to_cart_text', static fn (): string => 'Agregar al carrito');
 
 add_filter('woocommerce_product_add_to_cart_description', static function (string $description, WC_Product $product): string {
-    return sprintf('Agregar al carrito: “%s”', $product->get_name());
+    if ($product->is_type('variable')) {
+        return sprintf('Ver opciones de “%s”', $product->get_name());
+    }
+
+    return sprintf('Agregar “%s” al carrito', $product->get_name());
 }, 10, 2);
+
+add_action('wp_head', static function (): void {
+    wp_print_inline_script_tag("document.documentElement.classList.add('lm-interactions-ready');");
+}, 0);
 
 add_action('wp_enqueue_scripts', static function (): void {
     $asset_file = get_theme_file_path('build/index.asset.php');
