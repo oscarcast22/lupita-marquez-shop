@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 900" role="img" aria-labelledby="title desc">
   <title id="title">Foto próximamente</title>
   <desc id="desc">Marcador de imagen de Lupita Márquez</desc>
-  <rect width="720" height="900" fill="#f3ebe3"/>
-  <circle cx="360" cy="365" r="105" fill="none" stroke="#9b623a" stroke-width="3"/>
-  <path d="M292 390c37-76 99-80 136 0M330 327c0-17 13-30 30-30s30 13 30 30" fill="none" stroke="#9b623a" stroke-linecap="round" stroke-width="4"/>
-  <text x="360" y="530" fill="#2d2825" font-family="Georgia,serif" font-size="52" text-anchor="middle">Foto próximamente</text>
-  <text x="360" y="582" fill="#6f655f" font-family="Arial,sans-serif" font-size="22" letter-spacing="4" text-anchor="middle">LUPITA MÁRQUEZ</text>
+  <rect width="720" height="900" fill="#f5ede2"/>
+  <circle cx="360" cy="365" r="105" fill="none" stroke="#a47d36" stroke-width="3"/>
+  <path d="M292 390c37-76 99-80 136 0M330 327c0-17 13-30 30-30s30 13 30 30" fill="none" stroke="#a47d36" stroke-linecap="round" stroke-width="4"/>
+  <text x="360" y="530" fill="#292522" font-family="Georgia,serif" font-size="52" text-anchor="middle">Foto próximamente</text>
+  <text x="360" y="582" fill="#6b625c" font-family="Arial,sans-serif" font-size="22" letter-spacing="4" text-anchor="middle">LUPITA MÁRQUEZ</text>
 </svg>

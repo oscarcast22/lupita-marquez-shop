@@ -6,6 +6,14 @@ import path from 'node:path';
 const projectRoot = path.resolve( import.meta.dirname, '..' );
 const productsRoot = path.join( projectRoot, 'productos' );
 const outputRoot = path.join( productsRoot, 'catalogo' );
+const themePath = path.join(
+	projectRoot,
+	'wp-content/themes/lupita-marquez/theme.json'
+);
+const theme = JSON.parse( await fs.readFile( themePath, 'utf8' ) );
+const palette = Object.fromEntries(
+	theme.settings.color.palette.map( ( { slug, color } ) => [ slug, color ] )
+);
 
 const images = [
 	// Altar chico: four painted views; the comparison image is intentionally omitted.
@@ -142,34 +150,38 @@ const writeWebp = async ( source, destination ) => {
 	const sourceURL = `data:image/jpeg;base64,${ sourceBuffer.toString(
 		'base64'
 	) }`;
-	const dataURL = await page.evaluate( async ( url ) => {
-		const image = new window.Image();
-		image.src = url;
-		await image.decode();
+	const dataURL = await page.evaluate(
+		async ( url, colors ) => {
+			const image = new window.Image();
+			image.src = url;
+			await image.decode();
 
-		const canvas = document.createElement( 'canvas' );
-		canvas.width = 800;
-		canvas.height = 1000;
-		const context = canvas.getContext( '2d' );
-		context.fillStyle = '#ffffff';
-		context.fillRect( 0, 0, canvas.width, canvas.height );
+			const canvas = document.createElement( 'canvas' );
+			canvas.width = 800;
+			canvas.height = 1000;
+			const context = canvas.getContext( '2d' );
+			context.fillStyle = colors.white;
+			context.fillRect( 0, 0, canvas.width, canvas.height );
 
-		const padding = 32;
-		const scale = Math.min(
-			( canvas.width - padding * 2 ) / image.naturalWidth,
-			( canvas.height - padding * 2 ) / image.naturalHeight
-		);
-		const width = Math.round( image.naturalWidth * scale );
-		const height = Math.round( image.naturalHeight * scale );
-		context.drawImage(
-			image,
-			Math.round( ( canvas.width - width ) / 2 ),
-			Math.round( ( canvas.height - height ) / 2 ),
-			width,
-			height
-		);
-		return canvas.toDataURL( 'image/webp', 0.85 );
-	}, sourceURL );
+			const padding = 32;
+			const scale = Math.min(
+				( canvas.width - padding * 2 ) / image.naturalWidth,
+				( canvas.height - padding * 2 ) / image.naturalHeight
+			);
+			const width = Math.round( image.naturalWidth * scale );
+			const height = Math.round( image.naturalHeight * scale );
+			context.drawImage(
+				image,
+				Math.round( ( canvas.width - width ) / 2 ),
+				Math.round( ( canvas.height - height ) / 2 ),
+				width,
+				height
+			);
+			return canvas.toDataURL( 'image/webp', 0.85 );
+		},
+		sourceURL,
+		palette
+	);
 
 	const output = path.join( outputRoot, destination );
 	await fs.mkdir( path.dirname( output ), { recursive: true } );
@@ -183,23 +195,23 @@ for ( const [ source, destination ] of images ) {
 	await writeWebp( source, destination );
 }
 
-const placeholderDataURL = await page.evaluate( () => {
+const placeholderDataURL = await page.evaluate( ( colors ) => {
 	const canvas = document.createElement( 'canvas' );
 	canvas.width = 800;
 	canvas.height = 1000;
 	const context = canvas.getContext( '2d' );
-	context.fillStyle = '#ffffff';
+	context.fillStyle = colors.white;
 	context.fillRect( 0, 0, canvas.width, canvas.height );
-	context.strokeStyle = '#d8d1c7';
+	context.strokeStyle = colors.sand;
 	context.lineWidth = 3;
 	context.strokeRect( 48, 48, 704, 904 );
-	context.fillStyle = '#6f6257';
+	context.fillStyle = colors.muted;
 	context.textAlign = 'center';
 	context.textBaseline = 'middle';
 	context.font = '600 48px system-ui, sans-serif';
 	context.fillText( 'Foto próximamente', 400, 500 );
 	return canvas.toDataURL( 'image/webp', 0.85 );
-} );
+}, palette );
 await fs.mkdir( path.join( outputRoot, 'placeholder' ), { recursive: true } );
 await fs.writeFile(
 	path.join( outputRoot, 'placeholder/foto-proximamente.webp' ),
