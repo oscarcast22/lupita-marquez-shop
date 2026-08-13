@@ -7,9 +7,10 @@
     "start": "wp-scripts start wp-content/themes/lupita-marquez/src/index.js --output-path=wp-content/themes/lupita-marquez/build",
     "lint:css": "wp-scripts lint-style 'wp-content/themes/lupita-marquez/src/**/*.css'",
     "lint:js": "wp-scripts lint-js 'wp-content/themes/lupita-marquez/src/**/*.js' 'scripts/*.mjs'",
+    "check:design-system": "node scripts/design-system-check.mjs",
     "prepare:catalog-images": "node scripts/prepare-catalog-images.mjs",
     "audit:frontend": "node scripts/frontend-audit.mjs",
-    "test:frontend": "npm run build && npm run lint:css && npm run lint:js"
+    "test:frontend": "npm run build && npm run lint:css && npm run lint:js && npm run check:design-system"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",
