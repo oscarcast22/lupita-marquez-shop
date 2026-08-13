@@ -155,6 +155,7 @@ for ( const width of widths ) {
 		const pageErrors = [];
 		let interactionAudit = null;
 		let mobileNavigationAudit = null;
+		let productMediaAudit = null;
 		let stickyHeaderAudit = null;
 		let variationAudit = null;
 
@@ -578,6 +579,83 @@ for ( const width of widths ) {
 						)
 				  )
 				: 0;
+			const productActions = featuredCards.map( ( card ) => {
+				const media = card.querySelector(
+					'.wc-block-components-product-image > a, .wp-block-woocommerce-product-image > a'
+				);
+				const control = card.querySelector(
+					'.wp-block-woocommerce-product-button .wp-element-button'
+				);
+				const mediaBounds = media?.getBoundingClientRect();
+				const controlBounds = control?.getBoundingClientRect();
+				const label = control?.getAttribute( 'aria-label' ) || '';
+				return {
+					height: controlBounds?.height || 0,
+					labelValid: card.classList.contains(
+						'product-type-variable'
+					)
+						? label.startsWith( 'Ver opciones de' )
+						: label.startsWith( 'Agregar' ) &&
+						  label.endsWith( 'al carrito' ),
+					overlaysMedia: Boolean(
+						mediaBounds &&
+							controlBounds &&
+							controlBounds.left >= mediaBounds.left &&
+							controlBounds.right <= mediaBounds.right &&
+							controlBounds.top >= mediaBounds.top &&
+							controlBounds.bottom <= mediaBounds.bottom
+					),
+					width: controlBounds?.width || 0,
+				};
+			} );
+			const productMediaItems = [
+				...document.querySelectorAll( '.wc-block-product' ),
+			]
+				.filter( visible )
+				.filter( ( card ) =>
+					card.querySelector(
+						'.wc-block-components-product-image > a, .wp-block-woocommerce-product-image > a'
+					)
+				)
+				.map( ( card ) => {
+					const wrapper = card.querySelector(
+						'.wc-block-components-product-image, .wp-block-woocommerce-product-image'
+					);
+					const frame = wrapper?.querySelector( ':scope > a' );
+					const productImage = frame?.querySelector( 'img' );
+					const frameBounds = frame?.getBoundingClientRect();
+					const frameStyle = frame
+						? window.getComputedStyle( frame )
+						: null;
+					const imageStyle = productImage
+						? window.getComputedStyle( productImage )
+						: null;
+					return {
+						frameBackground: frameStyle?.backgroundColor || '',
+						frameBorder: frameStyle?.border || '',
+						framePadding: frameStyle?.padding || '',
+						frameRadius: frameStyle?.borderRadius || '',
+						imageRadius: imageStyle?.borderRadius || '',
+						imageTransitionDuration:
+							imageStyle?.transitionDuration || '',
+						imageTransitionProperty:
+							imageStyle?.transitionProperty || '',
+						imageSizingNative:
+							productImage?.style.objectFit === 'contain' &&
+							[ '1', '1 / 1' ].includes(
+								productImage?.style.aspectRatio
+							),
+						objectFit: imageStyle?.objectFit || '',
+						square: frameBounds
+							? Math.abs(
+									frameBounds.width - frameBounds.height
+							  ) <= 0.5
+							: false,
+						wrapperOverflow: wrapper
+							? window.getComputedStyle( wrapper ).overflow
+							: '',
+					};
+				} );
 			const heroImage = document.querySelector( '.lm-hero__picture img' );
 			const heroImageSource =
 				heroImage?.currentSrc || heroImage?.src || '';
@@ -659,6 +737,19 @@ for ( const width of widths ) {
 				homeLayout: {
 					featuredProductCount: featuredCards.length,
 					featuredButtonSpread: +featuredButtonSpread.toFixed( 2 ),
+					productActionCount: productActions.length,
+					productActionLabelsValid: productActions.every(
+						( action ) => action.labelValid
+					),
+					productActionsOverlayMedia: productActions.every(
+						( action ) => action.overlaysMedia
+					),
+					productActionsTactile:
+						window.innerWidth > 782 ||
+						productActions.every(
+							( action ) =>
+								action.width >= 43.5 && action.height >= 43.5
+						),
 					heroAssetCorrect: heroImage
 						? heroImageSource.includes(
 								window.innerWidth <= 782
@@ -666,6 +757,32 @@ for ( const width of widths ) {
 									: 'hero-desktop.jpg'
 						  )
 						: false,
+				},
+				productMedia: {
+					count: productMediaItems.length,
+					consistentSurface:
+						productMediaItems.length === 0 ||
+						productMediaItems.every(
+							( item ) =>
+								item.frameBackground ===
+									productMediaItems[ 0 ].frameBackground &&
+								item.frameBorder ===
+									productMediaItems[ 0 ].frameBorder &&
+								item.frameRadius ===
+									productMediaItems[ 0 ].frameRadius
+						),
+					compositionValid: productMediaItems.every(
+						( item ) =>
+							item.square &&
+							item.objectFit === 'contain' &&
+							item.imageSizingNative &&
+							item.framePadding === '8px' &&
+							item.frameRadius === '16px' &&
+							item.imageRadius === '8px' &&
+							item.imageTransitionDuration === '0.5s' &&
+							item.imageTransitionProperty === 'transform' &&
+							item.wrapperOverflow === 'visible'
+					),
 				},
 				uiScale: {
 					body: fontSize( 'body' ),
@@ -763,6 +880,64 @@ for ( const width of widths ) {
 					: null,
 			};
 		} );
+		if (
+			width === 1280 &&
+			[ 'inicio', 'tienda', 'producto-variable' ].includes( name )
+		) {
+			const productCardSelectors = {
+				inicio: '.lm-featured-collection .wc-block-product',
+				'producto-variable': '.lm-related-products .wc-block-product',
+				tienda: '.wc-block-product',
+			};
+			const cardSelector = productCardSelectors[ name ];
+			const card = page.locator( cardSelector ).first();
+			if ( await card.count() ) {
+				await card.scrollIntoViewIfNeeded();
+				const readProductMedia = () =>
+					card.evaluate( ( productCard ) => {
+						const frame = productCard.querySelector(
+							'.wc-block-components-product-image > a, .wp-block-woocommerce-product-image > a'
+						);
+						const productImage = frame.querySelector( 'img' );
+						const frameBounds = frame.getBoundingClientRect();
+						const frameStyle = window.getComputedStyle( frame );
+						const imageStyle =
+							window.getComputedStyle( productImage );
+						return {
+							frame: {
+								background: frameStyle.backgroundColor,
+								border: frameStyle.border,
+								height: frameBounds.height,
+								shadow: frameStyle.boxShadow,
+								width: frameBounds.width,
+								x: frameBounds.x,
+								y: frameBounds.y,
+							},
+							imageTransform: imageStyle.transform,
+						};
+					} );
+				const mediaAtRest = await readProductMedia();
+				await card.hover();
+				await page.waitForTimeout( 300 );
+				const mediaOnHover = await readProductMedia();
+				await page.mouse.move( width - 4, 400 );
+				await page.waitForTimeout( 300 );
+				const mediaAfterHover = await readProductMedia();
+				const frameStable = Object.keys( mediaAtRest.frame ).every(
+					( property ) =>
+						mediaAtRest.frame[ property ] ===
+						mediaOnHover.frame[ property ]
+				);
+				productMediaAudit = {
+					frameStable,
+					imageReturned: mediaAfterHover.imageTransform === 'none',
+					imageScaled:
+						mediaOnHover.imageTransform.startsWith(
+							'matrix(1.015'
+						) && mediaOnHover.imageTransform.endsWith( ', 0, 0)' ),
+				};
+			}
+		}
 		if ( name === 'inicio' ) {
 			const header = page.locator( '.lm-site-header' );
 			const headerIsVisible = () =>
@@ -1123,15 +1298,29 @@ for ( const width of widths ) {
 					.first();
 				await featuredCard.scrollIntoViewIfNeeded();
 				await page.evaluate( () => window.scrollBy( 0, -120 ) );
+				await page.mouse.move( width - 4, 400 );
+				const productAction = featuredCard.locator(
+					'.wp-block-woocommerce-product-button'
+				);
+				const productControl =
+					productAction.locator( '.wp-element-button' );
+				const cardBoundsBefore = await featuredCard.boundingBox();
+				const actionAtRest = await readMotion( productAction );
 				await featuredCard.hover();
 				await page.waitForTimeout( 300 );
 				const cardHover = await readMotion( featuredCard );
+				const actionOnHover = await readMotion( productAction );
+				const cardBoundsAfter = await featuredCard.boundingBox();
 				await page.screenshot( {
 					path: path.join(
 						outputDirectory,
 						'inicio-product-hover-1280.png'
 					),
 				} );
+				await page.mouse.move( width - 4, 400 );
+				await productControl.focus();
+				await page.waitForTimeout( 300 );
+				const actionOnFocus = await readMotion( productAction );
 
 				const socialMark = page
 					.locator( '.lm-footer-social a svg' )
@@ -1144,7 +1333,18 @@ for ( const width of widths ) {
 				interactionAudit.desktop = {
 					cardStable:
 						cardHover.transform === 'none' &&
-						cardHover.boxShadow !== 'none',
+						cardHover.boxShadow === 'none' &&
+						Math.abs(
+							cardBoundsBefore.height - cardBoundsAfter.height
+						) <= 0.5 &&
+						Math.abs(
+							cardBoundsBefore.width - cardBoundsAfter.width
+						) <= 0.5,
+					productActionConcealed:
+						actionAtRest.opacity === 0 &&
+						actionAtRest.transform !== 'none',
+					productActionFocusRevealed: actionOnFocus.opacity === 1,
+					productActionHoverRevealed: actionOnHover.opacity === 1,
 					chevronRotated: chevronOpen.transform !== 'none',
 					expandedAfterHover,
 					heroRaised:
@@ -1184,6 +1384,7 @@ for ( const width of widths ) {
 			requiredContentMissing,
 			interactionAudit,
 			mobileNavigationAudit,
+			productMediaAudit,
 			stickyHeaderAudit,
 			variationAudit,
 			...metrics,
@@ -1367,9 +1568,20 @@ const failures = report.pages.filter(
 		page.pageErrors.length ||
 		page.console.some( ( message ) => message.type === 'error' ) ||
 		page.requiredContentMissing ||
+		( page.productMedia.count > 0 &&
+			( ! page.productMedia.consistentSurface ||
+				! page.productMedia.compositionValid ) ) ||
+		( page.productMediaAudit &&
+			( ! page.productMediaAudit.frameStable ||
+				! page.productMediaAudit.imageScaled ||
+				! page.productMediaAudit.imageReturned ) ) ||
 		( page.name === 'inicio' &&
 			( page.homeLayout.featuredProductCount !== 6 ||
 				page.homeLayout.featuredButtonSpread > 1 ||
+				page.homeLayout.productActionCount !== 6 ||
+				! page.homeLayout.productActionLabelsValid ||
+				! page.homeLayout.productActionsOverlayMedia ||
+				! page.homeLayout.productActionsTactile ||
 				! page.homeLayout.heroAssetCorrect ||
 				page.interactionAudit?.accountTextLinkCount !== 0 ||
 				! page.interactionAudit?.accountIconVisible ||
@@ -1377,6 +1589,12 @@ const failures = report.pages.filter(
 				( page.width <= 960 && ! page.mobileNavigationAudit?.passed ) ||
 				( page.width === 1280 &&
 					( ! page.interactionAudit?.desktop?.cardStable ||
+						! page.interactionAudit?.desktop
+							?.productActionConcealed ||
+						! page.interactionAudit?.desktop
+							?.productActionFocusRevealed ||
+						! page.interactionAudit?.desktop
+							?.productActionHoverRevealed ||
 						! page.interactionAudit?.desktop?.chevronRotated ||
 						! page.interactionAudit?.desktop?.expandedAfterHover ||
 						! page.interactionAudit?.desktop?.heroRaised ||
