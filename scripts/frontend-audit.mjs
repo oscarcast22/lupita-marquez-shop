@@ -588,9 +588,16 @@ for ( const width of widths ) {
 				);
 				const mediaBounds = media?.getBoundingClientRect();
 				const controlBounds = control?.getBoundingClientRect();
+				const action = card.querySelector(
+					'.wp-block-woocommerce-product-button'
+				);
+				const actionStyle = action
+					? window.getComputedStyle( action )
+					: null;
 				const label = control?.getAttribute( 'aria-label' ) || '';
 				return {
 					height: controlBounds?.height || 0,
+					hidden: actionStyle?.display === 'none',
 					labelValid: card.classList.contains(
 						'product-type-variable'
 					)
@@ -741,15 +748,18 @@ for ( const width of widths ) {
 					productActionLabelsValid: productActions.every(
 						( action ) => action.labelValid
 					),
-					productActionsOverlayMedia: productActions.every(
-						( action ) => action.overlaysMedia
-					),
-					productActionsTactile:
-						window.innerWidth > 782 ||
-						productActions.every(
-							( action ) =>
-								action.width >= 43.5 && action.height >= 43.5
-						),
+					productActionsPresentationValid:
+						window.innerWidth <= 782
+							? productActions.every(
+									( action ) => action.hidden
+							  )
+							: productActions.every(
+									( action ) =>
+										! action.hidden &&
+										action.overlaysMedia &&
+										action.width >= 43.5 &&
+										action.height >= 43.5
+							  ),
 					heroAssetCorrect: heroImage
 						? heroImageSource.includes(
 								window.innerWidth <= 782
@@ -1580,8 +1590,7 @@ const failures = report.pages.filter(
 				page.homeLayout.featuredButtonSpread > 1 ||
 				page.homeLayout.productActionCount !== 6 ||
 				! page.homeLayout.productActionLabelsValid ||
-				! page.homeLayout.productActionsOverlayMedia ||
-				! page.homeLayout.productActionsTactile ||
+				! page.homeLayout.productActionsPresentationValid ||
 				! page.homeLayout.heroAssetCorrect ||
 				page.interactionAudit?.accountTextLinkCount !== 0 ||
 				! page.interactionAudit?.accountIconVisible ||
