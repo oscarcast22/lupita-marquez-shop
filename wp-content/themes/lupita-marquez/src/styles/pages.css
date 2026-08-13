@@ -1,4 +1,4 @@
-.lm-hero { background: var(--wp--preset--color--mist); min-height: clamp(31rem, 51vw, 43rem); overflow: clip; position: relative; }
+.lm-hero { background: var(--wp--preset--color--mist); min-height: clamp(31rem, 56.28vw, 56rem); overflow: clip; position: relative; }
 
 .lm-hero::after {
 	background: linear-gradient(90deg, color-mix(in srgb, var(--wp--preset--color--ivory) 30%, transparent), transparent 52%);
@@ -12,7 +12,7 @@
 
 .lm-hero__picture img { height: 100%; object-fit: cover; object-position: center; width: 100%; }
 
-.lm-hero__inner { align-items: center; display: flex; min-height: clamp(31rem, 51vw, 43rem); position: relative; z-index: 1; }
+.lm-hero__inner { align-items: center; display: flex; min-height: clamp(31rem, 56.28vw, 56rem); position: relative; z-index: 1; }
 
 .lm-hero__copy { max-width: min(46%, 36rem); padding-block: var(--wp--preset--spacing--50); }
 
