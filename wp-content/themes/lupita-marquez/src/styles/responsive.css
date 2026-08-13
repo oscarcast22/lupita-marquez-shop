@@ -1,12 +1,27 @@
 @media (max-width: 960px) {
 
-	.lm-interactions-ready .lm-site-header__inner {
+	.lm-site-header__inner {
 		display: grid;
 		gap: 0;
 		grid-template-columns: var(--lm-mobile-header-side) minmax(0, 1fr) var(--lm-mobile-header-side);
 	}
 
-	.lm-interactions-ready .lm-mobile-menu-toggle {
+	.lm-site-header__inner > .lm-primary-nav,
+	.lm-mobile-menu-toggle {
+		grid-column: 1;
+		grid-row: 1;
+	}
+
+	.lm-site-header__inner > .lm-primary-nav {
+		align-items: center;
+		display: flex;
+		justify-self: start;
+		margin: 0;
+		order: initial;
+		z-index: 4;
+	}
+
+	.lm-mobile-menu-ready .lm-mobile-menu-toggle {
 		align-items: center;
 		appearance: none;
 		background: transparent;
@@ -29,26 +44,26 @@
 	.lm-mobile-menu-toggle__line {
 		background: currentcolor;
 		display: block;
-		height: 1.5px;
-		margin-block: 2.25px;
+		height: var(--lm-menu-line-thickness);
+		margin-block: var(--lm-menu-line-gap);
 		transform-origin: center;
-		width: 22px;
+		width: var(--lm-menu-line-width);
 	}
 
-	.lm-interactions-ready .lm-brand {
+	.lm-brand {
 		grid-column: 2;
 		justify-content: center;
 		justify-self: stretch;
 	}
 
-	.lm-interactions-ready .lm-brand__mark {
+	.lm-brand__mark {
 		mask-position: center;
 		-webkit-mask-position: center;
 	}
 
-	.lm-interactions-ready .lm-primary-nav { display: none; }
+	.lm-mobile-menu-ready .lm-site-header__inner > .lm-primary-nav { display: none; }
 
-	.lm-interactions-ready .lm-header-actions {
+	.lm-header-actions {
 		grid-column: 3;
 		justify-content: flex-end;
 		justify-self: end;
@@ -56,7 +71,7 @@
 		z-index: 4;
 	}
 
-	.lm-interactions-ready .lm-mobile-menu-backdrop {
+	.lm-mobile-menu-ready .lm-mobile-menu-backdrop {
 		background: color-mix(in srgb, var(--wp--preset--color--charcoal) 34%, transparent);
 		bottom: 0;
 		display: block;
@@ -69,7 +84,7 @@
 		z-index: 1;
 	}
 
-	.lm-interactions-ready .lm-mobile-drawer {
+	.lm-mobile-menu-ready .lm-mobile-drawer {
 		background: var(--wp--preset--color--ivory);
 		bottom: 0;
 		display: block;
@@ -87,20 +102,20 @@
 		background: var(--wp--preset--color--wood);
 		bottom: 0;
 		content: "";
-		height: 10rem;
+		height: var(--lm-ornament-size);
 		mask: url(/wp-content/themes/lupita-marquez/assets/images/botanical-corner.svg) center / contain no-repeat;
 		opacity: 0.14;
 		pointer-events: none;
 		position: absolute;
 		right: 0;
-		width: 10rem;
+		width: var(--lm-ornament-size);
 	}
 
 	.lm-mobile-drawer__inner {
 		display: flex;
 		flex-direction: column;
 		min-height: 100%;
-		padding: clamp(1.5rem, 6vw, 2.25rem) clamp(1.5rem, 7vw, 2.25rem) 2rem;
+		padding: var(--wp--preset--spacing--drawer-padding) var(--wp--preset--spacing--drawer-padding) var(--wp--preset--spacing--40);
 		position: relative;
 		z-index: 1;
 	}
@@ -113,13 +128,13 @@
 		color: var(--wp--preset--color--charcoal);
 		display: grid;
 		font-family: var(--wp--preset--font-family--serif);
-		font-size: clamp(1.15rem, 5vw, 1.35rem);
+		font-size: var(--wp--preset--font-size--drawer-link);
 		font-weight: 650;
-		gap: 1rem;
+		gap: var(--wp--preset--spacing--20);
 		grid-template-columns: minmax(0, 1fr) 0.75rem;
 		line-height: 1.2;
-		min-height: 58px;
-		padding: 0.55rem 0.75rem;
+		min-height: var(--lm-drawer-link-height);
+		padding: var(--wp--preset--spacing--10) var(--wp--preset--spacing--15);
 		text-decoration: none;
 	}
 
@@ -148,11 +163,11 @@
 
 	.lm-mobile-drawer__signature {
 		color: var(--wp--preset--color--muted);
-		font-size: 0.72rem;
+		font-size: var(--wp--preset--font-size--micro);
 		letter-spacing: 0.04em;
 		margin: auto 0 0;
 		max-width: 15rem;
-		padding-top: 3rem;
+		padding-top: var(--wp--preset--spacing--50);
 	}
 
 	.lm-mobile-menu-is-open body {
@@ -173,11 +188,11 @@
 
 @media (max-width: 782px) {
 
-	.admin-bar .lm-site-header { top: 46px; }
+	.admin-bar .lm-site-header { top: var(--lm-control-height); }
 
-	.lm-brand { flex-basis: 165px; }
+	.lm-brand { flex-basis: calc(var(--lm-brand-width-tablet) + var(--wp--preset--spacing--10)); }
 
-	.lm-brand__mark { height: 34px; width: 155px; }
+	.lm-brand__mark { height: var(--lm-brand-height-tablet); width: var(--lm-brand-width-tablet); }
 
 	.lm-hero,
 	.lm-hero__inner { min-height: clamp(42rem, 150vw, 52rem); }
@@ -190,15 +205,15 @@
 
 	.lm-hero__copy { max-width: 35rem; padding-block: clamp(2.5rem, 8vw, 4rem); }
 
-	.lm-hero h1 { font-size: clamp(2.5rem, 8vw, 3.5rem); max-width: 11ch; }
+	.lm-hero h1 { max-width: 11ch; }
 
 	.lm-category-index { grid-template-columns: 1fr; }
 
-	.lm-category-card { min-height: 0; padding: 1.75rem 0; }
+	.lm-category-card { min-height: 0; padding: var(--wp--preset--spacing--45) 0; }
 
 	.lm-category-card + .lm-category-card { border-left: 0; padding-left: 0; }
 
-	.lm-category-card h3 { margin-block: 1rem 0.5rem; }
+	.lm-category-card h3 { margin-block: var(--wp--preset--spacing--20) var(--wp--preset--spacing--10); }
 
 	.lm-section-heading { align-items: start; flex-direction: column; }
 
@@ -211,24 +226,24 @@
 
 @media (max-width: 520px) {
 
-	:root { --lm-header-height: 64px; }
+	:root { --lm-header-height: 4rem; }
 
-	.lm-topbar { font-size: 0.68rem; }
+	.lm-topbar { font-size: var(--wp--preset--font-size--micro); }
 
 	.lm-header-actions { gap: 0; }
 
-	.lm-brand { flex-basis: 132px; }
+	.lm-brand { flex-basis: calc(var(--lm-brand-width-mobile) + var(--wp--preset--spacing--05)); }
 
-	.lm-brand__mark { height: 30px; width: 128px; }
+	.lm-brand__mark { height: var(--lm-brand-height-mobile); width: var(--lm-brand-width-mobile); }
 
 	.lm-hero,
 	.lm-hero__inner { min-height: clamp(41rem, 174vw, 47rem); }
 
 	.lm-hero__copy { padding-block: 2.4rem; }
 
-	.lm-hero h1 { font-size: clamp(2.5rem, 11vw, 3rem); }
+	.lm-hero h1 { max-width: 11ch; }
 
-	.lm-hero__lede { font-size: 0.9375rem; max-width: 20rem; }
+	.lm-hero__lede { max-width: 20rem; }
 
 	.lm-trust-grid { grid-template-columns: 1fr; }
 
@@ -240,10 +255,10 @@
 
 	.lm-footer-flower { position: static; }
 
-	.lm-footer-meta { gap: 1rem; justify-content: space-between; }
+	.lm-footer-meta { gap: var(--wp--preset--spacing--20); justify-content: space-between; }
 
 	.lm-site-footer::before,
-	.lm-site-footer::after { height: 96px; width: 96px; }
+	.lm-site-footer::after { height: var(--lm-ornament-size-mobile); width: var(--lm-ornament-size-mobile); }
 
 	.lm-footer-grid, .lm-search-results { grid-template-columns: 1fr; }
 }

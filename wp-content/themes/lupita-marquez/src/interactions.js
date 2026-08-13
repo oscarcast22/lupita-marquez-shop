@@ -32,6 +32,7 @@ let mobileMenuToggle;
 let mobileMenuBackdrop;
 let mobileMenuOpen = false;
 let mobileMenuFrame;
+let mobileMenuInitialized = false;
 let mobileMenuScrollY = 0;
 
 const MOBILE_MENU_BREAKPOINT = 960;
@@ -169,6 +170,10 @@ const markCurrentMobileDestination = () => {
 };
 
 const initMobileMenu = () => {
+	if ( mobileMenuInitialized ) {
+		return;
+	}
+
 	mobileMenu = document.querySelector( '.lm-mobile-drawer' );
 	mobileMenuToggle = document.querySelector( '.lm-mobile-menu-toggle' );
 	mobileMenuBackdrop = document.querySelector( '.lm-mobile-menu-backdrop' );
@@ -202,6 +207,8 @@ const initMobileMenu = () => {
 			() => closeMobileMenu( { restoreFocus: false } ),
 			true
 		);
+	mobileMenuInitialized = true;
+	document.documentElement.classList.add( 'lm-mobile-menu-ready' );
 };
 
 const getElementFromValue = ( value ) => {
@@ -811,6 +818,7 @@ const bindWooEvents = () => {
 
 const initInteractions = () => {
 	document.documentElement.classList.add( 'lm-interactions-ready' );
+	initMobileMenu();
 	liveRegion = document.createElement( 'p' );
 	liveRegion.className = 'lm-cart-status lm-sr-only';
 	liveRegion.setAttribute( 'aria-live', 'polite' );
@@ -821,7 +829,6 @@ const initInteractions = () => {
 	syncCartButtonQuantities();
 	connectMiniCart();
 	bindWooEvents();
-	initMobileMenu();
 };
 
 if ( document.readyState === 'loading' ) {
