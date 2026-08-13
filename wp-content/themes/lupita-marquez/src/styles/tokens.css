@@ -4,8 +4,17 @@
 	--lm-radius: 16px;
 	--lm-radius-lg: 24px;
 	--lm-border: 1px solid var(--wp--preset--color--sand);
+	--lm-product-action-glyph: 24px;
+	--lm-product-action-inset: 12px;
+	--lm-product-action-radius: 8px;
+	--lm-product-action-reveal-duration: 200ms;
+	--lm-product-image-radius: 8px;
+	--lm-product-media-inset: 8px;
+	--lm-product-media-radius: 16px;
+	--lm-product-media-scale-duration: 500ms;
 	--lm-shadow-card: 0 8px 28px color-mix(in srgb, var(--wp--preset--color--charcoal) 8%, transparent);
 	--lm-shadow-card-hover: 0 14px 36px color-mix(in srgb, var(--wp--preset--color--charcoal) 13%, transparent);
+	--lm-product-media-shadow: 0 10px 24px color-mix(in srgb, var(--wp--preset--color--charcoal) 7%, transparent);
 	--lm-shadow-soft: 0 24px 64px color-mix(in srgb, var(--wp--preset--color--charcoal) 12%, transparent);
 	--lm-shell: 1280px;
 	--lm-reading: 720px;

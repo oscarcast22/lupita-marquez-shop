@@ -42,4 +42,4 @@
 
 .lm-state { margin-inline: auto; max-width: 760px; text-align: center; }
 
-.lm-search-results { display: grid; gap: 2rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.lm-search-results { display: grid; gap: clamp(1.25rem, 2.5vw, 2rem); grid-template-columns: repeat(3, minmax(0, 1fr)); }
