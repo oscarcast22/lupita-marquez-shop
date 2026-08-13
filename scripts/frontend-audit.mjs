@@ -1526,6 +1526,31 @@ report.withoutJavaScript = await noJavaScriptPage.evaluate( () => ( {
 		document
 			.querySelector( '.wp-block-navigation__responsive-container-open' )
 			.getClientRects().length > 0,
+	mobileHeaderLayout: ( () => {
+		const header = document.querySelector( '.lm-site-header' );
+		const brand = document.querySelector( '.lm-brand' );
+		const nativeToggle = document.querySelector(
+			'.wp-block-navigation__responsive-container-open'
+		);
+		const actions = document.querySelector( '.lm-header-actions' );
+		const center = ( element ) => {
+			const bounds = element?.getBoundingClientRect();
+			return bounds ? bounds.left + bounds.width / 2 : null;
+		};
+		const headerBounds = header?.getBoundingClientRect();
+		return {
+			actionsCenter: center( actions ),
+			brandCenter: center( brand ),
+			headerHeight: headerBounds?.height || 0,
+			nativeToggleCenter: center( nativeToggle ),
+			passed:
+				Math.abs( ( center( brand ) || 0 ) - window.innerWidth / 2 ) <=
+					1.5 &&
+				( headerBounds?.height || 0 ) > 0 &&
+				center( nativeToggle ) !== null &&
+				center( actions ) !== null,
+		};
+	} )(),
 	runtimeGeneratedClasses: {
 		alignfull: document.querySelectorAll( '.alignfull' ).length,
 		alignwide: document.querySelectorAll( '.alignwide' ).length,
@@ -1638,6 +1663,7 @@ const enhancementFailures =
 	! report.withoutJavaScript.topbarOutsideViewport ||
 	! report.withoutJavaScript.customMenuHidden ||
 	! report.withoutJavaScript.nativeMenuAvailable ||
+	! report.withoutJavaScript.mobileHeaderLayout.passed ||
 	! report.reducedMotion.headerStayedVisible ||
 	! report.reducedMotion.motionDisabled ||
 	! report.reducedMotion.mobileMenuTransitionDisabled ||
