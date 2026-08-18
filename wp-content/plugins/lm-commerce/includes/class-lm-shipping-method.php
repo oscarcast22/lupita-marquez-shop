@@ -206,7 +206,7 @@ final class LM_Shipping_Method extends WC_Shipping_Method
     private static function package(float $weight, float $length, float $width, float $height, float $value): array
     {
         return array(
-            'content' => 'Productos artesanales de madera',
+            'content' => 'Productos de madera hechos en México',
             'amount' => 1,
             'type' => 'box',
             'weight' => round($weight, 2),

@@ -151,7 +151,7 @@ final class LM_Demo
             'carrito' => array('Carrito', '<!-- wp:woocommerce/cart /-->'),
             'finalizar-compra' => array('Finalizar compra', '<!-- wp:woocommerce/checkout /-->'),
             'mi-cuenta' => array('Mi cuenta', '[woocommerce_my_account]'),
-            'nosotros' => array('Nosotros', '<!-- wp:heading --><h2 class="wp-block-heading">Nuestra esencia</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Transformamos ideas en experiencias únicas mediante piezas artesanales de madera. Trabajamos con pasión, creatividad y compromiso para reflejar la esencia de cada persona y cada recuerdo.</p><!-- /wp:paragraph --><!-- wp:heading {"level":3} --><h3 class="wp-block-heading">Visión</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Ser una marca reconocida por la calidad, originalidad y calidez de sus productos personalizados.</p><!-- /wp:paragraph -->'),
+            'nosotros' => array('Nosotros', '<!-- wp:heading --><h2 class="wp-block-heading">Nuestra esencia</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Transformamos ideas en experiencias únicas mediante piezas de madera hechas en México. Trabajamos con pasión, creatividad y compromiso para reflejar la esencia de cada persona y cada recuerdo.</p><!-- /wp:paragraph --><!-- wp:heading {"level":3} --><h3 class="wp-block-heading">Visión</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Ser una marca reconocida por la calidad, originalidad y calidez de sus productos personalizados.</p><!-- /wp:paragraph -->'),
             'contacto' => array('Contacto', '<!-- wp:heading --><h2 class="wp-block-heading">Hablemos de tu pieza</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Los datos de WhatsApp, correo y redes sociales se agregarán cuando la clienta los confirme.</p><!-- /wp:paragraph -->'),
             'preguntas-frecuentes' => array('Preguntas frecuentes', '<!-- wp:heading --><h2 class="wp-block-heading">Preguntas frecuentes</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Las piezas disponibles se despachan al confirmar el pago. Las hechas bajo pedido muestran su tiempo estimado de elaboración en la ficha de producto.</p><!-- /wp:paragraph -->'),
             'envios-y-devoluciones' => array('Envíos y devoluciones', '<!-- wp:paragraph --><p><strong>Contenido provisional:</strong> los envíos se realizan dentro de México mediante Estafeta. La política definitiva de cambios, daños y devoluciones debe validarse con la clienta antes de publicar.</p><!-- /wp:paragraph -->'),
@@ -656,11 +656,11 @@ final class LM_Demo
         $availability = 'stock' === $row['stock_mode']
             ? 'Pieza disponible, sujeta al inventario mostrado.'
             : sprintf('Pieza elaborada bajo pedido. Tiempo estimado: %d días hábiles.', $lead);
-        return '<p>Pieza artesanal de madera elaborada por Lupita Márquez. Las vetas y pequeños matices pueden variar porque cada pieza es única.</p><p><strong>Disponibilidad:</strong> ' . esc_html($availability) . '</p><p><strong>Importante:</strong> medidas, precio y descripción son datos demo y deben validarse con la clienta antes de publicar.</p>';
+        return '<p>Pieza de madera hecha en México por Lupita Márquez. Las vetas y pequeños matices pueden variar porque cada pieza es única.</p><p><strong>Disponibilidad:</strong> ' . esc_html($availability) . '</p><p><strong>Importante:</strong> medidas, precio y descripción son datos demo y deben validarse con la clienta antes de publicar.</p>';
     }
 
     private static function short_description(array $row): string
     {
-        return '<p>' . esc_html('Hecho artesanalmente en madera en México.') . '</p>';
+        return '<p>' . esc_html('Piezas de madera hechas en México.') . '</p>';
     }
 }
