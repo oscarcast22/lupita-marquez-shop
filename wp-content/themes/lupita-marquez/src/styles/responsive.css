@@ -183,7 +183,7 @@
 
 	.lm-product-summary { position: static; }
 
-	.lm-trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.lm-trust-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 782px) {
@@ -248,9 +248,9 @@
 
 	.lm-trust-grid { grid-template-columns: 1fr; }
 
-	.lm-trust-item { grid-template-columns: var(--lm-trust-icon) minmax(0, 1fr); }
+	.lm-trust-item { padding-inline: 0; }
 
-	.lm-trust-item svg { height: var(--lm-trust-icon); width: var(--lm-trust-icon); }
+	.lm-trust-item + .lm-trust-item { border-inline-start: 0; border-block-start: var(--lm-border); padding-block-start: var(--wp--preset--spacing--30); }
 
 	.lm-footer-social { grid-column: auto; }
 

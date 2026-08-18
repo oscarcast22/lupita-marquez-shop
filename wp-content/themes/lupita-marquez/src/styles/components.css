@@ -58,17 +58,43 @@
 
 .lm-category-card a::after { content: "\2197"; font-size: var(--wp--preset--font-size--category-link-icon); margin-left: 0.55rem; }
 
-.lm-trust-strip { background: var(--wp--preset--color--ivory); border-top: var(--lm-border); padding-block: clamp(1.75rem, 4vw, 2.5rem); }
+.lm-trust-strip {
+	background: color-mix(in srgb, var(--wp--preset--color--mist) 62%, var(--wp--preset--color--ivory));
+	border-top: var(--lm-border);
+	padding-block: clamp(2.5rem, 4vw, 3rem);
+}
 
-.lm-trust-grid { display: grid; gap: clamp(1.5rem, 4vw, 3rem); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.lm-trust-heading { margin-bottom: var(--wp--preset--spacing--30); text-align: center; }
 
-.lm-trust-item { align-items: center; display: grid; gap: 1rem; grid-template-columns: var(--lm-trust-icon) minmax(0, 1fr); }
+.lm-trust-heading h2 {
+	color: var(--wp--preset--color--wood);
+	font-family: var(--wp--preset--font-family--sans);
+	font-size: var(--wp--preset--font-size--micro);
+	font-weight: 800;
+	letter-spacing: 0.16em;
+	margin: 0;
+	text-transform: uppercase;
+}
+
+.lm-trust-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.lm-trust-item {
+	align-items: center;
+	display: grid;
+	gap: var(--wp--preset--spacing--15);
+	justify-items: center;
+	min-width: 0;
+	padding-inline: clamp(0.75rem, 2.5vw, 2.25rem);
+	text-align: center;
+}
+
+.lm-trust-item + .lm-trust-item { border-inline-start: 1px solid color-mix(in srgb, var(--wp--preset--color--wood) 20%, transparent); }
 
 .lm-trust-item svg { fill: none; height: var(--lm-trust-icon); stroke: var(--wp--preset--color--wood); stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; width: var(--lm-trust-icon); }
 
-.lm-trust-item h2 { font-family: var(--wp--preset--font-family--sans); font-size: var(--wp--preset--font-size--caption); font-weight: 800; letter-spacing: 0; margin: 0 0 var(--wp--preset--spacing--05); }
+.lm-trust-item h3 { font-family: var(--wp--preset--font-family--sans); font-size: var(--wp--preset--font-size--small); font-weight: 800; letter-spacing: 0; line-height: 1.25; margin: 0 0 var(--wp--preset--spacing--05); }
 
-.lm-trust-item p { color: var(--wp--preset--color--muted); font-size: var(--wp--preset--font-size--micro); line-height: 1.5; margin: 0; }
+.lm-trust-item p { color: var(--wp--preset--color--muted); font-size: var(--wp--preset--font-size--small); line-height: 1.55; margin: 0; max-width: 15rem; }
 
 .lm-site-footer { background: var(--wp--preset--color--mist); color: var(--wp--preset--color--charcoal); overflow: clip; padding-block: clamp(2.5rem, 5vw, 3.5rem) 1.5rem; position: relative; }
 
