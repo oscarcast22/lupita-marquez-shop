@@ -37,8 +37,272 @@ let mobileMenuScrollY = 0;
 
 const MOBILE_MENU_BREAKPOINT = 960;
 const PENDING_LABEL_DELAY = 280;
+const PRODUCT_VARIATION_FORM_SELECTOR =
+	'.lm-product-purchase form.variations_form';
+const PRODUCT_QUANTITY_SELECTOR = '.lm-product-purchase form.cart .quantity';
+const PRODUCT_OFFER_PRICE_SELECTOR =
+	'.lm-product-offer .wp-block-woocommerce-product-price';
 
 const isElement = ( value ) => value instanceof Element;
+
+const getNumericAttribute = ( input, attribute, fallback ) => {
+	const value = Number( input.getAttribute( attribute ) );
+	return Number.isFinite( value ) ? value : fallback;
+};
+
+const getQuantityState = ( input ) => {
+	const minimum = getNumericAttribute( input, 'min', 1 );
+	const maximum = getNumericAttribute( input, 'max', Infinity );
+	const step = getNumericAttribute( input, 'step', 1 );
+	const value = Number( input.value );
+	return {
+		maximum,
+		minimum,
+		step: step > 0 ? step : 1,
+		value: Number.isFinite( value ) ? value : minimum,
+	};
+};
+
+const syncQuantityControl = ( quantity ) => {
+	const input = quantity.querySelector( 'input.qty' );
+	if ( ! ( input instanceof HTMLInputElement ) ) {
+		return;
+	}
+
+	const { maximum, minimum, value } = getQuantityState( input );
+	quantity
+		.querySelector( '[data-lm-quantity-step="decrease"]' )
+		?.toggleAttribute( 'disabled', value <= minimum );
+	quantity
+		.querySelector( '[data-lm-quantity-step="increase"]' )
+		?.toggleAttribute( 'disabled', value >= maximum );
+};
+
+const createQuantityButton = ( step, label, text ) => {
+	const button = document.createElement( 'button' );
+	button.className = 'lm-quantity__button';
+	button.dataset.lmQuantityStep = step;
+	button.setAttribute( 'aria-label', label );
+	button.setAttribute( 'type', 'button' );
+	button.textContent = text;
+	return button;
+};
+
+const initProductQuantityControls = () => {
+	document
+		.querySelectorAll( PRODUCT_QUANTITY_SELECTOR )
+		.forEach( ( quantity ) => {
+			const input = quantity.querySelector( 'input.qty' );
+			if ( ! ( input instanceof HTMLInputElement ) ) {
+				return;
+			}
+
+			if ( ! quantity.classList.contains( 'lm-quantity-control' ) ) {
+				quantity.classList.add( 'lm-quantity-control' );
+				quantity.insertBefore(
+					createQuantityButton( 'decrease', 'Reducir cantidad', '−' ),
+					input
+				);
+				quantity.append(
+					createQuantityButton( 'increase', 'Aumentar cantidad', '+' )
+				);
+				input.addEventListener( 'input', () =>
+					syncQuantityControl( quantity )
+				);
+				input.addEventListener( 'change', () =>
+					syncQuantityControl( quantity )
+				);
+			}
+
+			syncQuantityControl( quantity );
+		} );
+};
+
+const syncProductOffer = ( form, variation = null ) => {
+	const summary = form.closest( '.lm-product-summary' );
+	const price = summary?.querySelector( PRODUCT_OFFER_PRICE_SELECTOR );
+	const availability = summary?.querySelector(
+		'[data-lm-product-availability]'
+	);
+	if ( ! summary || ! price || ! availability ) {
+		return;
+	}
+
+	if ( price.dataset.lmOriginalHtml === undefined ) {
+		price.dataset.lmOriginalHtml = price.innerHTML;
+	}
+
+	const variationId = Number(
+		form.querySelector( 'input[name="variation_id"]' )?.value
+	);
+	const isSelected = Number.isFinite( variationId ) && variationId > 0;
+	const variationPrice = form.querySelector( '.woocommerce-variation-price' );
+	const variationAvailability = form.querySelector(
+		'.woocommerce-variation-availability'
+	);
+	const variationPriceHtml =
+		variation?.price_html || variationPrice?.innerHTML || '';
+	const variationAvailabilityHtml =
+		variation?.availability_html || variationAvailability?.innerHTML || '';
+	const hasVariationPrice = Boolean(
+		isSelected && variationPriceHtml.trim()
+	);
+
+	price.innerHTML = hasVariationPrice
+		? variationPriceHtml
+		: price.dataset.lmOriginalHtml;
+	availability.innerHTML = isSelected ? variationAvailabilityHtml : '';
+	availability.hidden = ! availability.textContent.trim();
+	summary.classList.add( 'lm-product-offer-ready' );
+};
+
+const syncVariationOptions = ( form ) => {
+	const variationId = Number(
+		form.querySelector( 'input[name="variation_id"]' )?.value
+	);
+	const isSelected = Number.isFinite( variationId ) && variationId > 0;
+	form.classList.toggle( 'lm-has-selected-variation', isSelected );
+	form.closest( '.lm-product-summary' )?.classList.toggle(
+		'lm-has-selected-variation',
+		isSelected
+	);
+
+	form.querySelectorAll( 'select[data-lm-variation-source]' ).forEach(
+		( select ) => {
+			const fieldset = form.querySelector(
+				`[data-lm-variation-options-for="${ select.id }"]`
+			);
+			if ( ! fieldset ) {
+				return;
+			}
+
+			fieldset
+				.querySelectorAll( 'input[type="radio"]' )
+				.forEach( ( radio ) => {
+					const option = [ ...select.options ].find(
+						( candidate ) => candidate.value === radio.value
+					);
+					radio.checked = select.value === radio.value;
+					radio.disabled = Boolean( option?.disabled );
+					radio
+						.closest( '.lm-variation-option' )
+						?.classList.toggle( 'is-selected', radio.checked );
+				} );
+		}
+	);
+};
+
+const initVariationOptions = () => {
+	document
+		.querySelectorAll( PRODUCT_VARIATION_FORM_SELECTOR )
+		.forEach( ( form ) => {
+			form.querySelectorAll( '.variations select' ).forEach(
+				( select, index ) => {
+					if ( ! select.id ) {
+						select.id = `lm-variation-${ index }`;
+					}
+
+					if ( ! select.dataset.lmVariationSource ) {
+						const sourceLabel = form.querySelector(
+							`label[for="${ select.id }"]`
+						);
+						const fieldset = document.createElement( 'fieldset' );
+						fieldset.className = 'lm-variation-options';
+						fieldset.dataset.lmVariationOptionsFor = select.id;
+						const legend = document.createElement( 'legend' );
+						legend.textContent =
+							sourceLabel?.textContent.trim() || 'Opciones';
+						fieldset.append( legend );
+						const reset =
+							index === 0
+								? form.querySelector( '.reset_variations' )
+								: null;
+						if ( reset ) {
+							reset.classList.add(
+								'lm-variation-options__reset'
+							);
+							fieldset.append( reset );
+						}
+
+						[ ...select.options ]
+							.filter( ( option ) => option.value )
+							.forEach( ( option ) => {
+								const label = document.createElement( 'label' );
+								label.className = 'lm-variation-option';
+								const radio = document.createElement( 'input' );
+								radio.name = `lm-${ select.name }`;
+								radio.type = 'radio';
+								radio.value = option.value;
+								radio.addEventListener( 'change', () => {
+									select.value = radio.value;
+									select.dispatchEvent(
+										new Event( 'change', { bubbles: true } )
+									);
+									syncVariationOptions( form );
+								} );
+								const text = document.createElement( 'span' );
+								text.textContent = option.textContent.trim();
+								label.append( radio, text );
+								fieldset.append( label );
+							} );
+
+						select.dataset.lmVariationSource = 'true';
+						select.setAttribute( 'aria-hidden', 'true' );
+						select.tabIndex = -1;
+						select.insertAdjacentElement( 'afterend', fieldset );
+						form.classList.add( 'lm-variation-options-ready' );
+					}
+				}
+			);
+
+			syncVariationOptions( form );
+		} );
+};
+
+const syncProductGalleryTriggers = () => {
+	document
+		.querySelectorAll(
+			'.lm-product-gallery .woocommerce-product-gallery__trigger'
+		)
+		.forEach( ( trigger ) => {
+			if ( ! trigger.getAttribute( 'aria-label' ) ) {
+				trigger.setAttribute(
+					'aria-label',
+					'Ampliar imagen del producto'
+				);
+			}
+		} );
+};
+
+const handleQuantityStep = ( event ) => {
+	const button = isElement( event.target )
+		? event.target.closest( '.lm-quantity__button' )
+		: null;
+	if ( ! button || button.disabled ) {
+		return;
+	}
+
+	const quantity = button.closest( '.lm-quantity-control' );
+	const input = quantity?.querySelector( 'input.qty' );
+	if ( ! ( input instanceof HTMLInputElement ) ) {
+		return;
+	}
+
+	const { maximum, minimum, step, value } = getQuantityState( input );
+	const direction = button.dataset.lmQuantityStep === 'increase' ? 1 : -1;
+	const nextValue = Math.min(
+		maximum,
+		Math.max( minimum, Number( ( value + direction * step ).toFixed( 6 ) ) )
+	);
+	if ( nextValue === value ) {
+		return;
+	}
+
+	input.value = String( nextValue );
+	input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+	input.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+	syncQuantityControl( quantity );
+};
 
 const normalizePath = ( value ) => {
 	const path = value.replace( /\/+$/, '' );
@@ -773,8 +1037,76 @@ const handleSimpleSubmit = ( event ) => {
 const handleBodyMutation = () => {
 	connectMiniCart();
 	syncCartButtonLabels();
+	syncProductGalleryTriggers();
 	if ( pendingControls.size && hasVisibleError() ) {
 		handleFailedAdd();
+	}
+};
+
+const syncProductPurchasePresentation = (
+	activeForm = null,
+	variation = null,
+	includeOffer = false
+) => {
+	window.requestAnimationFrame( () => {
+		initVariationOptions();
+		initProductQuantityControls();
+		const forms = activeForm
+			? [ activeForm ]
+			: document.querySelectorAll( PRODUCT_VARIATION_FORM_SELECTOR );
+		forms.forEach( ( form ) => {
+			syncVariationOptions( form );
+			if ( includeOffer && form === activeForm ) {
+				syncProductOffer( form, variation );
+			}
+		} );
+		syncProductGalleryTriggers();
+	} );
+};
+
+const bindProductPurchaseControls = () => {
+	initVariationOptions();
+	initProductQuantityControls();
+	syncProductGalleryTriggers();
+	document
+		.querySelectorAll( PRODUCT_VARIATION_FORM_SELECTOR )
+		.forEach( syncProductOffer );
+
+	document.addEventListener( 'click', handleQuantityStep );
+	document.addEventListener( 'change', ( event ) => {
+		if (
+			isElement( event.target ) &&
+			event.target.matches(
+				`${ PRODUCT_VARIATION_FORM_SELECTOR } select[data-lm-variation-source]`
+			)
+		) {
+			syncProductPurchasePresentation();
+		}
+	} );
+
+	if ( window.jQuery ) {
+		const forms = window
+			.jQuery( PRODUCT_VARIATION_FORM_SELECTOR )
+			.off( '.lmProductPurchase' );
+		forms
+			.on(
+				'found_variation.lmProductPurchase',
+				function ( _event, variation ) {
+					syncProductPurchasePresentation( this, variation, true );
+				}
+			)
+			.on(
+				'hide_variation.lmProductPurchase reset_data.lmProductPurchase',
+				function () {
+					syncProductPurchasePresentation( this, null, true );
+				}
+			)
+			.on(
+				'woocommerce_update_variation_values.lmProductPurchase woocommerce_variation_has_changed.lmProductPurchase',
+				function () {
+					syncProductPurchasePresentation( this );
+				}
+			);
 	}
 };
 
@@ -828,6 +1160,7 @@ const initInteractions = () => {
 	syncCartButtonLabels();
 	syncCartButtonQuantities();
 	connectMiniCart();
+	bindProductPurchaseControls();
 	bindWooEvents();
 };
 
