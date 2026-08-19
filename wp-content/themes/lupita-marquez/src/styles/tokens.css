@@ -8,10 +8,17 @@
 	--lm-product-action-min-width: 15rem;
 	--lm-product-action-radius: 0.5rem;
 	--lm-product-action-reveal-duration: 200ms;
+	--lm-product-content-width: 72rem;
+	--lm-product-gallery-aspect: 9 / 10;
+	--lm-product-gallery-radius: 0.5rem;
+	--lm-product-gallery-shadow: 0 0.75rem 2.5rem color-mix(in srgb, var(--wp--preset--color--charcoal) 5%, transparent);
 	--lm-product-image-radius: 0.5rem;
 	--lm-product-media-inset: 0.5rem;
 	--lm-product-media-radius: 1rem;
 	--lm-product-media-scale-duration: 500ms;
+	--lm-product-thumbnail-width: 4.5rem;
+	--lm-status-marker: 0.5rem;
+	--lm-tab-indicator: 0.125rem;
 	--lm-shadow-card: 0 0.5rem 1.75rem color-mix(in srgb, var(--wp--preset--color--charcoal) 8%, transparent);
 	--lm-shadow-card-hover: 0 0.875rem 2.25rem color-mix(in srgb, var(--wp--preset--color--charcoal) 13%, transparent);
 	--lm-product-media-shadow: 0 0.625rem 1.5rem color-mix(in srgb, var(--wp--preset--color--charcoal) 7%, transparent);
@@ -24,7 +31,8 @@
 	--lm-control-height-xl: 3.25rem;
 	--lm-control-height-drawer: 3.125rem;
 	--lm-icon-button: 2.75rem;
-	--lm-control-width-quantity: 5.25rem;
+	--lm-control-width-quantity: 7rem;
+	--lm-quantity-stepper-size: 2.25rem;
 	--lm-control-width-select: 14.375rem;
 	--lm-content-width-checkout: 70rem;
 	--lm-navigation-submenu-width: 13.75rem;
@@ -46,8 +54,6 @@
 	--lm-brand-height: 2.5rem;
 	--lm-brand-height-tablet: 2.125rem;
 	--lm-brand-height-mobile: 1.875rem;
-	--lm-mobile-gallery-gutter-offset: 2.5rem;
-	--lm-mobile-gallery-thumbnails: 7.25rem;
 	--lm-mobile-header-side: 5.5rem;
 	--lm-mobile-drawer-width: min(86vw, 23.75rem);
 	--lm-drawer-link-height: 3.625rem;

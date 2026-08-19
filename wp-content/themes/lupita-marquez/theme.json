@@ -53,6 +53,8 @@
         { "slug": "content-gap", "size": "clamp(1.25rem, 2.5vw, 2rem)", "name": "Ritmo de contenido" },
         { "slug": "section-heading", "size": "clamp(2rem, 5vw, 4.5rem)", "name": "Encabezado de sección" },
         { "slug": "editorial-gap", "size": "clamp(2rem, 6vw, 6rem)", "name": "Ritmo editorial" },
+        { "slug": "navigation-gap", "size": "1.5rem", "name": "Separación de navegación" },
+        { "slug": "product-gap", "size": "clamp(3rem, 5vw, 5rem)", "name": "Ritmo de producto" },
         { "slug": "footer-gap", "size": "clamp(2rem, 7vw, 6rem)", "name": "Ritmo de pie" },
         { "slug": "drawer-padding", "size": "clamp(1.5rem, 6vw, 2.25rem)", "name": "Relleno de cajón" }
       ]
@@ -88,7 +90,9 @@
         { "slug": "drawer-link", "size": "1.35rem", "fluid": { "min": "1.15rem", "max": "1.35rem" }, "name": "Enlace de menú móvil" },
         { "slug": "section-title", "size": "2.625rem", "fluid": { "min": "2rem", "max": "2.625rem" }, "name": "Título de sección" },
         { "slug": "x-large", "size": "2.75rem", "fluid": { "min": "2rem", "max": "2.75rem" }, "name": "Título" },
-        { "slug": "product-title", "size": "3.5rem", "fluid": { "min": "2.25rem", "max": "3.5rem" }, "name": "Título de producto" },
+        { "slug": "product-title", "size": "3rem", "fluid": { "min": "2.25rem", "max": "3rem" }, "name": "Título de producto" },
+        { "slug": "product-section-title", "size": "2.25rem", "fluid": { "min": "1.75rem", "max": "2.25rem" }, "name": "Título de sección de producto" },
+        { "slug": "product-price", "size": "2.25rem", "fluid": { "min": "1.75rem", "max": "2.25rem" }, "name": "Precio de producto" },
         { "slug": "price", "size": "1.6rem", "fluid": { "min": "1.25rem", "max": "1.6rem" }, "name": "Precio" },
         { "slug": "display", "size": "4rem", "fluid": { "min": "2.5rem", "max": "4rem" }, "name": "Portada" }
       ],
