@@ -156,6 +156,7 @@ for ( const width of widths ) {
 		let interactionAudit = null;
 		let mobileNavigationAudit = null;
 		let productMediaAudit = null;
+		let singleProductGalleryAudit = null;
 		let stickyHeaderAudit = null;
 		let variationAudit = null;
 
@@ -225,11 +226,22 @@ for ( const width of widths ) {
 			const finishSelect = page.locator(
 				'select[name="attribute_acabado"]'
 			);
-			await finishSelect.waitFor( { state: 'visible', timeout: 15_000 } );
+			await finishSelect.waitFor( {
+				state: 'attached',
+				timeout: 15_000,
+			} );
+			const finishOptions = page.locator( '.lm-variation-options' );
+			await finishOptions.waitFor( {
+				state: 'visible',
+				timeout: 15_000,
+			} );
 			const defaultFinish = await finishSelect.inputValue();
 
 			const selectAndRead = async ( label, expectedPrice ) => {
-				await finishSelect.selectOption( { label } );
+				const option = finishOptions
+					.locator( '.lm-variation-option' )
+					.filter( { hasText: label } );
+				await option.click();
 				await page.waitForFunction(
 					( price ) =>
 						Number(
@@ -244,35 +256,142 @@ for ( const width of widths ) {
 					{ timeout: 15_000 }
 				);
 				await page.waitForTimeout( 100 );
-				return page.evaluate( () => ( {
-					variationId: Number(
-						document.querySelector( 'input[name="variation_id"]' )
-							?.value
-					),
-					gallery: [
-						...new Set(
+				return page.evaluate(
+					( optionLabel ) => ( {
+						variationId: Number(
+							document.querySelector(
+								'input[name="variation_id"]'
+							)?.value
+						),
+						gallery: [
+							...new Set(
+								[
+									...document.querySelectorAll(
+										'.woocommerce-product-gallery img, .wp-block-woocommerce-product-gallery img, .wp-block-woocommerce-product-image-gallery img, .lm-product-gallery img'
+									),
+								]
+									.map(
+										( image ) =>
+											image.currentSrc || image.src
+									)
+									.filter( ( source ) =>
+										source.includes( '/uploads/' )
+									)
+							),
+						],
+						offerAvailabilityText:
+							document
+								.querySelector(
+									'.lm-product-offer__availability'
+								)
+								?.textContent.trim() || '',
+						offerPriceText:
+							document
+								.querySelector( '.lm-product-offer__price' )
+								?.textContent.trim() || '',
+						optionSelected: Boolean(
 							[
 								...document.querySelectorAll(
-									'.woocommerce-product-gallery img, .wp-block-woocommerce-product-gallery img, .wp-block-woocommerce-product-image-gallery img, .lm-product-gallery img'
+									'.lm-variation-option'
 								),
-							]
-								.map(
-									( image ) => image.currentSrc || image.src
-								)
-								.filter( ( source ) =>
-									source.includes( '/uploads/' )
-								)
+							].find(
+								( item ) =>
+									item.textContent.trim() === optionLabel &&
+									item.classList.contains( 'is-selected' )
+							)
 						),
-					],
-					priceText:
-						document
-							.querySelector( '.woocommerce-variation-price' )
-							?.textContent.trim() || '',
-				} ) );
+						priceText:
+							document
+								.querySelector( '.woocommerce-variation-price' )
+								?.textContent.trim() || '',
+						variationPriceHidden:
+							document.querySelector(
+								'.woocommerce-variation-price'
+							) &&
+							window.getComputedStyle(
+								document.querySelector(
+									'.woocommerce-variation-price'
+								)
+							).display === 'none',
+					} ),
+					label
+				);
+			};
+			const auditActiveGallery = async () =>
+				page.evaluate( () => {
+					const gallery = document.querySelector(
+						'.lm-product-gallery .woocommerce-product-gallery'
+					);
+					const stage =
+						gallery?.querySelector( '.flex-viewport' ) ||
+						gallery?.querySelector(
+							'.woocommerce-product-gallery__wrapper'
+						);
+					const active =
+						gallery?.querySelector( '.flex-active-slide' ) ||
+						gallery?.querySelector(
+							'.woocommerce-product-gallery__image'
+						);
+					const image = active?.querySelector( 'img' );
+					const stageBounds = stage?.getBoundingClientRect();
+					const activeBounds = active?.getBoundingClientRect();
+					const overlapsStage =
+						Boolean( stageBounds && activeBounds ) &&
+						activeBounds.right > stageBounds.left &&
+						activeBounds.left < stageBounds.right &&
+						activeBounds.bottom > stageBounds.top &&
+						activeBounds.top < stageBounds.bottom;
+					return {
+						activeHeight: activeBounds?.height || 0,
+						activeWidth: activeBounds?.width || 0,
+						imageDecoded: Boolean(
+							image?.complete && image.naturalWidth
+						),
+						imageObjectFit: image
+							? window.getComputedStyle( image ).objectFit
+							: '',
+						overlapsStage,
+						stageHeight: stageBounds?.height || 0,
+						stageWidth: stageBounds?.width || 0,
+					};
+				} );
+			const auditGalleryNavigation = async () => {
+				const thumbs = page.locator(
+					'.lm-product-gallery .flex-control-thumbs img'
+				);
+				const results = [];
+				for (
+					let index = 0;
+					index < ( await thumbs.count() );
+					index++
+				) {
+					await thumbs.nth( index ).click();
+					await page.waitForTimeout( 650 );
+					results.push( await auditActiveGallery() );
+				}
+				return results;
 			};
 
 			const natural = await selectAndRead( 'Natural', '599' );
+			const naturalGallery = await auditActiveGallery();
 			const painted = await selectAndRead( 'Pintado', '719' );
+			const paintedGallery = await auditGalleryNavigation();
+			const quantity = page.locator( '.lm-quantity-control' );
+			const quantityInput = quantity.locator( 'input.qty' );
+			const decrement = quantity.locator(
+				'[data-lm-quantity-step="decrease"]'
+			);
+			const increment = quantity.locator(
+				'[data-lm-quantity-step="increase"]'
+			);
+			const initiallyAtMinimum = await decrement.isDisabled();
+			await increment.click();
+			const afterIncrease = await quantityInput.inputValue();
+			await quantityInput.fill( '5' );
+			await quantityInput.dispatchEvent( 'change' );
+			const atMaximum = await increment.isDisabled();
+			await quantityInput.fill( '1' );
+			await quantityInput.dispatchEvent( 'change' );
 			await page.locator( '.single_add_to_cart_button' ).click();
 			await page.waitForLoadState( 'networkidle' );
 			const cart = await page.evaluate( async () =>
@@ -286,7 +405,10 @@ for ( const width of widths ) {
 			variationAudit = {
 				defaultFinish,
 				natural,
+				naturalGallery,
 				painted,
+				paintedGallery,
+				quantity: { afterIncrease, atMaximum, initiallyAtMinimum },
 				cartSku: cartItem?.sku || '',
 				cartPrice: cartItem?.prices?.price || '',
 				cartFinish:
@@ -299,8 +421,31 @@ for ( const width of widths ) {
 					natural.variationId &&
 					painted.variationId &&
 					natural.variationId !== painted.variationId &&
+					natural.optionSelected &&
+					painted.optionSelected &&
+					natural.offerPriceText.includes( '599' ) &&
+					painted.offerPriceText.includes( '719' ) &&
+					natural.offerAvailabilityText.includes( 'disponibles' ) &&
+					painted.offerAvailabilityText.includes( 'disponibles' ) &&
+					natural.variationPriceHidden &&
+					painted.variationPriceHidden &&
 					natural.gallery.length &&
 					painted.gallery.length &&
+					naturalGallery.imageDecoded &&
+					naturalGallery.imageObjectFit === 'cover' &&
+					naturalGallery.overlapsStage &&
+					paintedGallery.length > 0 &&
+					paintedGallery.every(
+						( item ) =>
+							item.imageDecoded &&
+							item.imageObjectFit === 'cover' &&
+							item.overlapsStage &&
+							item.activeWidth > 0 &&
+							item.activeHeight > 0
+					) &&
+					variationAudit.quantity.initiallyAtMinimum &&
+					variationAudit.quantity.afterIncrease === '2' &&
+					variationAudit.quantity.atMaximum &&
 					natural.priceText.includes( '599' ) &&
 					painted.priceText.includes( '719' ) &&
 					JSON.stringify( natural.gallery ) !==
@@ -928,10 +1073,10 @@ for ( const width of widths ) {
 					} );
 				const mediaAtRest = await readProductMedia();
 				await card.hover();
-				await page.waitForTimeout( 300 );
+				await page.waitForTimeout( 600 );
 				const mediaOnHover = await readProductMedia();
 				await page.mouse.move( width - 4, 400 );
-				await page.waitForTimeout( 300 );
+				await page.waitForTimeout( 600 );
 				const mediaAfterHover = await readProductMedia();
 				const frameStable = Object.keys( mediaAtRest.frame ).every(
 					( property ) =>
@@ -946,6 +1091,65 @@ for ( const width of widths ) {
 							'matrix(1.015'
 						) && mediaOnHover.imageTransform.endsWith( ', 0, 0)' ),
 				};
+			}
+		}
+		if ( name.startsWith( 'producto-' ) ) {
+			const gallery = page.locator(
+				'.lm-product-gallery .woocommerce-product-gallery'
+			);
+			if ( await gallery.count() ) {
+				singleProductGalleryAudit = await gallery.evaluate(
+					( element ) => {
+						const stage =
+							element.querySelector( '.flex-viewport' ) ||
+							element.querySelector(
+								'.woocommerce-product-gallery__wrapper'
+							);
+						const thumbs = element.querySelector(
+							'.flex-control-thumbs'
+						);
+						const image = element.querySelector(
+							'.woocommerce-product-gallery__image img'
+						);
+						const imageLink = image?.closest( 'a' );
+						const trigger = element.querySelector(
+							'.woocommerce-product-gallery__trigger'
+						);
+						const stageBounds = stage?.getBoundingClientRect();
+						const thumbsBounds = thumbs?.getBoundingClientRect();
+						const triggerBounds = trigger?.getBoundingClientRect();
+						const desktop = window.innerWidth > 960;
+						return {
+							present: Boolean(
+								stage && thumbs && image && trigger
+							),
+							imageCover:
+								window.getComputedStyle( image ).objectFit ===
+								'cover',
+							lightboxSourcePreserved:
+								Boolean(
+									imageLink?.href && image.dataset.large_image
+								) &&
+								new URL( imageLink.href ).pathname ===
+									new URL( image.dataset.large_image )
+										.pathname,
+							stageAspect:
+								stageBounds?.height > 0
+									? stageBounds.width / stageBounds.height
+									: 0,
+							thumbnailPlacement:
+								Boolean( stageBounds && thumbsBounds ) &&
+								( desktop
+									? thumbsBounds.right <= stageBounds.left + 1
+									: thumbsBounds.top >=
+									  stageBounds.bottom - 1 ),
+							triggerTarget:
+								Boolean( triggerBounds ) &&
+								triggerBounds.width >= 43.5 &&
+								triggerBounds.height >= 43.5,
+						};
+					}
+				);
 			}
 		}
 		if ( name === 'inicio' ) {
@@ -1395,6 +1599,7 @@ for ( const width of widths ) {
 			interactionAudit,
 			mobileNavigationAudit,
 			productMediaAudit,
+			singleProductGalleryAudit,
 			stickyHeaderAudit,
 			variationAudit,
 			...metrics,
@@ -1610,6 +1815,14 @@ const failures = report.pages.filter(
 			( ! page.productMediaAudit.frameStable ||
 				! page.productMediaAudit.imageScaled ||
 				! page.productMediaAudit.imageReturned ) ) ||
+		( page.singleProductGalleryAudit &&
+			( ! page.singleProductGalleryAudit.present ||
+				! page.singleProductGalleryAudit.imageCover ||
+				! page.singleProductGalleryAudit.lightboxSourcePreserved ||
+				Math.abs( page.singleProductGalleryAudit.stageAspect - 0.9 ) >
+					0.03 ||
+				! page.singleProductGalleryAudit.thumbnailPlacement ||
+				! page.singleProductGalleryAudit.triggerTarget ) ) ||
 		( page.name === 'inicio' &&
 			( page.homeLayout.featuredProductCount !== 6 ||
 				page.homeLayout.featuredButtonSpread > 1 ||
