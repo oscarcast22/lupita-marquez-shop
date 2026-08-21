@@ -241,6 +241,11 @@ for ( const width of widths ) {
 				const option = finishOptions
 					.locator( '.lm-variation-option' )
 					.filter( { hasText: label } );
+				const fromHeight = await page
+					.locator( '.lm-product-gallery' )
+					.evaluate(
+						( element ) => element.getBoundingClientRect().height
+					);
 				await option.click();
 				await page.waitForFunction(
 					( price ) =>
@@ -255,9 +260,72 @@ for ( const width of widths ) {
 					expectedPrice,
 					{ timeout: 15_000 }
 				);
-				await page.waitForTimeout( 100 );
-				return page.evaluate(
-					( optionLabel ) => ( {
+				await page.waitForFunction(
+					() => {
+						const gallery = document.querySelector(
+							'.lm-product-gallery'
+						);
+						return Boolean(
+							gallery?.classList.contains( 'lm-is-resizing' ) &&
+								gallery.style.height
+						);
+					},
+					undefined,
+					{ timeout: 15_000 }
+				);
+				const transition = await page
+					.locator( '.lm-product-gallery' )
+					.evaluate( ( element, initialHeight ) => {
+						const style = window.getComputedStyle( element );
+						return {
+							duration: Number.parseFloat(
+								style.transitionDuration
+							),
+							fromHeight: initialHeight,
+							property: style.transitionProperty,
+							started:
+								element.classList.contains( 'lm-is-resizing' ),
+							targetHeight: Number.parseFloat(
+								element.style.height
+							),
+						};
+					}, fromHeight );
+				await page.waitForFunction(
+					() =>
+						! document
+							.querySelector( '.lm-product-gallery' )
+							?.classList.contains( 'lm-is-resizing' ),
+					undefined,
+					{ timeout: 15_000 }
+				);
+				const result = await page.evaluate( ( optionLabel ) => {
+					const gallery = document.querySelector(
+						'.lm-product-gallery .woocommerce-product-gallery'
+					);
+					const details = document.querySelector(
+						'.lm-product-details-section'
+					);
+					const purchase = document.querySelector(
+						'.lm-product-purchase'
+					);
+					const description = document.querySelector(
+						'.woocommerce-variation-description'
+					);
+					const selectedOption = [
+						...document.querySelectorAll( '.lm-variation-option' ),
+					].find(
+						( item ) => item.textContent.trim() === optionLabel
+					);
+					const selectedOptionText =
+						selectedOption?.querySelector( 'span' );
+					const optionBounds =
+						selectedOption?.getBoundingClientRect();
+					const optionTextBounds =
+						selectedOptionText?.getBoundingClientRect();
+					const checkStyle = selectedOption
+						? window.getComputedStyle( selectedOption, '::after' )
+						: null;
+					return {
 						variationId: Number(
 							document.querySelector(
 								'input[name="variation_id"]'
@@ -290,16 +358,20 @@ for ( const width of widths ) {
 								.querySelector( '.lm-product-offer__price' )
 								?.textContent.trim() || '',
 						optionSelected: Boolean(
-							[
-								...document.querySelectorAll(
-									'.lm-variation-option'
-								),
-							].find(
-								( item ) =>
-									item.textContent.trim() === optionLabel &&
-									item.classList.contains( 'is-selected' )
-							)
+							selectedOption?.classList.contains( 'is-selected' )
 						),
+						optionPresentation: {
+							checkPositioned:
+								checkStyle?.position === 'absolute' &&
+								Number.parseFloat( checkStyle.right ) > 0,
+							textCenterOffset:
+								optionBounds && optionTextBounds
+									? optionTextBounds.left +
+									  optionTextBounds.width / 2 -
+									  ( optionBounds.left +
+											optionBounds.width / 2 )
+									: Infinity,
+						},
 						priceText:
 							document
 								.querySelector( '.woocommerce-variation-price' )
@@ -313,9 +385,23 @@ for ( const width of widths ) {
 									'.woocommerce-variation-price'
 								)
 							).display === 'none',
-					} ),
-					label
-				);
+						layout: {
+							descriptionHidden:
+								! description ||
+								window.getComputedStyle( description )
+									.display === 'none',
+							detailsTop:
+								( details?.getBoundingClientRect().top || 0 ) +
+								window.scrollY,
+							galleryHeight:
+								gallery?.getBoundingClientRect().height || 0,
+							purchaseHeight:
+								purchase?.getBoundingClientRect().height || 0,
+						},
+					};
+				}, label );
+				result.transition = transition;
+				return result;
 			};
 			const auditActiveGallery = async () =>
 				page.evaluate( () => {
@@ -392,8 +478,110 @@ for ( const width of widths ) {
 			const atMaximum = await increment.isDisabled();
 			await quantityInput.fill( '1' );
 			await quantityInput.dispatchEvent( 'change' );
-			await page.locator( '.single_add_to_cart_button' ).click();
-			await page.waitForLoadState( 'networkidle' );
+			const cartBefore = await page.evaluate( async () =>
+				fetch( '/wp-json/wc/store/v1/cart' ).then( ( result ) =>
+					result.json()
+				)
+			);
+			const cartItemBefore = cartBefore.items?.find(
+				( item ) => item.sku === 'LM-ALT-CHI-PIN'
+			);
+			const beforeAdd = await page.evaluate( () => ( {
+				documentStartedAt: window.performance.timeOrigin,
+				href: window.location.href,
+				scrollY: window.scrollY,
+			} ) );
+			await page
+				.locator( '.single_add_to_cart_button' )
+				.evaluate( ( button ) => {
+					button.click();
+					button.click();
+				} );
+			await page.waitForFunction(
+				() =>
+					Boolean(
+						document.querySelector(
+							'.wc-block-components-drawer__screen-overlay.is-open, .wc-block-components-drawer__screen-overlay[aria-hidden="false"], .wc-block-components-drawer__screen-overlay--with-slide-in'
+						)
+					),
+				undefined,
+				{ timeout: 15_000 }
+			);
+			await page.waitForTimeout( 350 );
+			const afterAdd = await page.evaluate( () => {
+				const drawer = document.querySelector(
+					'.wc-block-components-drawer__screen-overlay.is-open, .wc-block-components-drawer__screen-overlay[aria-hidden="false"], .wc-block-components-drawer__screen-overlay--with-slide-in'
+				);
+				const successNotice = document.querySelector(
+					'.woocommerce-message, .wc-block-components-notice-banner.is-success'
+				);
+				const drawerDescription = drawer?.querySelector(
+					'.wc-block-components-product-metadata__description'
+				);
+				return {
+					buttonDisabled: Boolean(
+						document.querySelector( '.single_add_to_cart_button' )
+							?.disabled
+					),
+					buttonLabel:
+						document
+							.querySelector( '.single_add_to_cart_button' )
+							?.textContent.trim() || '',
+					documentStartedAt: window.performance.timeOrigin,
+					drawerDescriptionHidden:
+						! drawerDescription ||
+						window.getComputedStyle( drawerDescription ).display ===
+							'none',
+					drawerFocused: Boolean(
+						drawer?.contains( drawer.ownerDocument.activeElement )
+					),
+					drawerOpen: Boolean( drawer ),
+					href: window.location.href,
+					scrollY: window.scrollY,
+					successNoticeVisible: Boolean(
+						successNotice?.getClientRects().length
+					),
+				};
+			} );
+			await page.keyboard.press( 'Escape' );
+			await page.waitForFunction(
+				() =>
+					! document.querySelector(
+						'.wc-block-components-drawer__screen-overlay.is-open, .wc-block-components-drawer__screen-overlay[aria-hidden="false"], .wc-block-components-drawer__screen-overlay--with-slide-in'
+					),
+				undefined,
+				{ timeout: 15_000 }
+			);
+			const drawerClosedWithEscape = await page.evaluate(
+				() =>
+					! document.querySelector(
+						'.wc-block-components-drawer__screen-overlay.is-open, .wc-block-components-drawer__screen-overlay[aria-hidden="false"], .wc-block-components-drawer__screen-overlay--with-slide-in'
+					)
+			);
+			await page.waitForFunction(
+				() => {
+					const button = document.querySelector(
+						'.single_add_to_cart_button'
+					);
+					return Boolean(
+						button &&
+							! button.disabled &&
+							button.textContent.includes( 'Agregar al carrito' )
+					);
+				},
+				undefined,
+				{ timeout: 5_000 }
+			);
+			const buttonRestored = await page.evaluate( () => {
+				const button = document.querySelector(
+					'.single_add_to_cart_button'
+				);
+				return Boolean(
+					button &&
+						! button.disabled &&
+						button.textContent.includes( 'Agregar al carrito' )
+				);
+			} );
 			const cart = await page.evaluate( async () =>
 				fetch( '/wp-json/wc/store/v1/cart' ).then( ( result ) =>
 					result.json()
@@ -402,6 +590,113 @@ for ( const width of widths ) {
 			const cartItem = cart.items?.find(
 				( item ) => item.sku === 'LM-ALT-CHI-PIN'
 			);
+			await quantityInput.fill( '5' );
+			await quantityInput.dispatchEvent( 'change' );
+			const beforeError = await page.evaluate( () => ( {
+				documentStartedAt: window.performance.timeOrigin,
+				href: window.location.href,
+				scrollY: window.scrollY,
+			} ) );
+			await page
+				.locator( '.single_add_to_cart_button' )
+				.evaluate( ( button ) => button.click() );
+			await page.waitForFunction(
+				() =>
+					document
+						.querySelector( '[data-lm-product-feedback]' )
+						?.classList.contains( 'is-visible' ),
+				undefined,
+				{ timeout: 15_000 }
+			);
+			await page.waitForTimeout( 250 );
+			const productError = await page.evaluate( () => {
+				const feedback = document.querySelector(
+					'[data-lm-product-feedback]'
+				);
+				const notice = feedback?.querySelector(
+					'.lm-product-feedback__notice'
+				);
+				const style = window.getComputedStyle( feedback );
+				return {
+					buttonLabel:
+						document
+							.querySelector( '.single_add_to_cart_button' )
+							?.textContent.trim() || '',
+					cartLink:
+						notice?.querySelector( 'a' )?.textContent.trim() || '',
+					dismissLabel:
+						notice
+							?.querySelector( 'button' )
+							?.getAttribute( 'aria-label' ) || '',
+					documentStartedAt: window.performance.timeOrigin,
+					href: window.location.href,
+					message:
+						notice?.querySelector( 'p' )?.textContent.trim() || '',
+					placement: Boolean(
+						feedback?.closest( '.lm-product-purchase' )
+					),
+					role: notice?.getAttribute( 'role' ) || '',
+					scrollY: window.scrollY,
+					topNoticeCount: document.querySelectorAll(
+						'.lm-product-overview > .lm-shell > .wp-block-woocommerce-store-notices, .lm-product-overview > .lm-shell > .woocommerce-error, .lm-product-overview > .lm-shell > .wc-block-components-notice-banner'
+					).length,
+					transitionDuration: Number.parseFloat(
+						style.transitionDuration
+					),
+				};
+			} );
+			if ( width === 1280 || width === 390 ) {
+				await page.screenshot( {
+					path: path.join(
+						outputDirectory,
+						`producto-variable-error-${ width }.png`
+					),
+					fullPage: true,
+				} );
+			}
+			await page.locator( '[data-lm-dismiss-product-feedback]' ).click();
+			await page.waitForFunction(
+				() =>
+					! document
+						.querySelector( '[data-lm-product-feedback]' )
+						?.classList.contains( 'is-visible' )
+			);
+			const errorDismissed = await page.evaluate( () => ( {
+				collapsed: ! document
+					.querySelector( '[data-lm-product-feedback]' )
+					?.classList.contains( 'is-visible' ),
+				focusReturned: Boolean(
+					document
+						.querySelector( '[data-lm-product-feedback]' )
+						?.ownerDocument.activeElement?.matches(
+							'.single_add_to_cart_button, input.qty'
+						)
+				),
+			} ) );
+			await page.reload( { waitUntil: 'networkidle' } );
+			const afterErrorReload = await page.evaluate( () => ( {
+				errorCount: document.querySelectorAll(
+					'.woocommerce-error, .wc-block-components-notice-banner.is-error'
+				).length,
+				feedbackVisible: Boolean(
+					document
+						.querySelector( '[data-lm-product-feedback]' )
+						?.classList.contains( 'is-visible' )
+				),
+				successCount: document.querySelectorAll(
+					'.woocommerce-message, .wc-block-components-notice-banner.is-success'
+				).length,
+			} ) );
+			const purchaseSupport = await page.evaluate( () => ( {
+				benefits: [
+					...document.querySelectorAll(
+						'.lm-product-assurance span'
+					),
+				].map( ( item ) => item.textContent.trim() ),
+				metaPresent: Boolean(
+					document.querySelector( '.lm-product-meta, .product_meta' )
+				),
+			} ) );
 			variationAudit = {
 				defaultFinish,
 				natural,
@@ -409,12 +704,28 @@ for ( const width of widths ) {
 				painted,
 				paintedGallery,
 				quantity: { afterIncrease, atMaximum, initiallyAtMinimum },
+				cartFeedback: {
+					afterAdd,
+					beforeAdd,
+					buttonRestored,
+					drawerClosedWithEscape,
+				},
+				cartQuantityDelta:
+					Number( cartItem?.quantity || 0 ) -
+					Number( cartItemBefore?.quantity || 0 ),
 				cartSku: cartItem?.sku || '',
 				cartPrice: cartItem?.prices?.price || '',
 				cartFinish:
 					cartItem?.variation?.find(
 						( attribute ) => attribute.attribute === 'Acabado'
 					)?.value || '',
+				productError: {
+					afterReload: afterErrorReload,
+					before: beforeError,
+					dismissed: errorDismissed,
+					feedback: productError,
+				},
+				purchaseSupport,
 			};
 			variationAudit.passed = Boolean(
 				defaultFinish.toLowerCase() === 'pintado' &&
@@ -423,22 +734,63 @@ for ( const width of widths ) {
 					natural.variationId !== painted.variationId &&
 					natural.optionSelected &&
 					painted.optionSelected &&
+					Math.abs( natural.optionPresentation.textCenterOffset ) <=
+						1 &&
+					Math.abs( painted.optionPresentation.textCenterOffset ) <=
+						1 &&
+					natural.optionPresentation.checkPositioned &&
+					painted.optionPresentation.checkPositioned &&
 					natural.offerPriceText.includes( '599' ) &&
 					painted.offerPriceText.includes( '719' ) &&
 					natural.offerAvailabilityText.includes( 'disponibles' ) &&
 					painted.offerAvailabilityText.includes( 'disponibles' ) &&
 					natural.variationPriceHidden &&
 					painted.variationPriceHidden &&
+					natural.layout.descriptionHidden &&
+					painted.layout.descriptionHidden &&
+					natural.transition.started &&
+					painted.transition.started &&
+					natural.transition.property.includes( 'height' ) &&
+					painted.transition.property.includes( 'height' ) &&
+					natural.transition.duration >= 0.18 &&
+					painted.transition.duration >= 0.18 &&
+					Math.abs(
+						natural.transition.targetHeight -
+							natural.transition.fromHeight
+					) >= 40 &&
+					Math.abs(
+						painted.transition.targetHeight -
+							painted.transition.fromHeight
+					) >= 40 &&
+					Math.abs(
+						natural.layout.galleryHeight -
+							painted.layout.galleryHeight
+					) >= 40 &&
+					Math.abs(
+						natural.layout.detailsTop - painted.layout.detailsTop
+					) >= 20 &&
+					Math.abs(
+						natural.layout.detailsTop - painted.layout.detailsTop
+					) <=
+						Math.abs(
+							natural.layout.galleryHeight -
+								painted.layout.galleryHeight
+						) +
+							1 &&
+					Math.abs(
+						natural.layout.purchaseHeight -
+							painted.layout.purchaseHeight
+					) <= 1 &&
 					natural.gallery.length &&
 					painted.gallery.length &&
 					naturalGallery.imageDecoded &&
-					naturalGallery.imageObjectFit === 'cover' &&
+					naturalGallery.imageObjectFit === 'contain' &&
 					naturalGallery.overlapsStage &&
 					paintedGallery.length > 0 &&
 					paintedGallery.every(
 						( item ) =>
 							item.imageDecoded &&
-							item.imageObjectFit === 'cover' &&
+							item.imageObjectFit === 'contain' &&
 							item.overlapsStage &&
 							item.activeWidth > 0 &&
 							item.activeHeight > 0
@@ -450,6 +802,44 @@ for ( const width of widths ) {
 					painted.priceText.includes( '719' ) &&
 					JSON.stringify( natural.gallery ) !==
 						JSON.stringify( painted.gallery ) &&
+					beforeAdd.documentStartedAt ===
+						afterAdd.documentStartedAt &&
+					beforeAdd.href === afterAdd.href &&
+					Math.abs( beforeAdd.scrollY - afterAdd.scrollY ) <= 1 &&
+					afterAdd.drawerOpen &&
+					afterAdd.drawerFocused &&
+					afterAdd.drawerDescriptionHidden &&
+					afterAdd.buttonDisabled &&
+					afterAdd.buttonLabel === 'Agregado ✓' &&
+					! afterAdd.successNoticeVisible &&
+					buttonRestored &&
+					drawerClosedWithEscape &&
+					variationAudit.cartQuantityDelta === 1 &&
+					beforeError.documentStartedAt ===
+						productError.documentStartedAt &&
+					beforeError.href === productError.href &&
+					Math.abs( beforeError.scrollY - productError.scrollY ) <=
+						1 &&
+					productError.placement &&
+					productError.role === 'alert' &&
+					productError.dismissLabel === 'Cerrar mensaje' &&
+					productError.cartLink === 'Ver carrito' &&
+					productError.buttonLabel === 'No se pudo agregar' &&
+					productError.message.includes( '5 existencias' ) &&
+					! productError.message.includes( 'Ver carrito' ) &&
+					productError.topNoticeCount === 0 &&
+					productError.transitionDuration >= 0.14 &&
+					errorDismissed.collapsed &&
+					errorDismissed.focusReturned &&
+					! afterErrorReload.feedbackVisible &&
+					afterErrorReload.errorCount === 0 &&
+					afterErrorReload.successCount === 0 &&
+					! purchaseSupport.metaPresent &&
+					JSON.stringify( purchaseSupport.benefits ) ===
+						JSON.stringify( [
+							'Hecho en México',
+							'Envíos seguros',
+						] ) &&
 					variationAudit.cartSku === 'LM-ALT-CHI-PIN' &&
 					variationAudit.cartPrice === '71900' &&
 					variationAudit.cartFinish === 'Pintado'
@@ -570,6 +960,74 @@ for ( const width of widths ) {
 						shellEdges.maxRight - shellEdges.minRight
 				  )
 				: 0;
+			const shellElements = [
+				...document.querySelectorAll( '.lm-shell' ),
+			].filter( visible );
+			const shellContentEdges = shellElements.length
+				? shellElements.map( ( element ) => {
+						const style = window.getComputedStyle( element );
+						const bounds = element.getBoundingClientRect();
+						const leftPadding = Number.parseFloat(
+							style?.paddingLeft || '0'
+						);
+						const rightPadding = Number.parseFloat(
+							style?.paddingRight || '0'
+						);
+						return {
+							left: +(
+								( bounds?.left || 0 ) + leftPadding
+							).toFixed( 2 ),
+							right: +(
+								( bounds?.right || 0 ) - rightPadding
+							).toFixed( 2 ),
+						};
+				  } )
+				: [];
+			const rootFontSize =
+				Number.parseFloat(
+					window.getComputedStyle( document.documentElement ).fontSize
+				) || 16;
+			const compactSpacingExpected = {
+				'05': 4,
+				10: 8,
+				15: 12,
+				20: 7.04,
+				25: 20,
+				30: 10.72,
+				35: 28,
+				40: 16,
+				45: 40,
+				50: 24,
+				55: 56,
+				60: 36,
+				65: 80,
+				70: 54.08,
+			};
+			const cssValueToPixels = ( value ) => {
+				const rawValue = value.trim();
+				if ( rawValue.endsWith( 'rem' ) ) {
+					return Number.parseFloat( rawValue ) * rootFontSize;
+				}
+				if ( rawValue.endsWith( 'px' ) ) {
+					return Number.parseFloat( rawValue );
+				}
+				return null;
+			};
+			const spacingTokenValues = Object.fromEntries(
+				Object.keys( compactSpacingExpected ).map( ( slug ) => [
+					slug,
+					window
+						.getComputedStyle( document.documentElement )
+						.getPropertyValue( `--wp--preset--spacing--${ slug }` )
+						.trim(),
+				] )
+			);
+			const compactSpacingValid = Object.entries(
+				compactSpacingExpected
+			).every( ( [ slug, expected ] ) => {
+				const actual = cssValueToPixels( spacingTokenValues[ slug ] );
+				return actual !== null && Math.abs( actual - expected ) <= 0.2;
+			} );
 			const runtimeGeneratedClasses = {
 				alignfull: document.querySelectorAll( '.alignfull' ).length,
 				alignwide: document.querySelectorAll( '.alignwide' ).length,
@@ -761,7 +1219,9 @@ for ( const width of widths ) {
 				};
 			} );
 			const productMediaItems = [
-				...document.querySelectorAll( '.wc-block-product' ),
+				...document.querySelectorAll(
+					'.lm-product-grid .wc-block-product, .lm-related-products .wc-block-product'
+				),
 			]
 				.filter( visible )
 				.filter( ( card ) =>
@@ -857,10 +1317,171 @@ for ( const width of widths ) {
 					);
 				return sizes.length ? rounded( Math.max( ...sizes ) ) : null;
 			};
+			const productPage = Boolean(
+				document.querySelector( '.lm-product-main' )
+			);
+			const productRailSelectors = [
+				'.lm-product-layout',
+				'.lm-product-details-heading',
+				'.lm-product-description',
+				'.lm-product-reviews-heading',
+				'.lm-product-reviews-content',
+				'.lm-related-products',
+			];
+			const productRails = productPage
+				? productRailSelectors
+						.map( ( selector ) => {
+							const element = document.querySelector( selector );
+							if ( ! element ) {
+								return null;
+							}
+							const bounds = element.getBoundingClientRect();
+							return {
+								selector,
+								left: rounded( bounds.left ),
+								right: rounded( bounds.right ),
+								width: rounded( bounds.width ),
+							};
+						} )
+						.filter( Boolean )
+				: [];
+			const productRailSpread = productRails.length
+				? Math.max(
+						Math.max(
+							...productRails.map( ( rail ) => rail.left )
+						) -
+							Math.min(
+								...productRails.map( ( rail ) => rail.left )
+							),
+						Math.max(
+							...productRails.map( ( rail ) => rail.right )
+						) -
+							Math.min(
+								...productRails.map( ( rail ) => rail.right )
+							)
+				  )
+				: 0;
+			const overviewShell = document.querySelector(
+				'.lm-product-overview .lm-shell'
+			);
+			const overviewShellBounds = overviewShell?.getBoundingClientRect();
+			const overviewShellStyle = overviewShell
+				? window.getComputedStyle( overviewShell )
+				: null;
+			const overviewShellContentEdges = overviewShellBounds
+				? {
+						left: rounded(
+							overviewShellBounds.left +
+								Number.parseFloat(
+									overviewShellStyle.paddingLeft
+								)
+						),
+						right: rounded(
+							overviewShellBounds.right -
+								Number.parseFloat(
+									overviewShellStyle.paddingRight
+								)
+						),
+				  }
+				: null;
+			const productRailsAligned = Boolean(
+				productRails.length &&
+					overviewShellContentEdges &&
+					productRails.every(
+						( rail ) =>
+							Math.abs(
+								rail.left - overviewShellContentEdges.left
+							) <= 1 &&
+							Math.abs(
+								rail.right - overviewShellContentEdges.right
+							) <= 1
+					)
+			);
+			const siteHeader = document.querySelector( '.lm-site-header' );
+			const productMain = document.querySelector( '.lm-product-main' );
+			const productStartGap =
+				productPage && siteHeader && productMain
+					? rounded(
+							productMain.getBoundingClientRect().top -
+								siteHeader.getBoundingClientRect().bottom
+					  )
+					: null;
+			const quantityButtons = [
+				...document.querySelectorAll(
+					'.lm-product-purchase .lm-quantity__button'
+				),
+			].filter( visible );
+			const quantityTargetSizes = quantityButtons.map( ( button ) => {
+				const bounds = button.getBoundingClientRect();
+				return {
+					width: rounded( bounds.width ),
+					height: rounded( bounds.height ),
+				};
+			} );
+			const quantityInput = document.querySelector(
+				'.lm-product-purchase .wp-block-add-to-cart-form form.cart .quantity .qty'
+			);
+			const quantityInputStyle = quantityInput
+				? window.getComputedStyle( quantityInput )
+				: null;
+			const styleNumber = ( selector, property ) => {
+				const element = document.querySelector( selector );
+				return element
+					? Number.parseFloat(
+							window.getComputedStyle( element )[ property ]
+					  )
+					: 0;
+			};
+			const productSpacing = productPage
+				? {
+						productStartGap,
+						layoutMarginStart: styleNumber(
+							'.lm-product-layout',
+							'marginBlockStart'
+						),
+						variationMarginBottom: styleNumber(
+							'.lm-product-purchase .woocommerce-variation',
+							'marginBottom'
+						),
+						reviewToggleMarginStart: styleNumber(
+							'.lm-product-reviews-summary > .lm-product-reviews-toggle',
+							'marginBlockStart'
+						),
+						relatedTemplateMarginStart: styleNumber(
+							'.lm-related-products > .wc-block-product-template',
+							'marginBlockStart'
+						),
+						reviewContentMarginStart: styleNumber(
+							'.lm-product-review__body > .wp-block-woocommerce-product-review-content',
+							'marginBlockStart'
+						),
+						quantityInputMarginRight: Number.parseFloat(
+							quantityInputStyle?.marginRight || '0'
+						),
+						quantityTargets: quantityTargetSizes,
+						quantityTargetsValid:
+							quantityTargetSizes.length > 0 &&
+							quantityTargetSizes.every(
+								( size ) =>
+									size.width >= 44 && size.height >= 44
+							),
+						quantityInputMarginValid:
+							! quantityInput ||
+							Math.abs(
+								Number.parseFloat(
+									quantityInputStyle.marginRight
+								)
+							) <= 0.1,
+				  }
+				: null;
 
 			return {
 				title: document.title,
 				cls: +( window.__lmCLS || 0 ).toFixed( 4 ),
+				compactSpacing: {
+					values: spacingTokenValues,
+					valid: compactSpacingValid,
+				},
 				overflow: Math.max(
 					0,
 					document.documentElement.scrollWidth - window.innerWidth
@@ -939,6 +1560,13 @@ for ( const width of widths ) {
 							item.wrapperOverflow === 'visible'
 					),
 				},
+				productRails: {
+					aligned: productRailsAligned,
+					spread: rounded( productRailSpread ),
+					edges: productRails,
+					shellContentEdges: overviewShellContentEdges,
+				},
+				productSpacing,
 				uiScale: {
 					body: fontSize( 'body' ),
 					navigationChevronGap: rounded( navigationChevronGap ),
@@ -1015,6 +1643,7 @@ for ( const width of widths ) {
 				wideBands: wide,
 				shells,
 				shellEdges,
+				shellContentEdges,
 				shellEdgeSpread: +shellEdgeSpread.toFixed( 2 ),
 				runtimeGeneratedClasses,
 				wideEdges: wide.length
@@ -1123,9 +1752,9 @@ for ( const width of widths ) {
 							present: Boolean(
 								stage && thumbs && image && trigger
 							),
-							imageCover:
+							imageContained:
 								window.getComputedStyle( image ).objectFit ===
-								'cover',
+								'contain',
 							lightboxSourcePreserved:
 								Boolean(
 									imageLink?.href && image.dataset.large_image
@@ -1444,11 +2073,14 @@ for ( const width of widths ) {
 								document.querySelector( '.lm-mobile-drawer' );
 							const overflow =
 								drawer.scrollHeight - drawer.clientHeight;
+							if ( overflow <= 1 ) {
+								return true;
+							}
 							drawer.scrollTop = Math.min( 40, overflow );
+							const drawerStyle =
+								window.getComputedStyle( drawer );
 							return (
-								overflow > 1 &&
-								window.getComputedStyle( drawer ).overflowY ===
-									'auto' &&
+								drawerStyle.overflowY === 'auto' &&
 								drawer.scrollTop > 0
 							);
 						} );
@@ -1610,6 +2242,442 @@ for ( const width of widths ) {
 	await context.close();
 }
 
+report.productDetails = [];
+report.productReviews = [];
+for ( const width of [ 1280, 390 ] ) {
+	const context = await browser.newContext( {
+		viewport: { width, height: 1100 },
+	} );
+	const page = await context.newPage();
+	await page.goto( new URL( '/producto/altar-chico/', baseURL ).href, {
+		waitUntil: 'networkidle',
+		timeout: 45_000,
+	} );
+	const section = page.locator( '.lm-product-details-section' );
+	await section.scrollIntoViewIfNeeded();
+	const presentation = await section.evaluate( ( root ) => {
+		const description = root.querySelector(
+			'.lm-product-description-content'
+		);
+		const descriptionStyle = description
+			? window.getComputedStyle( description )
+			: null;
+		const specs = description?.querySelector( '.lm-product-specs' );
+		const specLabels = specs
+			? [
+					...specs.querySelectorAll(
+						':scope > .lm-product-spec > dt'
+					),
+			  ].map( ( label ) => label.textContent.trim() )
+			: [];
+		const reviewsSection = document.querySelector(
+			'.lm-product-reviews-section'
+		);
+		const overviewSection = document.querySelector(
+			'.lm-product-overview'
+		);
+		const relatedSection = document.querySelector( '.lm-related-section' );
+		const sectionStyle = window.getComputedStyle( root );
+		const overviewStyle = overviewSection
+			? window.getComputedStyle( overviewSection )
+			: null;
+		const reviewsStyle = reviewsSection
+			? window.getComputedStyle( reviewsSection )
+			: null;
+		const relatedStyle = relatedSection
+			? window.getComputedStyle( relatedSection )
+			: null;
+		let descriptionDividers = 0;
+		if ( description ) {
+			for ( const paragraph of description.querySelectorAll(
+				':scope > p:not(:first-child)'
+			) ) {
+				if (
+					Number.parseFloat(
+						window.getComputedStyle( paragraph ).borderTopWidth
+					) > 0
+				) {
+					descriptionDividers += 1;
+				}
+			}
+		}
+		const railSelectors = [
+			'.lm-product-details-heading',
+			'.lm-product-description',
+			'.lm-product-reviews-heading',
+			'.lm-product-reviews-content',
+			'.lm-related-products',
+		];
+		const rails = railSelectors.map( ( selector ) => {
+			const element = document.querySelector( selector );
+			if ( ! element ) {
+				return null;
+			}
+			const bounds = element.getBoundingClientRect();
+			return {
+				left: Math.round( bounds.left ),
+				right: Math.round( bounds.right ),
+				width: Math.round( bounds.width ),
+			};
+		} );
+		const firstRail = rails[ 0 ];
+		const railsAligned = Boolean(
+			firstRail &&
+				rails.every(
+					( rail ) =>
+						rail &&
+						Math.abs( rail.left - firstRail.left ) <= 1 &&
+						Math.abs( rail.right - firstRail.right ) <= 1
+				)
+		);
+		return {
+			descriptionParagraphs:
+				description?.querySelectorAll( ':scope > p' ).length || 0,
+			descriptionSpecCount:
+				specs?.querySelectorAll( ':scope > .lm-product-spec' ).length ||
+				0,
+			descriptionSpecLabels: specLabels,
+			descriptionHeadingCount:
+				description?.querySelectorAll(
+					':scope > h1, :scope > h2, :scope > h3'
+				).length || 0,
+			descriptionDividers,
+			descriptionAccordionCount:
+				description?.querySelectorAll( 'details, [role="button"]' )
+					.length || 0,
+			heading:
+				root
+					.querySelector( '.lm-product-details-heading h2' )
+					?.textContent.trim() || '',
+			overflow: root.scrollWidth - root.clientWidth,
+			sectionBorders: [
+				Number.parseFloat( sectionStyle.borderTopWidth ),
+				Number.parseFloat( sectionStyle.borderBottomWidth ),
+			],
+			sectionShadow: window.getComputedStyle( root ).boxShadow,
+			surfaceBackground: sectionStyle.backgroundColor,
+			overviewSurfaceBackground: overviewStyle?.backgroundColor || '',
+			relatedSurfaceBackground: relatedStyle?.backgroundColor || '',
+			reviewsSurfaceBackground: reviewsStyle?.backgroundColor || '',
+			verticalDivider: Number.parseFloat(
+				descriptionStyle?.borderLeftWidth || '0'
+			),
+			tabCount: root.querySelectorAll( '[role="tab"], .woocommerce-tabs' )
+				.length,
+			rails,
+			railsAligned,
+		};
+	} );
+	await section.screenshot( {
+		path: path.join( outputDirectory, `producto-detalles-${ width }.png` ),
+	} );
+	report.productDetails.push( {
+		passed: Boolean(
+			presentation.heading === 'Detalles del producto' &&
+				presentation.tabCount === 0 &&
+				presentation.descriptionParagraphs >= 1 &&
+				presentation.descriptionSpecCount === 1 &&
+				[ 'Medidas aproximadas' ].every( ( label ) =>
+					presentation.descriptionSpecLabels.includes( label )
+				) &&
+				! presentation.descriptionSpecLabels.includes( 'Cuidados' ) &&
+				! presentation.descriptionSpecLabels.includes(
+					'Disponibilidad'
+				) &&
+				presentation.descriptionHeadingCount === 0 &&
+				presentation.descriptionDividers === 0 &&
+				presentation.descriptionAccordionCount === 0 &&
+				presentation.overflow <= 1 &&
+				presentation.sectionBorders.every(
+					( border ) => border === 0
+				) &&
+				presentation.sectionShadow === 'none' &&
+				presentation.surfaceBackground ===
+					presentation.overviewSurfaceBackground &&
+				presentation.surfaceBackground ===
+					presentation.reviewsSurfaceBackground &&
+				presentation.surfaceBackground ===
+					presentation.relatedSurfaceBackground &&
+				presentation.verticalDivider === 0 &&
+				presentation.railsAligned
+		),
+		presentation,
+		width,
+	} );
+
+	const reviewsSection = page.locator( '.lm-product-reviews-section' );
+	await reviewsSection.scrollIntoViewIfNeeded();
+	const closedReviews = await reviewsSection.evaluate( ( root ) => {
+		const button = root.querySelector( '[data-lm-review-form-toggle]' );
+		const form = root.querySelector( '[id="review_form_wrapper"]' );
+		const surfaceStyle = window.getComputedStyle( root );
+		const contentStyle = window.getComputedStyle(
+			root.querySelector( '.lm-product-reviews-content' )
+		);
+		const headingStyle = window.getComputedStyle(
+			root.querySelector( '.lm-product-reviews-heading' )
+		);
+		return {
+			buttonHidden: button?.hidden ?? true,
+			buttonLabel: button?.textContent.trim() || '',
+			expanded: button?.getAttribute( 'aria-expanded' ) || '',
+			formHidden: form?.hidden ?? false,
+			heading:
+				root
+					.querySelector( '.lm-product-reviews-heading h2' )
+					?.textContent.trim() || '',
+			overflow: root.scrollWidth - root.clientWidth,
+			sectionBorders: [
+				Number.parseFloat( surfaceStyle.borderTopWidth ),
+				Number.parseFloat( surfaceStyle.borderBottomWidth ),
+			],
+			ratingSummary: Boolean(
+				root.querySelector(
+					'.lm-product-reviews-summary .wc-block-components-product-rating__stars'
+				)
+			),
+			shadow: surfaceStyle.boxShadow,
+			headingBorderBottom: Number.parseFloat(
+				headingStyle.borderBottomWidth
+			),
+			verticalDivider: Number.parseFloat( contentStyle.borderLeftWidth ),
+			title:
+				root
+					.querySelector(
+						'.wp-block-woocommerce-product-reviews-title'
+					)
+					?.textContent.trim() || '',
+		};
+	} );
+	await reviewsSection.screenshot( {
+		path: path.join(
+			outputDirectory,
+			`producto-valoraciones-cerrado-${ width }.png`
+		),
+	} );
+	const reviewToggle = reviewsSection.locator(
+		'[data-lm-review-form-toggle]'
+	);
+	await reviewToggle.click();
+	await page.waitForTimeout( 60 );
+	const reviewTransition = await reviewsSection
+		.locator( '[id="review_form_wrapper"]' )
+		.evaluate( ( form ) => {
+			const style = window.getComputedStyle( form );
+			return {
+				duration: Number.parseFloat( style.transitionDuration ),
+				height: form.style.height,
+				started: form.classList.contains( 'lm-is-animating' ),
+			};
+		} );
+	await page.waitForTimeout( 380 );
+	const openedReviews = await reviewsSection.evaluate( ( root ) => {
+		const bounds = ( selector ) =>
+			root.querySelector( selector )?.getBoundingClientRect();
+		const author = bounds( '.comment-form-author' );
+		const button = root.querySelector( '[data-lm-review-form-toggle]' );
+		const email = bounds( '.comment-form-email' );
+		const form = root.querySelector( '[id="review_form_wrapper"]' );
+		const stars = [
+			...root.querySelectorAll( '.comment-form-rating .stars button' ),
+		];
+		return {
+			buttonLabel: button?.textContent.trim() || '',
+			existingRatings: [
+				...root.querySelectorAll(
+					'.wc-block-product-review-rating__stars[aria-label]'
+				),
+			].map( ( rating ) => rating.getAttribute( 'aria-label' ) ),
+			expanded: button?.getAttribute( 'aria-expanded' ) || '',
+			formColumns:
+				author && email
+					? {
+							aligned: Math.abs( author.top - email.top ) <= 1,
+							sameColumn:
+								Math.abs( author.left - email.left ) <= 1,
+					  }
+					: null,
+			formHidden: form?.hidden ?? true,
+			inlineHeight: form?.style.height || '',
+			reviewCount: root.querySelectorAll(
+				'.wp-block-woocommerce-product-review-template > .review'
+			).length,
+			starLabels: stars.map( ( star ) =>
+				star.getAttribute( 'aria-label' )
+			),
+			starTargets: stars.map( ( star ) => {
+				const starBounds = star.getBoundingClientRect();
+				return {
+					height: starBounds.height,
+					width: starBounds.width,
+				};
+			} ),
+		};
+	} );
+	await reviewsSection.screenshot( {
+		path: path.join(
+			outputDirectory,
+			`producto-valoraciones-abierto-${ width }.png`
+		),
+	} );
+	const fourthStar = reviewsSection
+		.locator( '.comment-form-rating .stars button' )
+		.nth( 3 );
+	await fourthStar.click();
+	await page.waitForTimeout( 50 );
+	const ratingSelected = await fourthStar.getAttribute( 'aria-checked' );
+	await page.keyboard.press( 'Escape' );
+	await page.waitForTimeout( 380 );
+	const closedAfterEscape = await reviewsSection.evaluate( ( root ) => {
+		const button = root.querySelector( '[data-lm-review-form-toggle]' );
+		const form = root.querySelector( '[id="review_form_wrapper"]' );
+		return {
+			expanded: button?.getAttribute( 'aria-expanded' ) || '',
+			focusReturned: button === button?.ownerDocument.activeElement,
+			formHidden: form?.hidden ?? false,
+			inlineHeight: form?.style.height || '',
+		};
+	} );
+	const reviewLinkTarget = await page
+		.locator( '.lm-product-heading .woocommerce-review-link' )
+		.getAttribute( 'href' );
+	const reviewIds = await page.locator( '[id="reviews"]' ).count();
+	const expectedStarLabels = [
+		'1 estrella de 5',
+		'2 estrellas de 5',
+		'3 estrellas de 5',
+		'4 estrellas de 5',
+		'5 estrellas de 5',
+	];
+	report.productReviews.push( {
+		closedAfterEscape,
+		closedReviews,
+		openedReviews,
+		passed: Boolean(
+			closedReviews.heading === 'Opiniones sobre esta pieza' &&
+				closedReviews.title === '1 valoración' &&
+				closedReviews.buttonLabel === 'Escribir una valoración' &&
+				! closedReviews.buttonHidden &&
+				closedReviews.expanded === 'false' &&
+				closedReviews.formHidden &&
+				closedReviews.overflow <= 1 &&
+				closedReviews.ratingSummary &&
+				closedReviews.shadow === 'none' &&
+				closedReviews.sectionBorders.every(
+					( border ) => border === 0
+				) &&
+				closedReviews.headingBorderBottom === 0 &&
+				closedReviews.verticalDivider === 0 &&
+				reviewTransition.started &&
+				reviewTransition.duration >= 0.18 &&
+				Boolean( reviewTransition.height ) &&
+				openedReviews.buttonLabel === 'Cerrar formulario' &&
+				openedReviews.expanded === 'true' &&
+				! openedReviews.formHidden &&
+				openedReviews.inlineHeight === '' &&
+				openedReviews.reviewCount >= 1 &&
+				openedReviews.existingRatings.some( ( label ) =>
+					label.includes( '5 de 5' )
+				) &&
+				JSON.stringify( openedReviews.starLabels ) ===
+					JSON.stringify( expectedStarLabels ) &&
+				openedReviews.starTargets.every(
+					( target ) => target.width >= 43.5 && target.height >= 43.5
+				) &&
+				ratingSelected === 'true' &&
+				closedAfterEscape.expanded === 'false' &&
+				closedAfterEscape.formHidden &&
+				closedAfterEscape.focusReturned &&
+				closedAfterEscape.inlineHeight === '' &&
+				reviewLinkTarget === '#reviews' &&
+				reviewIds === 1 &&
+				( width <= 520
+					? openedReviews.formColumns?.sameColumn &&
+					  ! openedReviews.formColumns?.aligned
+					: openedReviews.formColumns?.aligned &&
+					  ! openedReviews.formColumns?.sameColumn )
+		),
+		ratingSelected,
+		reviewIds,
+		reviewLinkTarget,
+		reviewTransition,
+		width,
+	} );
+	await context.close();
+}
+
+const emptyReviewsContext = await browser.newContext( {
+	viewport: { width: 390, height: 900 },
+} );
+const emptyReviewsPage = await emptyReviewsContext.newPage();
+await emptyReviewsPage.goto(
+	new URL( '/producto/altar-gigante/', baseURL ).href,
+	{ waitUntil: 'networkidle', timeout: 45_000 }
+);
+report.productReviewsEmpty = await emptyReviewsPage
+	.locator( '.lm-product-reviews-section' )
+	.evaluate( ( root ) => {
+		const headingStyle = window.getComputedStyle(
+			root.querySelector( '.lm-product-reviews-heading' )
+		);
+		return {
+			buttonAvailable: ! root.querySelector(
+				'[data-lm-review-form-toggle]'
+			)?.hidden,
+			compactHeight: root.getBoundingClientRect().height <= 240,
+			formCollapsed:
+				root.querySelector( '[id="review_form_wrapper"]' )?.hidden ??
+				false,
+			headingBorderBottom: Number.parseFloat(
+				headingStyle.borderBottomWidth
+			),
+			reviewCount: root.querySelectorAll(
+				'.wp-block-woocommerce-product-review-template > .review'
+			).length,
+			title:
+				root
+					.querySelector(
+						'.wp-block-woocommerce-product-reviews-title'
+					)
+					?.textContent.trim() || '',
+		};
+	} );
+report.productReviewsEmpty.passed = Boolean(
+	report.productReviewsEmpty.title === 'Aún no hay valoraciones' &&
+		report.productReviewsEmpty.reviewCount === 0 &&
+		report.productReviewsEmpty.buttonAvailable &&
+		report.productReviewsEmpty.formCollapsed &&
+		report.productReviewsEmpty.compactHeight &&
+		report.productReviewsEmpty.headingBorderBottom === 0
+);
+await emptyReviewsContext.close();
+
+const noScriptReviewsContext = await browser.newContext( {
+	javaScriptEnabled: false,
+	viewport: { width: 390, height: 900 },
+} );
+const noScriptReviewsPage = await noScriptReviewsContext.newPage();
+await noScriptReviewsPage.goto(
+	new URL( '/producto/altar-chico/', baseURL ).href,
+	{ waitUntil: 'networkidle', timeout: 45_000 }
+);
+report.productReviewsWithoutJavaScript = await noScriptReviewsPage
+	.locator( '.lm-product-reviews-section' )
+	.evaluate( ( root ) => ( {
+		buttonHidden:
+			root.querySelector( '[data-lm-review-form-toggle]' )?.hidden ??
+			false,
+		formVisible: Boolean(
+			root.querySelector( '[id="review_form_wrapper"]' )?.getClientRects()
+				.length
+		),
+	} ) );
+report.productReviewsWithoutJavaScript.passed = Boolean(
+	report.productReviewsWithoutJavaScript.buttonHidden &&
+		report.productReviewsWithoutJavaScript.formVisible
+);
+await noScriptReviewsContext.close();
+
 const reducedMotionContext = await browser.newContext( {
 	viewport: { width: 1280, height: 900 },
 	reducedMotion: 'reduce',
@@ -1691,6 +2759,55 @@ report.reducedMotion.mobileMenuTransitionDisabled =
 				.every( ( duration ) => duration.trim() === '0s' );
 		} );
 	} );
+await reducedMotionPage.goto(
+	new URL( '/producto/altar-chico/', baseURL ).href,
+	{
+		waitUntil: 'networkidle',
+		timeout: 45_000,
+	}
+);
+await reducedMotionPage
+	.locator( '.lm-variation-option' )
+	.filter( { hasText: 'Natural' } )
+	.click();
+await reducedMotionPage.waitForTimeout( 100 );
+report.reducedMotion.galleryTransitionSkipped =
+	await reducedMotionPage.evaluate( () => {
+		const gallery = document.querySelector( '.lm-product-gallery' );
+		return Boolean(
+			gallery &&
+				! gallery.classList.contains( 'lm-is-resizing' ) &&
+				! gallery.style.height
+		);
+	} );
+report.reducedMotion.productFeedbackTransitionDisabled =
+	await reducedMotionPage.evaluate( () => {
+		const feedback = document.querySelector( '[data-lm-product-feedback]' );
+		const durations = feedback
+			? window
+					.getComputedStyle( feedback )
+					.transitionDuration.split( ',' )
+			: [];
+		return Boolean(
+			feedback &&
+				durations.length &&
+				durations.every( ( duration ) => duration.trim() === '0s' )
+		);
+	} );
+await reducedMotionPage.locator( '[data-lm-review-form-toggle]' ).click();
+await reducedMotionPage.waitForTimeout( 50 );
+report.reducedMotion.productReviewTransitionDisabled =
+	await reducedMotionPage.evaluate( () => {
+		const form = document.querySelector(
+			'.lm-product-reviews-content [id="review_form_wrapper"]'
+		);
+		return Boolean(
+			form &&
+				! form.hidden &&
+				! form.classList.contains( 'lm-is-animating' ) &&
+				! form.style.height
+		);
+	} );
 await reducedMotionContext.close();
 
 const noJavaScriptContext = await browser.newContext( {
@@ -1767,6 +2884,26 @@ report.withoutJavaScript = await noJavaScriptPage.evaluate( () => ( {
 			document.querySelectorAll( '.products .product' ).length,
 	},
 } ) );
+await noJavaScriptPage.goto(
+	new URL( '/producto/altar-chico/', baseURL ).href,
+	{
+		waitUntil: 'networkidle',
+		timeout: 45_000,
+	}
+);
+report.withoutJavaScript.productNoticeFallback =
+	await noJavaScriptPage.evaluate( () => {
+		const feedback = document.querySelector( '[data-lm-product-feedback]' );
+		return {
+			insidePurchase: Boolean(
+				feedback?.closest( '.lm-product-purchase' )
+			),
+			present: Boolean( feedback ),
+			topNoticeCount: document.querySelectorAll(
+				'.lm-product-overview > .lm-shell > .wp-block-woocommerce-store-notices'
+			).length,
+		};
+	} );
 await noJavaScriptContext.close();
 
 await browser.close();
@@ -1804,6 +2941,7 @@ const failures = report.pages.filter(
 	( page ) =>
 		( page.status >= 400 && page.name !== 'error-404' ) ||
 		page.overflow > 0 ||
+		! page.compactSpacing?.valid ||
 		page.brokenImages.length ||
 		page.pageErrors.length ||
 		page.console.some( ( message ) => message.type === 'error' ) ||
@@ -1815,9 +2953,25 @@ const failures = report.pages.filter(
 			( ! page.productMediaAudit.frameStable ||
 				! page.productMediaAudit.imageScaled ||
 				! page.productMediaAudit.imageReturned ) ) ||
+		( [ 'producto-variable', 'producto-bajo-pedido' ].includes(
+			page.name
+		) &&
+			( ! page.productRails?.aligned ||
+				page.productRails?.spread > 1 ||
+				! page.productSpacing ||
+				Math.abs( page.productSpacing.productStartGap ) > 1 ||
+				Math.abs( page.productSpacing.layoutMarginStart ) > 0.1 ||
+				Math.abs( page.productSpacing.variationMarginBottom ) > 0.1 ||
+				Math.abs( page.productSpacing.reviewToggleMarginStart ) > 0.1 ||
+				Math.abs( page.productSpacing.relatedTemplateMarginStart ) >
+					0.1 ||
+				Math.abs( page.productSpacing.reviewContentMarginStart ) >
+					0.1 ||
+				! page.productSpacing.quantityTargetsValid ||
+				! page.productSpacing.quantityInputMarginValid ) ) ||
 		( page.singleProductGalleryAudit &&
 			( ! page.singleProductGalleryAudit.present ||
-				! page.singleProductGalleryAudit.imageCover ||
+				! page.singleProductGalleryAudit.imageContained ||
 				! page.singleProductGalleryAudit.lightboxSourcePreserved ||
 				Math.abs( page.singleProductGalleryAudit.stageAspect - 0.9 ) >
 					0.03 ||
@@ -1880,6 +3034,16 @@ const enhancementFailures =
 	! report.reducedMotion.headerStayedVisible ||
 	! report.reducedMotion.motionDisabled ||
 	! report.reducedMotion.mobileMenuTransitionDisabled ||
+	! report.reducedMotion.galleryTransitionSkipped ||
+	! report.reducedMotion.productFeedbackTransitionDisabled ||
+	! report.reducedMotion.productReviewTransitionDisabled ||
+	report.productDetails.some( ( details ) => ! details.passed ) ||
+	report.productReviews.some( ( reviews ) => ! reviews.passed ) ||
+	! report.productReviewsEmpty.passed ||
+	! report.productReviewsWithoutJavaScript.passed ||
+	! report.withoutJavaScript.productNoticeFallback.present ||
+	! report.withoutJavaScript.productNoticeFallback.insidePurchase ||
+	report.withoutJavaScript.productNoticeFallback.topNoticeCount > 0 ||
 	report.withoutJavaScript.legacyMotionHooks > 0 ||
 	report.withoutJavaScript.themeScriptInitialized;
 
