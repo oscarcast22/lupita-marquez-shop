@@ -8,7 +8,7 @@
 	--lm-product-action-min-width: 15rem;
 	--lm-product-action-radius: 0.5rem;
 	--lm-product-action-reveal-duration: 200ms;
-	--lm-product-content-width: 72rem;
+	--lm-product-content-width: var(--wp--style--global--wide-size);
 	--lm-product-gallery-aspect: 9 / 10;
 	--lm-product-gallery-radius: 0.5rem;
 	--lm-product-gallery-shadow: 0 0.75rem 2.5rem color-mix(in srgb, var(--wp--preset--color--charcoal) 5%, transparent);
@@ -31,8 +31,8 @@
 	--lm-control-height-xl: 3.25rem;
 	--lm-control-height-drawer: 3.125rem;
 	--lm-icon-button: 2.75rem;
-	--lm-control-width-quantity: 7rem;
-	--lm-quantity-stepper-size: 2.25rem;
+	--lm-quantity-stepper-size: 2.5rem;
+	--lm-quantity-touch-size: 2.75rem;
 	--lm-control-width-select: 14.375rem;
 	--lm-content-width-checkout: 70rem;
 	--lm-navigation-submenu-width: 13.75rem;
@@ -47,6 +47,7 @@
 	--lm-cart-badge-padding: 0.1875rem;
 	--lm-social-glyph: 1.0625rem;
 	--lm-social-mark: 2.125rem;
+	--lm-social-gap: 0.65rem;
 	--lm-trust-icon: 2.5rem;
 	--lm-brand-width: 11.875rem;
 	--lm-brand-width-tablet: 9.6875rem;
