@@ -12,6 +12,11 @@ const MINI_CART_SELECTOR =
 const MINI_CART_BUTTON_SELECTOR = '.wc-block-mini-cart__button';
 const PRODUCT_CART_LABEL_SELECTOR =
 	'.wc-block-product .wc-block-components-product-button__button';
+const PRODUCT_FEEDBACK_SELECTOR = '[data-lm-product-feedback]';
+const PRODUCT_NATIVE_ERROR_SELECTOR =
+	'.woocommerce-error, .wc-block-components-notice-banner.is-error, .wc-block-components-notice-banner[role="alert"]';
+const PRODUCT_NATIVE_NOTICE_SELECTOR =
+	'.woocommerce-message, .woocommerce-info, .woocommerce-error, .wc-block-components-notice-banner';
 const ERROR_SELECTOR = [
 	'.woocommerce-error',
 	'.wc-block-components-notice-banner.is-error',
@@ -19,10 +24,15 @@ const ERROR_SELECTOR = [
 ].join( ', ' );
 
 const pendingControls = new Set();
+const submittedControls = new Set();
 const originalControlState = new WeakMap();
 const pendingTimers = new WeakMap();
 const pendingLabelTimers = new WeakMap();
+const productGalleryTransitions = new WeakMap();
+const productReviewTransitions = new WeakMap();
 let liveRegion;
+let productFeedback;
+let productFeedbackCleanupTimer;
 let miniCartRoot;
 let miniCartObserver;
 let hasBadgeSnapshot = false;
@@ -37,6 +47,8 @@ let mobileMenuScrollY = 0;
 
 const MOBILE_MENU_BREAKPOINT = 960;
 const PENDING_LABEL_DELAY = 280;
+const PRODUCT_GALLERY_TRANSITION_SETTLE = 320;
+const PRODUCT_REVIEW_TRANSITION_SETTLE = 360;
 const PRODUCT_VARIATION_FORM_SELECTOR =
 	'.lm-product-purchase form.variations_form';
 const PRODUCT_QUANTITY_SELECTOR = '.lm-product-purchase form.cart .quantity';
@@ -88,6 +100,14 @@ const createQuantityButton = ( step, label, text ) => {
 	return button;
 };
 
+const createQuantityLabel = () => {
+	const label = document.createElement( 'span' );
+	label.className = 'lm-quantity__label';
+	label.setAttribute( 'aria-hidden', 'true' );
+	label.textContent = 'Cantidad';
+	return label;
+};
+
 const initProductQuantityControls = () => {
 	document
 		.querySelectorAll( PRODUCT_QUANTITY_SELECTOR )
@@ -98,14 +118,23 @@ const initProductQuantityControls = () => {
 			}
 
 			if ( ! quantity.classList.contains( 'lm-quantity-control' ) ) {
+				const decreaseButton = createQuantityButton(
+					'decrease',
+					'Reducir cantidad',
+					'−'
+				);
+				const increaseButton = createQuantityButton(
+					'increase',
+					'Aumentar cantidad',
+					'+'
+				);
+				const actions = document.createElement( 'span' );
+
 				quantity.classList.add( 'lm-quantity-control' );
-				quantity.insertBefore(
-					createQuantityButton( 'decrease', 'Reducir cantidad', '−' ),
-					input
-				);
-				quantity.append(
-					createQuantityButton( 'increase', 'Aumentar cantidad', '+' )
-				);
+				actions.className = 'lm-quantity__actions';
+				quantity.insertBefore( createQuantityLabel(), input );
+				quantity.insertBefore( actions, input );
+				actions.append( decreaseButton, input, increaseButton );
 				input.addEventListener( 'input', () =>
 					syncQuantityControl( quantity )
 				);
@@ -274,6 +303,223 @@ const syncProductGalleryTriggers = () => {
 		} );
 };
 
+const finishProductGalleryTransition = ( gallery ) => {
+	const state = productGalleryTransitions.get( gallery );
+	if ( ! state ) {
+		return;
+	}
+
+	window.cancelAnimationFrame( state.frame );
+	window.clearTimeout( state.timer );
+	state.mutationObserver.disconnect();
+	state.resizeObserver?.disconnect();
+	gallery.classList.remove( 'lm-is-resizing' );
+	gallery.style.removeProperty( 'height' );
+	productGalleryTransitions.delete( gallery );
+};
+
+const measureProductGalleryTransition = ( gallery ) => {
+	const state = productGalleryTransitions.get( gallery );
+	if ( ! state ) {
+		return;
+	}
+
+	window.cancelAnimationFrame( state.frame );
+	state.frame = window.requestAnimationFrame( () => {
+		const content = gallery.firstElementChild;
+		const targetHeight = content?.getBoundingClientRect().height || 0;
+		if ( targetHeight <= 0 ) {
+			return;
+		}
+
+		if ( state.observedContent !== content && window.ResizeObserver ) {
+			state.resizeObserver?.disconnect();
+			state.resizeObserver = new window.ResizeObserver( () =>
+				measureProductGalleryTransition( gallery )
+			);
+			state.resizeObserver.observe( content );
+			state.observedContent = content;
+		}
+
+		gallery.style.height = `${ targetHeight }px`;
+		window.clearTimeout( state.timer );
+		state.timer = window.setTimeout(
+			() => finishProductGalleryTransition( gallery ),
+			PRODUCT_GALLERY_TRANSITION_SETTLE
+		);
+	} );
+};
+
+const startProductGalleryTransition = ( form ) => {
+	if (
+		! form ||
+		window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches
+	) {
+		return;
+	}
+
+	const gallery = form
+		.closest( '.lm-product-layout' )
+		?.querySelector( '.lm-product-gallery' );
+	if ( ! gallery ) {
+		return;
+	}
+
+	const currentHeight = gallery.getBoundingClientRect().height;
+	finishProductGalleryTransition( gallery );
+	gallery.style.height = `${ currentHeight }px`;
+	gallery.classList.add( 'lm-is-resizing' );
+	const state = {
+		frame: 0,
+		mutationObserver: new MutationObserver( ( mutations ) => {
+			if (
+				mutations.some( ( mutation ) => mutation.target !== gallery )
+			) {
+				measureProductGalleryTransition( gallery );
+			}
+		} ),
+		observedContent: null,
+		resizeObserver: null,
+		timer: 0,
+	};
+	productGalleryTransitions.set( gallery, state );
+	state.mutationObserver.observe( gallery, {
+		attributes: true,
+		childList: true,
+		subtree: true,
+	} );
+	measureProductGalleryTransition( gallery );
+};
+
+const finishProductReviewTransition = ( button, state, isOpen ) => {
+	if ( state.frame ) {
+		window.cancelAnimationFrame( state.frame );
+	}
+	if ( state.timer ) {
+		window.clearTimeout( state.timer );
+	}
+
+	state.frame = 0;
+	state.timer = 0;
+	state.isOpen = isOpen;
+	state.wrapper.classList.remove( 'lm-is-animating' );
+	state.wrapper.style.removeProperty( 'height' );
+	state.wrapper.style.removeProperty( 'opacity' );
+	state.wrapper.hidden = ! isOpen;
+	button.setAttribute( 'aria-expanded', String( isOpen ) );
+	button.textContent = isOpen
+		? 'Cerrar formulario'
+		: 'Escribir una valoración';
+};
+
+const setProductReviewFormOpen = ( button, state, isOpen, animate = true ) => {
+	const { wrapper } = state;
+	const reduceMotion = window.matchMedia(
+		'(prefers-reduced-motion: reduce)'
+	).matches;
+
+	if ( wrapper.contains( wrapper.ownerDocument.activeElement ) && ! isOpen ) {
+		button.focus();
+	}
+
+	if ( state.frame ) {
+		window.cancelAnimationFrame( state.frame );
+	}
+	if ( state.timer ) {
+		window.clearTimeout( state.timer );
+	}
+	state.isOpen = isOpen;
+
+	button.setAttribute( 'aria-expanded', String( isOpen ) );
+	button.textContent = isOpen
+		? 'Cerrar formulario'
+		: 'Escribir una valoración';
+
+	if ( reduceMotion || ! animate ) {
+		finishProductReviewTransition( button, state, isOpen );
+		return;
+	}
+
+	wrapper.hidden = false;
+	wrapper.classList.add( 'lm-is-animating' );
+	const startHeight = isOpen ? 0 : wrapper.getBoundingClientRect().height;
+	wrapper.style.height = `${ startHeight }px`;
+	wrapper.style.opacity = isOpen ? '0' : '1';
+	wrapper.getBoundingClientRect();
+
+	state.frame = window.requestAnimationFrame( () => {
+		wrapper.style.height = `${ isOpen ? wrapper.scrollHeight : 0 }px`;
+		wrapper.style.opacity = isOpen ? '1' : '0';
+		state.timer = window.setTimeout(
+			() => finishProductReviewTransition( button, state, isOpen ),
+			PRODUCT_REVIEW_TRANSITION_SETTLE
+		);
+	} );
+};
+
+const initProductReviews = () => {
+	const button = document.querySelector( '[data-lm-review-form-toggle]' );
+	const wrapper = document.querySelector(
+		'.lm-product-reviews-content [id="review_form_wrapper"]'
+	);
+	if ( ! button || ! wrapper ) {
+		return;
+	}
+
+	const currentState = productReviewTransitions.get( button );
+	if ( currentState?.wrapper === wrapper ) {
+		return;
+	}
+	if ( currentState ) {
+		button.removeEventListener( 'click', currentState.handleClick );
+		button.removeEventListener(
+			'keydown',
+			currentState.handleButtonKeydown
+		);
+		currentState.wrapper.removeEventListener(
+			'keydown',
+			currentState.handleWrapperKeydown
+		);
+	}
+
+	const openFromHash = [
+		'#review_form',
+		'#review_form_wrapper',
+		'#respond',
+	].includes( window.location.hash );
+	const state = {
+		frame: 0,
+		handleButtonKeydown: null,
+		handleClick: null,
+		handleWrapperKeydown: null,
+		isOpen: openFromHash,
+		timer: 0,
+		wrapper,
+	};
+	productReviewTransitions.set( button, state );
+	button.hidden = false;
+	finishProductReviewTransition( button, state, openFromHash );
+
+	state.handleClick = () => {
+		setProductReviewFormOpen( button, state, ! state.isOpen );
+	};
+	state.handleButtonKeydown = ( event ) => {
+		if ( event.key === 'Escape' && state.isOpen ) {
+			event.preventDefault();
+			setProductReviewFormOpen( button, state, false );
+		}
+	};
+	state.handleWrapperKeydown = ( event ) => {
+		if ( event.key === 'Escape' && state.isOpen ) {
+			event.preventDefault();
+			setProductReviewFormOpen( button, state, false );
+		}
+	};
+	button.addEventListener( 'click', state.handleClick );
+	button.addEventListener( 'keydown', state.handleButtonKeydown );
+	wrapper.addEventListener( 'keydown', state.handleWrapperKeydown );
+};
+
 const handleQuantityStep = ( event ) => {
 	const button = isElement( event.target )
 		? event.target.closest( '.lm-quantity__button' )
@@ -298,6 +544,7 @@ const handleQuantityStep = ( event ) => {
 		return;
 	}
 
+	clearProductFeedback();
 	input.value = String( nextValue );
 	input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 	input.dispatchEvent( new Event( 'change', { bubbles: true } ) );
@@ -547,6 +794,9 @@ const saveControlState = ( control ) => {
 
 	originalControlState.set( control, {
 		ariaLabel: control.getAttribute( 'aria-label' ),
+		disabled: control.matches( 'button, input' )
+			? Boolean( control.disabled )
+			: null,
 		html: control.innerHTML,
 		value: control instanceof HTMLInputElement ? control.value : null,
 	} );
@@ -565,8 +815,10 @@ const setControlState = ( control, state ) => {
 		control.removeAttribute( 'aria-busy' );
 		setControlLabel( control, 'No se pudo agregar' );
 	} else if ( state === 'success' ) {
-		// WooCommerce owns the reactive label, including the persistent cart quantity.
 		control.removeAttribute( 'aria-busy' );
+		if ( control.closest( 'form.cart' ) ) {
+			setControlLabel( control, 'Agregado ✓' );
+		}
 	}
 };
 
@@ -578,6 +830,7 @@ const clearControlFeedback = ( control ) => {
 	control.classList.remove( 'lm-is-pending', 'lm-is-success', 'lm-is-error' );
 	delete control.dataset.lmState;
 	control.removeAttribute( 'aria-busy' );
+	submittedControls.delete( control );
 	originalControlState.delete( control );
 };
 
@@ -595,12 +848,16 @@ const restoreControl = ( control ) => {
 	} else {
 		control.setAttribute( 'aria-label', original.ariaLabel );
 	}
+	if ( original.disabled !== null ) {
+		control.disabled = original.disabled;
+	}
 
 	if ( control instanceof HTMLInputElement ) {
 		control.value = original.value;
 	} else {
 		control.innerHTML = original.html;
 	}
+	submittedControls.delete( control );
 	originalControlState.delete( control );
 };
 
@@ -624,8 +881,169 @@ const announce = ( message ) => {
 	}
 };
 
+const getNoticeText = ( notice ) => {
+	const copy = notice.cloneNode( true );
+	copy.querySelectorAll( 'a, button, svg' ).forEach( ( item ) =>
+		item.remove()
+	);
+	return copy.textContent.replace( /\s+/g, ' ' ).trim();
+};
+
+const clearProductFeedback = ( shouldRestoreFocus = false ) => {
+	if ( ! productFeedback ) {
+		return;
+	}
+
+	productFeedback.classList.remove( 'is-visible' );
+	window.clearTimeout( productFeedbackCleanupTimer );
+	productFeedbackCleanupTimer = window.setTimeout( () => {
+		if ( ! productFeedback?.classList.contains( 'is-visible' ) ) {
+			productFeedback?.replaceChildren();
+		}
+	}, 240 );
+
+	if ( shouldRestoreFocus ) {
+		const purchase = productFeedback.closest( '.lm-product-purchase' );
+		const addButton = purchase?.querySelector(
+			'.single_add_to_cart_button'
+		);
+		const focusTarget =
+			addButton && ! addButton.disabled
+				? addButton
+				: purchase?.querySelector( 'input.qty' );
+		focusTarget?.focus();
+	}
+};
+
+const showProductError = ( messages, cartUrl = null ) => {
+	if ( ! productFeedback ) {
+		return;
+	}
+
+	const cleanMessages = [ ...new Set( messages.filter( Boolean ) ) ];
+	if ( ! cleanMessages.length ) {
+		cleanMessages.push(
+			'No pudimos agregar el producto. Revisa la cantidad e inténtalo nuevamente.'
+		);
+	}
+
+	window.clearTimeout( productFeedbackCleanupTimer );
+	const notice = document.createElement( 'div' );
+	notice.className = 'lm-product-feedback__notice';
+	notice.setAttribute( 'aria-atomic', 'true' );
+	notice.setAttribute( 'role', 'alert' );
+
+	const marker = document.createElement( 'span' );
+	marker.className = 'lm-product-feedback__marker';
+	marker.setAttribute( 'aria-hidden', 'true' );
+	marker.textContent = '!';
+
+	const content = document.createElement( 'div' );
+	content.className = 'lm-product-feedback__content';
+	cleanMessages.forEach( ( message ) => {
+		const paragraph = document.createElement( 'p' );
+		paragraph.textContent = message;
+		content.append( paragraph );
+	} );
+
+	if ( cartUrl ) {
+		const cartLink = document.createElement( 'a' );
+		cartLink.className = 'lm-product-feedback__cart-link';
+		cartLink.href = cartUrl;
+		cartLink.textContent = 'Ver carrito';
+		content.append( cartLink );
+	}
+
+	const dismiss = document.createElement( 'button' );
+	dismiss.className = 'lm-product-feedback__dismiss';
+	dismiss.dataset.lmDismissProductFeedback = '';
+	dismiss.setAttribute( 'aria-label', 'Cerrar mensaje' );
+	dismiss.type = 'button';
+	dismiss.textContent = '×';
+
+	notice.append( marker, content, dismiss );
+	productFeedback.replaceChildren( notice );
+	window.requestAnimationFrame( () =>
+		productFeedback?.classList.add( 'is-visible' )
+	);
+};
+
+const normalizeNativeProductFeedback = () => {
+	if ( ! productFeedback ) {
+		return;
+	}
+
+	const notices = [
+		...productFeedback.querySelectorAll( PRODUCT_NATIVE_NOTICE_SELECTOR ),
+	].filter(
+		( notice ) => ! notice.closest( '.lm-product-feedback__notice' )
+	);
+	if ( ! notices.length ) {
+		return;
+	}
+
+	const errors = notices.filter( ( notice ) =>
+		notice.matches( PRODUCT_NATIVE_ERROR_SELECTOR )
+	);
+	if ( errors.length ) {
+		const cartLink = errors
+			.flatMap( ( notice ) => [ ...notice.querySelectorAll( 'a' ) ] )
+			.find( ( link ) => link.href );
+		showProductError( errors.map( getNoticeText ), cartLink?.href || null );
+		return;
+	}
+
+	const hasInformation = notices.some( ( notice ) =>
+		notice.matches( '.woocommerce-info, .is-info' )
+	);
+	if ( ! hasInformation ) {
+		clearProductFeedback();
+	}
+};
+
+const handleProductFeedbackDismiss = ( event ) => {
+	const dismiss = isElement( event.target )
+		? event.target.closest( '[data-lm-dismiss-product-feedback]' )
+		: null;
+	if ( ! dismiss ) {
+		return;
+	}
+
+	clearProductFeedback( true );
+};
+
+const consumeProductErrors = async () => {
+	const configuration = window.lmProductNotices;
+	if ( ! configuration?.endpoint || ! configuration?.nonce ) {
+		return { cartUrl: null, messages: [] };
+	}
+
+	const body = new URLSearchParams( { security: configuration.nonce } );
+	const response = await fetch( configuration.endpoint, {
+		body,
+		credentials: 'same-origin',
+		headers: {
+			'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+		},
+		method: 'POST',
+	} );
+	const result = await response.json();
+	if ( ! response.ok || ! result?.success ) {
+		throw new Error( 'WooCommerce notice request failed.' );
+	}
+
+	return {
+		cartUrl: result.data?.cartUrl || null,
+		messages: Array.isArray( result.data?.messages )
+			? result.data.messages
+			: [],
+	};
+};
+
 const hasVisibleError = () => {
-	const error = document.querySelector( ERROR_SELECTOR );
+	const error = [ ...document.querySelectorAll( ERROR_SELECTOR ) ].find(
+		( item ) => ! item.closest( '.lm-product-feedback__notice' )
+	);
 	return Boolean( error?.getClientRects().length );
 };
 
@@ -638,14 +1056,19 @@ const finishControl = ( control, state ) => {
 			() => {
 				if ( state === 'success' ) {
 					if ( control.dataset.lmState === 'success' ) {
-						clearControlFeedback( control );
+						if ( control.closest( 'form.cart' ) ) {
+							restoreControl( control );
+						} else {
+							// WooCommerce owns reactive catalog labels, including cart quantities.
+							clearControlFeedback( control );
+						}
 					}
 					return;
 				}
 
 				restoreControl( control );
 			},
-			state === 'success' ? 1800 : 2200
+			state === 'success' ? 1000 : 2200
 		);
 		return;
 	}
@@ -876,7 +1299,7 @@ const markPending = ( control ) => {
 	pendingTimers.set( control, timer );
 };
 
-const getSimpleAddData = ( form, control ) => {
+const getProductAddData = ( form, control ) => {
 	const formData = new FormData( form );
 	const data = new URLSearchParams();
 
@@ -885,11 +1308,23 @@ const getSimpleAddData = ( form, control ) => {
 			data.set( key, value );
 		}
 	} );
+	// Prevent WC_Form_Handler from adding the item before WC_AJAX handles it.
+	data.delete( 'add-to-cart' );
 
-	const productId =
-		control.dataset.productId ||
-		formData.get( 'add-to-cart' ) ||
-		control.getAttribute( 'value' );
+	const isVariable = form.classList.contains( 'variations_form' );
+	const variationId = Number( formData.get( 'variation_id' ) );
+	if (
+		isVariable &&
+		( ! Number.isInteger( variationId ) || variationId < 1 )
+	) {
+		return null;
+	}
+
+	const productId = isVariable
+		? variationId
+		: control.dataset.productId ||
+		  formData.get( 'add-to-cart' ) ||
+		  control.getAttribute( 'value' );
 	if ( productId ) {
 		data.set( 'product_id', productId.toString() );
 	}
@@ -900,12 +1335,27 @@ const getSimpleAddData = ( form, control ) => {
 	return data;
 };
 
-const addSimpleProduct = async ( form, control ) => {
+const handleProductAddError = async ( control ) => {
+	let feedback = { cartUrl: null, messages: [] };
+	try {
+		feedback = await consumeProductErrors();
+	} catch {
+		// A concise local fallback is preferable to redirecting or losing context.
+	}
+
+	finishControl( control, 'error' );
+	showProductError( feedback.messages, feedback.cartUrl );
+	announce(
+		feedback.messages[ 0 ] || 'No se pudo agregar el producto al carrito.'
+	);
+};
+
+const addProduct = async ( form, control, data ) => {
 	try {
 		const response = await fetch(
 			`${ window.location.origin }/?wc-ajax=add_to_cart`,
 			{
-				body: getSimpleAddData( form, control ),
+				body: data,
 				headers: {
 					'Content-Type':
 						'application/x-www-form-urlencoded; charset=UTF-8',
@@ -915,8 +1365,8 @@ const addSimpleProduct = async ( form, control ) => {
 		);
 		const result = await response.json();
 
-		if ( result.error && result.product_url ) {
-			window.location.href = result.product_url;
+		if ( result.error ) {
+			await handleProductAddError( control );
 			return;
 		}
 		if ( ! response.ok || ! result ) {
@@ -940,9 +1390,8 @@ const addSimpleProduct = async ( form, control ) => {
 				detail: { button: control, fragments: result.fragments },
 			} )
 		);
-	} catch ( error ) {
-		finishControl( control, 'error' );
-		announce( 'No se pudo agregar el producto al carrito.' );
+	} catch {
+		await handleProductAddError( control );
 	}
 };
 
@@ -963,6 +1412,7 @@ const handleSuccessfulAdd = ( ...values ) => {
 	const control = resolveEventControl( values );
 	const productName = getProductName( control );
 	finishControl( control, 'success' );
+	clearProductFeedback();
 	syncCartButtonLabels();
 	syncCartButtonQuantities();
 	announce( `${ productName } se agregó al carrito.` );
@@ -975,6 +1425,7 @@ const handleFailedAdd = () => {
 	}
 
 	finishControl( [ ...pendingControls ][ 0 ], 'error' );
+	showProductError( [] );
 	announce( 'No se pudo agregar el producto al carrito.' );
 };
 
@@ -1010,12 +1461,11 @@ const handleSubmit = ( event ) => {
 	markPending( control );
 };
 
-const handleSimpleSubmit = ( event ) => {
+const handleProductSubmit = ( event ) => {
 	const form = event.target;
 	if (
 		! isElement( form ) ||
 		! form.matches( 'form.cart' ) ||
-		form.classList.contains( 'variations_form' ) ||
 		typeof window.jQuery !== 'function' ||
 		event.defaultPrevented
 	) {
@@ -1028,17 +1478,32 @@ const handleSimpleSubmit = ( event ) => {
 	if ( ! control || form.method.toLowerCase() !== 'post' ) {
 		return;
 	}
+	const data = getProductAddData( form, control );
+	if ( ! data ) {
+		return;
+	}
 
 	event.preventDefault();
+	if ( submittedControls.has( control ) ) {
+		return;
+	}
+	clearProductFeedback();
 	markPending( control );
-	addSimpleProduct( form, control );
+	submittedControls.add( control );
+	if ( control.matches( 'button, input' ) ) {
+		control.disabled = true;
+	}
+	addProduct( form, control, data );
 };
 
 const handleBodyMutation = () => {
+	const visibleError = hasVisibleError();
 	connectMiniCart();
 	syncCartButtonLabels();
 	syncProductGalleryTriggers();
-	if ( pendingControls.size && hasVisibleError() ) {
+	initProductReviews();
+	normalizeNativeProductFeedback();
+	if ( pendingControls.size && visibleError ) {
 		handleFailedAdd();
 	}
 };
@@ -1068,21 +1533,38 @@ const bindProductPurchaseControls = () => {
 	initVariationOptions();
 	initProductQuantityControls();
 	syncProductGalleryTriggers();
+	normalizeNativeProductFeedback();
 	document
 		.querySelectorAll( PRODUCT_VARIATION_FORM_SELECTOR )
 		.forEach( syncProductOffer );
 
 	document.addEventListener( 'click', handleQuantityStep );
-	document.addEventListener( 'change', ( event ) => {
-		if (
-			isElement( event.target ) &&
-			event.target.matches(
-				`${ PRODUCT_VARIATION_FORM_SELECTOR } select[data-lm-variation-source]`
-			)
-		) {
-			syncProductPurchasePresentation();
-		}
-	} );
+	document.addEventListener( 'click', handleProductFeedbackDismiss );
+	document.addEventListener(
+		'change',
+		( event ) => {
+			if (
+				isElement( event.target ) &&
+				event.target.matches(
+					`${ PRODUCT_VARIATION_FORM_SELECTOR } select[data-lm-variation-source], ${ PRODUCT_QUANTITY_SELECTOR } input.qty`
+				)
+			) {
+				clearProductFeedback();
+			}
+			if (
+				isElement( event.target ) &&
+				event.target.matches(
+					`${ PRODUCT_VARIATION_FORM_SELECTOR } select[data-lm-variation-source]`
+				)
+			) {
+				startProductGalleryTransition(
+					event.target.closest( PRODUCT_VARIATION_FORM_SELECTOR )
+				);
+				syncProductPurchasePresentation();
+			}
+		},
+		true
+	);
 
 	if ( window.jQuery ) {
 		const forms = window
@@ -1141,7 +1623,7 @@ const bindWooEvents = () => {
 	} );
 	body.addEventListener( 'wc-blocks_add_to_cart_failed', handleFailedAdd );
 	body.addEventListener( 'click', handleInteraction, true );
-	body.addEventListener( 'submit', handleSimpleSubmit, true );
+	body.addEventListener( 'submit', handleProductSubmit, true );
 	body.addEventListener( 'submit', handleSubmit, true );
 
 	const bodyObserver = new MutationObserver( handleBodyMutation );
@@ -1151,6 +1633,7 @@ const bindWooEvents = () => {
 const initInteractions = () => {
 	document.documentElement.classList.add( 'lm-interactions-ready' );
 	initMobileMenu();
+	productFeedback = document.querySelector( PRODUCT_FEEDBACK_SELECTOR );
 	liveRegion = document.createElement( 'p' );
 	liveRegion.className = 'lm-cart-status lm-sr-only';
 	liveRegion.setAttribute( 'aria-live', 'polite' );
@@ -1160,6 +1643,7 @@ const initInteractions = () => {
 	syncCartButtonLabels();
 	syncCartButtonQuantities();
 	connectMiniCart();
+	initProductReviews();
 	bindProductPurchaseControls();
 	bindWooEvents();
 };

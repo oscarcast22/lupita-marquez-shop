@@ -52,6 +52,33 @@ add_filter('woocommerce_product_add_to_cart_text', static function (string $text
 
 add_filter('woocommerce_product_single_add_to_cart_text', static fn (): string => 'Agregar al carrito');
 
+add_filter('render_block_woocommerce/product-reviews-title', static function (
+    string $content,
+    array $block,
+    WP_Block $instance
+): string {
+    $product = wc_get_product((int) ($instance->context['postId'] ?? get_the_ID()));
+    if (! $product) {
+        return $content;
+    }
+
+    $count = $product->get_review_count();
+    $label = match ($count) {
+        0 => 'Aún no hay valoraciones',
+        1 => '1 valoración',
+        default => sprintf('%s valoraciones', number_format_i18n($count)),
+    };
+
+    $localized = (string) preg_replace(
+        '/(<h[1-6][^>]*>).*?(<\/h[1-6]>)/s',
+        '${1}' . esc_html($label) . '$2',
+        $content,
+        1
+    );
+
+    return str_replace(' id="reviews"', '', $localized);
+}, 10, 3);
+
 add_filter('woocommerce_product_add_to_cart_description', static function (string $description, WC_Product $product): string {
     if ($product->is_type('variable')) {
         return sprintf('Ver opciones de “%s”', $product->get_name());

@@ -54,6 +54,19 @@ final class LM_Demo
                 $mailer->SMTPAuth = false;
             });
         }
+        add_filter('woocommerce_get_availability_text', array(__CLASS__, 'availability_text'), 10, 2);
+    }
+
+    public static function availability_text(string $availability, WC_Product $product): string
+    {
+        $product_id = $product instanceof WC_Product_Variation
+            ? $product->get_parent_id()
+            : $product->get_id();
+        if ('made_to_order' !== get_post_meta($product_id, '_lm_stock_mode', true)) {
+            return $availability;
+        }
+        $lead_days = absint(get_post_meta($product_id, '_lm_lead_days', true));
+        return sprintf('Hecho bajo pedido · %d días hábiles', $lead_days);
     }
 
     /**
@@ -396,10 +409,21 @@ final class LM_Demo
             $variation->set_attributes(array('acabado' => $finish));
             $price_key = 'Natural' === $finish ? 'natural_price' : 'painted_price';
             $variation->set_regular_price((string) $row[$price_key]);
-            $variation->set_manage_stock(false);
-            $variation->set_stock_status($parent->get_stock_status());
-            $variation->set_backorders('no');
-            $variation->set_description(sprintf('Acabado %s. Precio provisional pendiente de validación.', $finish));
+            if ('made_to_order' === $row['stock_mode']) {
+                $variation->set_manage_stock(true);
+                $variation->set_stock_quantity(0);
+                $variation->set_stock_status('onbackorder');
+                $variation->set_backorders('yes');
+            } else {
+                $variation->set_manage_stock(false);
+                $variation->set_stock_status($parent->get_stock_status());
+                $variation->set_backorders('no');
+            }
+            $variation->set_description(
+                'Natural' === $finish
+                    ? 'Madera al natural, con sus vetas y matices propios a la vista.'
+                    : 'Acabado pintado en colores vibrantes; cada pieza conserva variaciones sutiles que la hacen única.'
+            );
             $variation->save();
             self::images($variation, $row, $finish);
             $kept_ids[] = $variation->get_id();
@@ -423,8 +447,8 @@ final class LM_Demo
             $product->set_backorders('no');
         } else {
             $product->set_manage_stock(false);
-            $product->set_stock_status('instock');
-            $product->set_backorders('no');
+            $product->set_stock_status('onbackorder');
+            $product->set_backorders('yes');
         }
     }
 
@@ -652,15 +676,20 @@ final class LM_Demo
 
     private static function description(array $row): string
     {
-        $lead = absint($row['lead_days']);
-        $availability = 'stock' === $row['stock_mode']
-            ? 'Pieza disponible, sujeta al inventario mostrado.'
-            : sprintf('Pieza elaborada bajo pedido. Tiempo estimado: %d días hábiles.', $lead);
-        return '<p>Pieza de madera hecha en México por Lupita Márquez. Las vetas y pequeños matices pueden variar porque cada pieza es única.</p><p><strong>Disponibilidad:</strong> ' . esc_html($availability) . '</p><p><strong>Importante:</strong> medidas, precio y descripción son datos demo y deben validarse con la clienta antes de publicar.</p>';
+        $dimensions = sprintf(
+            '%s × %s × %s cm',
+            wc_format_localized_decimal((string) $row['length_cm']),
+            wc_format_localized_decimal((string) $row['width_cm']),
+            wc_format_localized_decimal((string) $row['height_cm'])
+        );
+        return sprintf(
+            '<p>Pieza de madera diseñada y producida en México. Las vetas, colores y pequeños matices forman parte de su carácter único.</p><dl class="lm-product-specs" aria-label="Información técnica"><div class="lm-product-spec"><dt>Medidas aproximadas</dt><dd>%s</dd></div></dl>',
+            esc_html($dimensions)
+        );
     }
 
     private static function short_description(array $row): string
     {
-        return '<p>' . esc_html('Piezas de madera hechas en México.') . '</p>';
+        return '<p>' . esc_html('Pieza de madera diseñada y producida en México.') . '</p>';
     }
 }

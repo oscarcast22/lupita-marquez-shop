@@ -6,7 +6,6 @@
 	<div class="wp-block-group lm-product-overview lm-section">
 		<div class="lm-shell">
 			<!-- wp:woocommerce/breadcrumbs /-->
-			<!-- wp:woocommerce/store-notices /-->
 			<div class="lm-product-layout">
 				<div class="lm-product-gallery">
 					<!-- wp:woocommerce/product-image-gallery /-->
@@ -26,18 +25,13 @@
 					</div>
 					<div class="lm-product-purchase">
 						<!-- wp:woocommerce/add-to-cart-form /-->
-					</div>
-					<div class="lm-product-meta">
-						<!-- wp:woocommerce/product-meta -->
-						<div class="wp-block-woocommerce-product-meta">
-							<!-- wp:group {"layout":{"type":"flex","orientation":"vertical"}} -->
-							<div class="wp-block-group">
-								<!-- wp:woocommerce/product-sku /-->
-								<!-- wp:post-terms {"term":"product_cat","prefix":"Categoría: "} /-->
-							</div>
-							<!-- /wp:group -->
+						<div class="lm-product-feedback" data-lm-product-feedback>
+							<!-- wp:woocommerce/store-notices /-->
 						</div>
-						<!-- /wp:woocommerce/product-meta -->
+					</div>
+					<div class="lm-product-assurance" aria-label="Beneficios de compra">
+						<span>Hecho en México</span>
+						<span>Envíos seguros</span>
 					</div>
 				</div>
 			</div>
@@ -48,18 +42,70 @@
 	<!-- wp:group {"className":"lm-product-details-section lm-section lm-section--compact","layout":{"type":"default"}} -->
 	<div class="wp-block-group lm-product-details-section lm-section lm-section--compact">
 		<div class="lm-shell">
-			<div class="lm-product-details-content lm-reading">
-				<!-- wp:woocommerce/product-details {"className":"is-style-minimal"} /-->
+			<header class="lm-product-details-heading">
+				<h2>Detalles del producto</h2>
+			</header>
+			<div class="lm-product-description lm-reading">
+				<!-- wp:post-content {"className":"lm-product-description-content"} /-->
 			</div>
 		</div>
 	</div>
 	<!-- /wp:group -->
 
+	<!-- wp:group {"tagName":"section","anchor":"reviews","className":"lm-product-reviews-section lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section id="reviews" class="wp-block-group lm-product-reviews-section lm-section lm-section--compact">
+		<div class="lm-shell">
+			<header class="lm-product-reviews-heading">
+				<div class="lm-product-reviews-heading__copy">
+					<h2>Opiniones sobre esta pieza</h2>
+				</div>
+				<div class="lm-product-reviews-summary">
+					<!-- wp:woocommerce/product-rating {"isDescendentOfSingleProductTemplate":true} /-->
+					<button class="lm-product-reviews-toggle" type="button" aria-controls="review_form_wrapper" aria-expanded="false" data-lm-review-form-toggle hidden>Escribir una valoraci&oacute;n</button>
+				</div>
+			</header>
+				<!-- wp:woocommerce/product-reviews {"tagName":"div","className":"lm-product-reviews-content"} -->
+				<div class="wp-block-woocommerce-product-reviews lm-product-reviews-content">
+					<!-- wp:woocommerce/product-reviews-title {"showProductTitle":false,"level":3} /-->
+					<!-- wp:woocommerce/product-review-form {"className":"lm-product-review-form"} /-->
+					<!-- wp:woocommerce/product-review-template -->
+						<!-- wp:group {"className":"lm-product-review","layout":{"type":"default"}} -->
+						<div class="wp-block-group lm-product-review">
+							<!-- wp:avatar {"size":48} /-->
+							<!-- wp:group {"className":"lm-product-review__body","layout":{"type":"default"}} -->
+							<div class="wp-block-group lm-product-review__body">
+								<!-- wp:group {"className":"lm-product-review__meta","layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between"}} -->
+								<div class="wp-block-group lm-product-review__meta">
+									<!-- wp:woocommerce/product-review-author-name {"isLink":false,"fontSize":"small"} /-->
+									<!-- wp:woocommerce/product-review-rating /-->
+								</div>
+								<!-- /wp:group -->
+								<!-- wp:woocommerce/product-review-date {"isLink":false,"fontSize":"small"} /-->
+								<!-- wp:woocommerce/product-review-content /-->
+							</div>
+							<!-- /wp:group -->
+						</div>
+						<!-- /wp:group -->
+					<!-- /wp:woocommerce/product-review-template -->
+					<!-- wp:woocommerce/product-reviews-pagination -->
+						<!-- wp:woocommerce/product-reviews-pagination-previous /-->
+						<!-- wp:woocommerce/product-reviews-pagination-numbers /-->
+						<!-- wp:woocommerce/product-reviews-pagination-next /-->
+					<!-- /wp:woocommerce/product-reviews-pagination -->
+				</div>
+				<!-- /wp:woocommerce/product-reviews -->
+		</div>
+	</section>
+	<!-- /wp:group -->
+
 	<!-- wp:group {"className":"lm-related-section lm-section","layout":{"type":"default"}} -->
 	<div class="wp-block-group lm-related-section lm-section">
 		<div class="lm-shell">
-			<!-- wp:woocommerce/product-collection {"queryId":0,"query":{"perPage":4,"pages":1,"offset":0,"postType":"product","order":"asc","orderBy":"title","search":"","exclude":[],"inherit":false,"taxQuery":{},"isProductCollectionBlock":true,"featured":false,"woocommerceOnSale":false,"woocommerceStockStatus":["instock","onbackorder"],"woocommerceAttributes":[],"woocommerceHandPickedProducts":[],"filterable":false,"relatedBy":{"categories":true,"tags":true}},"displayLayout":{"type":"flex","columns":4,"shrinkColumns":false},"dimensions":{"widthType":"fill"},"collection":"woocommerce/product-collection/related","hideControls":["inherit"],"queryContextIncludes":["collection"],"className":"lm-related-products"} -->
+			<!-- wp:woocommerce/product-collection {"queryId":0,"query":{"perPage":4,"pages":1,"offset":0,"postType":"product","order":"asc","orderBy":"menu_order","search":"","exclude":[],"inherit":false,"taxQuery":{},"isProductCollectionBlock":true,"featured":false,"woocommerceOnSale":false,"woocommerceStockStatus":["instock","onbackorder"],"woocommerceAttributes":[],"woocommerceHandPickedProducts":[],"filterable":false,"relatedBy":{"categories":true,"tags":true}},"displayLayout":{"type":"flex","columns":4,"shrinkColumns":false},"dimensions":{"widthType":"fill"},"collection":"woocommerce/product-collection/related","hideControls":["inherit"],"queryContextIncludes":["collection"],"className":"lm-related-products"} -->
 			<div class="wp-block-woocommerce-product-collection lm-related-products">
+				<!-- wp:paragraph {"className":"lm-eyebrow"} -->
+				<p class="lm-eyebrow">Más de la colección</p>
+				<!-- /wp:paragraph -->
 				<!-- wp:heading {"level":2} -->
 				<h2 class="wp-block-heading">También te puede gustar</h2>
 				<!-- /wp:heading -->

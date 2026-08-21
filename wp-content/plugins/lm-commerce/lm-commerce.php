@@ -26,6 +26,7 @@ define('LM_COMMERCE_DIR', plugin_dir_path(__FILE__));
 require_once LM_COMMERCE_DIR . 'includes/class-lm-envia-client.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-fulfillment.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-demo.php';
+require_once LM_COMMERCE_DIR . 'includes/class-lm-product-notices.php';
 
 add_action('before_woocommerce_init', static function (): void {
     if (class_exists(Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
@@ -42,6 +43,7 @@ add_action('plugins_loaded', static function (): void {
     require_once LM_COMMERCE_DIR . 'includes/class-lm-shipping-method.php';
     LM_Fulfillment::init();
     LM_Demo::init();
+    LM_Product_Notices::init();
 });
 
 add_filter('woocommerce_shipping_methods', static function (array $methods): array {
