@@ -27,6 +27,7 @@ require_once LM_COMMERCE_DIR . 'includes/class-lm-envia-client.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-fulfillment.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-demo.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-product-notices.php';
+require_once LM_COMMERCE_DIR . 'includes/class-lm-contact-form.php';
 
 add_action('before_woocommerce_init', static function (): void {
     if (class_exists(Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
@@ -36,6 +37,8 @@ add_action('before_woocommerce_init', static function (): void {
 });
 
 add_action('plugins_loaded', static function (): void {
+    LM_Contact_Form::init();
+
     if (! class_exists('WooCommerce')) {
         return;
     }
