@@ -1,39 +1,87 @@
 <!-- wp:template-part {"slug":"header","tagName":"header"} /-->
 <!-- wp:woocommerce/page-content-wrapper {"page":"cart"} -->
-<!-- wp:group {"tagName":"main","className":"lm-section lm-section--compact lm-main","layout":{"type":"default"}} -->
-<main class="wp-block-group lm-section lm-section--compact lm-main">
-	<div class="lm-shell">
-		<!-- wp:woocommerce/store-notices /-->
-		<!-- wp:post-title {"level":1} /-->
-<!-- wp:woocommerce/cart -->
-<div class="wp-block-woocommerce-cart is-loading"><!-- wp:woocommerce/filled-cart-block -->
-<div class="wp-block-woocommerce-filled-cart-block"><!-- wp:woocommerce/cart-items-block -->
-<div class="wp-block-woocommerce-cart-items-block"><!-- wp:woocommerce/cart-line-items-block -->
-<div class="wp-block-woocommerce-cart-line-items-block"></div>
-<!-- /wp:woocommerce/cart-line-items-block --></div>
-<!-- /wp:woocommerce/cart-items-block -->
-<!-- wp:woocommerce/cart-totals-block -->
-<div class="wp-block-woocommerce-cart-totals-block"><!-- wp:woocommerce/cart-order-summary-block -->
-<div class="wp-block-woocommerce-cart-order-summary-block"><!-- wp:woocommerce/cart-order-summary-heading-block --><div class="wp-block-woocommerce-cart-order-summary-heading-block"></div><!-- /wp:woocommerce/cart-order-summary-heading-block -->
-<!-- wp:woocommerce/cart-order-summary-coupon-form-block --><div class="wp-block-woocommerce-cart-order-summary-coupon-form-block"></div><!-- /wp:woocommerce/cart-order-summary-coupon-form-block -->
-<!-- wp:woocommerce/cart-order-summary-subtotal-block --><div class="wp-block-woocommerce-cart-order-summary-subtotal-block"></div><!-- /wp:woocommerce/cart-order-summary-subtotal-block -->
-<!-- wp:woocommerce/cart-order-summary-fee-block --><div class="wp-block-woocommerce-cart-order-summary-fee-block"></div><!-- /wp:woocommerce/cart-order-summary-fee-block -->
-<!-- wp:woocommerce/cart-order-summary-discount-block --><div class="wp-block-woocommerce-cart-order-summary-discount-block"></div><!-- /wp:woocommerce/cart-order-summary-discount-block -->
-<!-- wp:woocommerce/cart-order-summary-shipping-block --><div class="wp-block-woocommerce-cart-order-summary-shipping-block"></div><!-- /wp:woocommerce/cart-order-summary-shipping-block -->
-<!-- wp:woocommerce/cart-order-summary-taxes-block --><div class="wp-block-woocommerce-cart-order-summary-taxes-block"></div><!-- /wp:woocommerce/cart-order-summary-taxes-block --></div>
-<!-- /wp:woocommerce/cart-order-summary-block -->
-<!-- wp:woocommerce/cart-express-payment-block --><div class="wp-block-woocommerce-cart-express-payment-block"></div><!-- /wp:woocommerce/cart-express-payment-block -->
-<!-- wp:woocommerce/proceed-to-checkout-block --><div class="wp-block-woocommerce-proceed-to-checkout-block"></div><!-- /wp:woocommerce/proceed-to-checkout-block -->
-<!-- wp:woocommerce/cart-accepted-payment-methods-block --><div class="wp-block-woocommerce-cart-accepted-payment-methods-block"></div><!-- /wp:woocommerce/cart-accepted-payment-methods-block --></div>
-<!-- /wp:woocommerce/cart-totals-block --></div>
-<!-- /wp:woocommerce/filled-cart-block -->
-<!-- wp:woocommerce/empty-cart-block -->
-<div class="wp-block-woocommerce-empty-cart-block"><!-- wp:heading {"textAlign":"center","className":"with-empty-cart-icon wc-block-cart__empty-cart__title"} --><h2 class="wp-block-heading has-text-align-center with-empty-cart-icon wc-block-cart__empty-cart__title">Tu carrito está vacío</h2><!-- /wp:heading -->
-<!-- wp:paragraph {"align":"center"} --><p class="has-text-align-center">Explora la colección para encontrar una pieza especial.</p><!-- /wp:paragraph -->
-<!-- wp:buttons {"layout":{"type":"flex","justifyContent":"center"}} --><div class="wp-block-buttons"><!-- wp:button --><div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="/tienda/">Ir a la tienda</a></div><!-- /wp:button --></div><!-- /wp:buttons --></div>
-<!-- /wp:woocommerce/empty-cart-block --></div>
-<!-- /wp:woocommerce/cart -->
-	</div>
+<!-- wp:group {"tagName":"main","className":"lm-main lm-cart-page","layout":{"type":"default"}} -->
+<main class="wp-block-group lm-main lm-cart-page">
+	<!-- wp:group {"tagName":"section","className":"lm-commerce-heading lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-commerce-heading lm-section lm-section--compact">
+		<div class="lm-shell">
+			<p class="lm-eyebrow">Tu selección</p>
+			<!-- wp:post-title {"level":1,"fontSize":"x-large"} /-->
+		</div>
+	</section>
+	<!-- /wp:group -->
+	<!-- wp:group {"tagName":"section","className":"lm-cart-section lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-cart-section lm-section lm-section--compact">
+		<div class="lm-shell">
+			<!-- wp:woocommerce/store-notices /-->
+			<!-- wp:woocommerce/cart -->
+			<div class="wp-block-woocommerce-cart is-loading"><!-- wp:woocommerce/filled-cart-block -->
+				<div class="wp-block-woocommerce-filled-cart-block"><!-- wp:woocommerce/cart-items-block -->
+					<div class="wp-block-woocommerce-cart-items-block"><!-- wp:woocommerce/cart-line-items-block -->
+						<div class="wp-block-woocommerce-cart-line-items-block"></div>
+						<!-- /wp:woocommerce/cart-line-items-block -->
+					</div>
+					<!-- /wp:woocommerce/cart-items-block -->
+					<!-- wp:woocommerce/cart-totals-block -->
+					<div class="wp-block-woocommerce-cart-totals-block"><!-- wp:woocommerce/cart-order-summary-block -->
+						<div class="wp-block-woocommerce-cart-order-summary-block">
+							<!-- wp:woocommerce/cart-order-summary-heading-block -->
+							<div class="wp-block-woocommerce-cart-order-summary-heading-block"></div>
+							<!-- /wp:woocommerce/cart-order-summary-heading-block -->
+							<!-- wp:woocommerce/cart-order-summary-coupon-form-block -->
+							<div class="wp-block-woocommerce-cart-order-summary-coupon-form-block"></div>
+							<!-- /wp:woocommerce/cart-order-summary-coupon-form-block -->
+							<!-- wp:woocommerce/cart-order-summary-subtotal-block -->
+							<div class="wp-block-woocommerce-cart-order-summary-subtotal-block"></div>
+							<!-- /wp:woocommerce/cart-order-summary-subtotal-block -->
+							<!-- wp:woocommerce/cart-order-summary-fee-block -->
+							<div class="wp-block-woocommerce-cart-order-summary-fee-block"></div>
+							<!-- /wp:woocommerce/cart-order-summary-fee-block -->
+							<!-- wp:woocommerce/cart-order-summary-discount-block -->
+							<div class="wp-block-woocommerce-cart-order-summary-discount-block"></div>
+							<!-- /wp:woocommerce/cart-order-summary-discount-block -->
+							<!-- wp:woocommerce/cart-order-summary-shipping-block -->
+							<div class="wp-block-woocommerce-cart-order-summary-shipping-block"></div>
+							<!-- /wp:woocommerce/cart-order-summary-shipping-block -->
+							<!-- wp:woocommerce/cart-order-summary-taxes-block -->
+							<div class="wp-block-woocommerce-cart-order-summary-taxes-block"></div>
+							<!-- /wp:woocommerce/cart-order-summary-taxes-block -->
+						</div>
+						<!-- /wp:woocommerce/cart-order-summary-block -->
+						<!-- wp:woocommerce/cart-express-payment-block -->
+						<div class="wp-block-woocommerce-cart-express-payment-block"></div>
+						<!-- /wp:woocommerce/cart-express-payment-block -->
+						<!-- wp:woocommerce/proceed-to-checkout-block -->
+						<div class="wp-block-woocommerce-proceed-to-checkout-block"></div>
+						<!-- /wp:woocommerce/proceed-to-checkout-block -->
+						<!-- wp:woocommerce/cart-accepted-payment-methods-block -->
+						<div class="wp-block-woocommerce-cart-accepted-payment-methods-block"></div>
+						<!-- /wp:woocommerce/cart-accepted-payment-methods-block -->
+					</div>
+					<!-- /wp:woocommerce/cart-totals-block -->
+				</div>
+				<!-- /wp:woocommerce/filled-cart-block -->
+				<!-- wp:woocommerce/empty-cart-block -->
+				<div class="wp-block-woocommerce-empty-cart-block">
+					<!-- wp:heading {"textAlign":"center","className":"with-empty-cart-icon wc-block-cart__empty-cart__title"} -->
+					<h2
+						class="wp-block-heading has-text-align-center with-empty-cart-icon wc-block-cart__empty-cart__title">
+						Tu carrito está vacío</h2><!-- /wp:heading -->
+					<!-- wp:paragraph {"align":"center"} -->
+					<p class="has-text-align-center">Explora la colección para encontrar una pieza especial.</p>
+					<!-- /wp:paragraph -->
+					<!-- wp:buttons {"layout":{"type":"flex","justifyContent":"center"}} -->
+					<div class="wp-block-buttons"><!-- wp:button -->
+						<div class="wp-block-button"><a class="wp-block-button__link wp-element-button"
+								href="/tienda/">Ir a la tienda</a></div><!-- /wp:button -->
+					</div><!-- /wp:buttons -->
+				</div>
+				<!-- /wp:woocommerce/empty-cart-block -->
+			</div>
+			<!-- /wp:woocommerce/cart -->
+		</div>
+	</section>
+	<!-- /wp:group -->
 </main>
 <!-- /wp:group -->
 <!-- /wp:woocommerce/page-content-wrapper -->
