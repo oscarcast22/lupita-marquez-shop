@@ -200,7 +200,6 @@
 
 	.lm-product-meta { order: 5; }
 
-	.lm-trust-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 782px) {
@@ -259,17 +258,30 @@
 
 	.lm-product-layout { gap: var(--wp--preset--spacing--20); }
 
+	.lm-about-story__action { align-items: stretch; flex-direction: column; }
+
+	.lm-about-story__buttons,
+	.lm-about-story__buttons > div,
+	.lm-about-story__action .wp-element-button { width: 100%; }
+
+	.lm-contact-form { grid-template-columns: 1fr; }
+
+	.lm-contact-form__field,
+	.lm-contact-form__consent,
+	.lm-contact-form__status,
+	.lm-contact-form__actions { grid-column: 1; }
+
+	.lm-contact-form__actions { align-items: stretch; flex-direction: column; }
+
+	.lm-contact-form__actions .lm-button { width: 100%; }
+
+	.lm-contextual-actions { align-items: flex-start; flex-direction: column; gap: var(--wp--preset--spacing--15); }
+
 	.lm-hero__copy { padding-block: var(--wp--preset--spacing--hero-copy-mobile); }
 
 	.lm-hero h1 { max-width: 11ch; }
 
 	.lm-hero__lede { max-width: 20rem; }
-
-	.lm-trust-grid { grid-template-columns: 1fr; }
-
-	.lm-trust-item { padding-inline: 0; }
-
-	.lm-trust-item + .lm-trust-item { border-inline-start: 0; border-block-start: var(--lm-border); padding-block-start: var(--wp--preset--spacing--30); }
 
 	.lm-footer-social { grid-column: auto; }
 

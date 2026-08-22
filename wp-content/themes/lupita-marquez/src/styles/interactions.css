@@ -120,15 +120,20 @@
 	}
 }
 
-.lm-interactions-ready .lm-main input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):focus,
-.lm-interactions-ready .lm-main select:focus,
-.lm-interactions-ready .lm-main textarea:focus {
-	border-color: var(--wp--preset--color--fuchsia);
-	box-shadow: 0 0 0 var(--lm-focus-ring-size) color-mix(in srgb, var(--wp--preset--color--fuchsia) 14%, transparent);
-}
-
 .lm-interactions-ready.lm-drawer-is-open body {
 	overflow: hidden;
+}
+
+.lm-interactions-ready .lm-contact-form,
+.lm-interactions-ready .lm-contact-form__status {
+	transition: border-color var(--lm-motion-fast) ease-out,
+		opacity var(--lm-motion-base) ease-out;
+}
+
+.lm-interactions-ready .lm-main :where(input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]), select, textarea) {
+	transition: background-color var(--lm-motion-fast) ease-out,
+		border-color var(--lm-motion-fast) ease-out,
+		box-shadow var(--lm-motion-fast) ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -140,6 +145,10 @@
 	.lm-interactions-ready .lm-hero__copy a,
 	.lm-interactions-ready .lm-featured-cta a,
 	.lm-interactions-ready .lm-site-footer nav a,
+	.lm-interactions-ready .lm-store-feedback,
+	.lm-interactions-ready .lm-contact-form,
+	.lm-interactions-ready .lm-contact-form__status,
+	.lm-interactions-ready .lm-main :where(input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]), select, textarea),
 	.lm-interactions-ready .lm-footer-social svg {
 		animation: none;
 		transition: none;
