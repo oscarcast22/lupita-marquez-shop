@@ -13,6 +13,7 @@ const MINI_CART_BUTTON_SELECTOR = '.wc-block-mini-cart__button';
 const PRODUCT_CART_LABEL_SELECTOR =
 	'.wc-block-product .wc-block-components-product-button__button';
 const PRODUCT_FEEDBACK_SELECTOR = '[data-lm-product-feedback]';
+const STORE_FEEDBACK_SELECTOR = '[data-lm-store-feedback]';
 const PRODUCT_NATIVE_ERROR_SELECTOR =
 	'.woocommerce-error, .wc-block-components-notice-banner.is-error, .wc-block-components-notice-banner[role="alert"]';
 const PRODUCT_NATIVE_NOTICE_SELECTOR =
@@ -33,6 +34,8 @@ const productReviewTransitions = new WeakMap();
 let liveRegion;
 let productFeedback;
 let productFeedbackCleanupTimer;
+let storeFeedback;
+let storeFeedbackTimer;
 let miniCartRoot;
 let miniCartObserver;
 let hasBadgeSnapshot = false;
@@ -49,11 +52,15 @@ const MOBILE_MENU_BREAKPOINT = 960;
 const PENDING_LABEL_DELAY = 280;
 const PRODUCT_GALLERY_TRANSITION_SETTLE = 320;
 const PRODUCT_REVIEW_TRANSITION_SETTLE = 360;
+const ADD_REQUEST_TIMEOUT = 15000;
+const STORE_FEEDBACK_TIMEOUT = 9000;
 const PRODUCT_VARIATION_FORM_SELECTOR =
 	'.lm-product-purchase form.variations_form';
 const PRODUCT_QUANTITY_SELECTOR = '.lm-product-purchase form.cart .quantity';
 const PRODUCT_OFFER_PRICE_SELECTOR =
 	'.lm-product-offer .wp-block-woocommerce-product-price';
+const CONTACT_FORM_SELECTOR = '[data-lm-contact-form]';
+const CONTACT_STATUS_SELECTOR = '[data-lm-contact-status]';
 
 const isElement = ( value ) => value instanceof Element;
 
@@ -294,12 +301,7 @@ const syncProductGalleryTriggers = () => {
 			'.lm-product-gallery .woocommerce-product-gallery__trigger'
 		)
 		.forEach( ( trigger ) => {
-			if ( ! trigger.getAttribute( 'aria-label' ) ) {
-				trigger.setAttribute(
-					'aria-label',
-					'Ampliar imagen del producto'
-				);
-			}
+			trigger.setAttribute( 'aria-label', 'Ampliar imagen del producto' );
 		} );
 };
 
@@ -881,6 +883,114 @@ const announce = ( message ) => {
 	}
 };
 
+const ensureStoreFeedback = () => {
+	if ( storeFeedback?.isConnected ) {
+		return storeFeedback;
+	}
+
+	storeFeedback = document.querySelector( STORE_FEEDBACK_SELECTOR );
+	if ( storeFeedback ) {
+		return storeFeedback;
+	}
+
+	storeFeedback = document.createElement( 'div' );
+	storeFeedback.className = 'lm-store-feedback';
+	storeFeedback.dataset.lmStoreFeedback = '';
+	storeFeedback.setAttribute( 'aria-live', 'polite' );
+	storeFeedback.setAttribute( 'aria-atomic', 'true' );
+	document.body.append( storeFeedback );
+	return storeFeedback;
+};
+
+const clearStoreFeedback = () => {
+	if ( ! storeFeedback ) {
+		return;
+	}
+
+	window.clearTimeout( storeFeedbackTimer );
+	storeFeedback.classList.remove( 'is-visible' );
+	storeFeedbackTimer = window.setTimeout( () => {
+		if ( ! storeFeedback?.classList.contains( 'is-visible' ) ) {
+			storeFeedback?.replaceChildren();
+		}
+	}, 240 );
+};
+
+const showStoreFeedback = ( messages = [], productName = '' ) => {
+	const feedback = ensureStoreFeedback();
+	const cleanMessages = [
+		...new Set(
+			( Array.isArray( messages ) ? messages : [] ).filter( Boolean )
+		),
+	];
+	if ( ! cleanMessages.length ) {
+		cleanMessages.push(
+			productName
+				? `No pudimos agregar “${ productName }”. Revisa la cantidad e inténtalo nuevamente.`
+				: 'No pudimos agregar el producto. Inténtalo nuevamente.'
+		);
+	}
+
+	window.clearTimeout( storeFeedbackTimer );
+	const notice = document.createElement( 'div' );
+	notice.className = 'lm-store-feedback__notice';
+	notice.setAttribute( 'role', 'alert' );
+	notice.setAttribute( 'aria-atomic', 'true' );
+
+	const marker = document.createElement( 'span' );
+	marker.className = 'lm-store-feedback__marker';
+	marker.setAttribute( 'aria-hidden', 'true' );
+	marker.textContent = '!';
+
+	const content = document.createElement( 'div' );
+	content.className = 'lm-store-feedback__content';
+	cleanMessages.forEach( ( message ) => {
+		const paragraph = document.createElement( 'p' );
+		paragraph.textContent = message;
+		content.append( paragraph );
+	} );
+
+	const dismiss = document.createElement( 'button' );
+	dismiss.className = 'lm-store-feedback__dismiss';
+	dismiss.dataset.lmDismissStoreFeedback = '';
+	dismiss.setAttribute( 'aria-label', 'Cerrar mensaje' );
+	dismiss.type = 'button';
+	dismiss.textContent = '×';
+
+	notice.append( marker, content, dismiss );
+	feedback.replaceChildren( notice );
+	window.requestAnimationFrame( () =>
+		feedback.classList.add( 'is-visible' )
+	);
+	storeFeedbackTimer = window.setTimeout(
+		() => clearStoreFeedback(),
+		STORE_FEEDBACK_TIMEOUT
+	);
+};
+
+const syncWooLabels = () => {
+	document
+		.querySelectorAll(
+			'.lm-site-header .wc-block-components-drawer__close'
+		)
+		.forEach( ( closeButton ) =>
+			closeButton.setAttribute( 'aria-label', 'Cerrar carrito' )
+		);
+	document
+		.querySelectorAll(
+			'.wc-block-checkout .wc-block-components-checkbox__label'
+		)
+		.forEach( ( label ) => {
+			if (
+				label.textContent.trim() !==
+				'Create an account with Lupita Márquez'
+			) {
+				return;
+			}
+			label.textContent = 'Crear una cuenta con Lupita Márquez';
+		} );
+};
+
 const getNoticeText = ( notice ) => {
 	const copy = notice.cloneNode( true );
 	copy.querySelectorAll( 'a, button, svg' ).forEach( ( item ) =>
@@ -1001,15 +1111,38 @@ const normalizeNativeProductFeedback = () => {
 	}
 };
 
+const collectNativeStoreErrors = () => {
+	const notices = [
+		...document.querySelectorAll( PRODUCT_NATIVE_NOTICE_SELECTOR ),
+	].filter(
+		( notice ) =>
+			! notice.closest( '.lm-product-feedback__notice' ) &&
+			! notice.closest( '.lm-store-feedback__notice' )
+	);
+	const errors = notices.filter( ( notice ) =>
+		notice.matches( PRODUCT_NATIVE_ERROR_SELECTOR )
+	);
+	const messages = errors.map( getNoticeText );
+	errors.forEach( ( notice ) => notice.remove() );
+	return messages;
+};
+
 const handleProductFeedbackDismiss = ( event ) => {
-	const dismiss = isElement( event.target )
-		? event.target.closest( '[data-lm-dismiss-product-feedback]' )
-		: null;
-	if ( ! dismiss ) {
+	if ( ! isElement( event.target ) ) {
 		return;
 	}
 
-	clearProductFeedback( true );
+	const productDismiss = event.target.closest(
+		'[data-lm-dismiss-product-feedback]'
+	);
+	if ( productDismiss ) {
+		clearProductFeedback( true );
+		return;
+	}
+
+	if ( event.target.closest( '[data-lm-dismiss-store-feedback]' ) ) {
+		clearStoreFeedback();
+	}
 };
 
 const consumeProductErrors = async () => {
@@ -1080,13 +1213,25 @@ const finishControl = ( control, state ) => {
 
 const isDrawerOpen = ( root ) => {
 	const trigger = root?.querySelector( MINI_CART_BUTTON_SELECTOR );
+	// WooCommerce mounts the mini-cart drawer in a portal attached to the
+	// document body, outside the mini-cart block root. Check both locations so
+	// contextual feedback can close an already-open drawer reliably.
+	const overlay =
+		root?.querySelector( '.wc-block-components-drawer__screen-overlay' ) ||
+		document
+			.querySelector( '.wc-block-mini-cart__drawer' )
+			?.closest( '.wc-block-components-drawer__screen-overlay' );
+	const overlayStyle = overlay ? window.getComputedStyle( overlay ) : null;
 	return Boolean(
 		root?.classList.contains( 'is-open' ) ||
 			root?.classList.contains( 'lm-is-open' ) ||
 			trigger?.getAttribute( 'aria-expanded' ) === 'true' ||
-			root?.querySelector(
-				'.wc-block-components-drawer__screen-overlay.is-open, .wc-block-components-drawer__screen-overlay[aria-hidden="false"], .wc-block-components-drawer__screen-overlay--with-slide-in'
-			)
+			( overlay &&
+				! overlay.classList.contains(
+					'wc-block-components-drawer__screen-overlay--is-hidden'
+				) &&
+				overlayStyle?.opacity !== '0' &&
+				overlayStyle?.pointerEvents !== 'none' )
 	);
 };
 
@@ -1117,10 +1262,25 @@ const openMiniCart = () => {
 	}, 80 );
 };
 
+const closeMiniCart = () => {
+	if ( ! miniCartRoot || ! isDrawerOpen( miniCartRoot ) ) {
+		return;
+	}
+	(
+		miniCartRoot.querySelector( '.wc-block-components-drawer__close' ) ||
+		document.querySelector(
+			'.wc-block-mini-cart__drawer .wc-block-components-drawer__close'
+		)
+	)?.click();
+};
+
 const getBadgeText = () =>
 	miniCartRoot
 		?.querySelector( '.wc-block-mini-cart__badge' )
 		?.textContent.trim() || '';
+
+const getSinglePendingControl = () =>
+	pendingControls.size === 1 ? [ ...pendingControls ][ 0 ] : null;
 
 const syncCartButtonLabels = () => {
 	document
@@ -1225,15 +1385,14 @@ const syncCartButtonQuantities = async (
 const observeBadge = () => {
 	syncCartButtonLabels();
 	const nextBadgeText = getBadgeText();
+	const previousBadgeCount = Number( lastBadgeText || 0 );
+	const nextBadgeCount = Number( nextBadgeText || 0 );
+	const badgeIncreased = nextBadgeCount > previousBadgeCount;
 	if ( hasBadgeSnapshot && nextBadgeText !== lastBadgeText ) {
 		syncCartButtonQuantities( 0, true );
 	}
-	if (
-		hasBadgeSnapshot &&
-		nextBadgeText !== lastBadgeText &&
-		pendingControls.size
-	) {
-		const control = [ ...pendingControls ][ 0 ];
+	if ( hasBadgeSnapshot && badgeIncreased && getSinglePendingControl() ) {
+		const control = getSinglePendingControl();
 		finishControl( control, 'success' );
 		announce( `${ getProductName( control ) } se agregó al carrito.` );
 		openMiniCart();
@@ -1287,15 +1446,19 @@ const markPending = ( control ) => {
 	}, PENDING_LABEL_DELAY );
 	pendingLabelTimers.set( control, labelTimer );
 	const timer = window.setTimeout( () => {
-		if ( hasVisibleError() ) {
-			finishControl( control, 'error' );
-			announce( 'No se pudo agregar el producto al carrito.' );
-		} else {
-			clearPendingTimer( control );
-			pendingControls.delete( control );
-			restoreControl( control );
+		if ( ! pendingControls.has( control ) ) {
+			return;
 		}
-	}, 5000 );
+
+		finishControl( control, 'error' );
+		if ( control.closest( '.lm-product-purchase' ) ) {
+			showProductError( [] );
+		} else {
+			closeMiniCart();
+			showStoreFeedback( [], getProductName( control ) );
+		}
+		announce( 'No se pudo agregar el producto al carrito.' );
+	}, ADD_REQUEST_TIMEOUT );
 	pendingTimers.set( control, timer );
 };
 
@@ -1352,44 +1515,54 @@ const handleProductAddError = async ( control ) => {
 
 const addProduct = async ( form, control, data ) => {
 	try {
-		const response = await fetch(
-			`${ window.location.origin }/?wc-ajax=add_to_cart`,
-			{
-				body: data,
-				headers: {
-					'Content-Type':
-						'application/x-www-form-urlencoded; charset=UTF-8',
-				},
-				method: 'POST',
+		const abortController = new AbortController();
+		const timeout = window.setTimeout(
+			() => abortController.abort(),
+			ADD_REQUEST_TIMEOUT
+		);
+		try {
+			const response = await fetch(
+				`${ window.location.origin }/?wc-ajax=add_to_cart`,
+				{
+					body: data,
+					headers: {
+						'Content-Type':
+							'application/x-www-form-urlencoded; charset=UTF-8',
+					},
+					method: 'POST',
+					signal: abortController.signal,
+				}
+			);
+			const result = await response.json();
+
+			if ( result.error ) {
+				await handleProductAddError( control );
+				return;
 			}
-		);
-		const result = await response.json();
+			if ( ! response.ok || ! result ) {
+				throw new Error( 'WooCommerce add-to-cart request failed.' );
+			}
 
-		if ( result.error ) {
-			await handleProductAddError( control );
-			return;
-		}
-		if ( ! response.ok || ! result ) {
-			throw new Error( 'WooCommerce add-to-cart request failed.' );
-		}
+			if ( window.jQuery ) {
+				window
+					.jQuery( document.body )
+					.trigger( 'added_to_cart', [
+						result.fragments,
+						result.cart_hash,
+						window.jQuery( control ),
+					] );
+				return;
+			}
 
-		if ( window.jQuery ) {
-			window
-				.jQuery( document.body )
-				.trigger( 'added_to_cart', [
-					result.fragments,
-					result.cart_hash,
-					window.jQuery( control ),
-				] );
-			return;
+			document.body.dispatchEvent(
+				new CustomEvent( 'wc-blocks_added_to_cart', {
+					bubbles: true,
+					detail: { button: control, fragments: result.fragments },
+				} )
+			);
+		} finally {
+			window.clearTimeout( timeout );
 		}
-
-		document.body.dispatchEvent(
-			new CustomEvent( 'wc-blocks_added_to_cart', {
-				bubbles: true,
-				detail: { button: control, fragments: result.fragments },
-			} )
-		);
 	} catch {
 		await handleProductAddError( control );
 	}
@@ -1405,27 +1578,53 @@ const resolveEventControl = ( values ) => {
 		}
 	}
 
-	return [ ...pendingControls ][ 0 ] || null;
+	return getSinglePendingControl();
 };
+
+const getEventMessages = ( values ) =>
+	values.flatMap( ( value ) => {
+		const detail = value?.detail;
+		return [ detail?.message, detail?.error?.message ].filter(
+			( message ) => typeof message === 'string' && message.trim()
+		);
+	} );
 
 const handleSuccessfulAdd = ( ...values ) => {
 	const control = resolveEventControl( values );
 	const productName = getProductName( control );
 	finishControl( control, 'success' );
 	clearProductFeedback();
+	clearStoreFeedback();
 	syncCartButtonLabels();
 	syncCartButtonQuantities();
 	announce( `${ productName } se agregó al carrito.` );
 	openMiniCart();
 };
 
-const handleFailedAdd = () => {
-	if ( ! pendingControls.size ) {
+const handleFailedAdd = ( ...values ) => {
+	const control = resolveEventControl( values );
+	if ( ! control ) {
 		return;
 	}
 
-	finishControl( [ ...pendingControls ][ 0 ], 'error' );
-	showProductError( [] );
+	const messages = getEventMessages( values );
+	finishControl( control, 'error' );
+	if ( control.closest( '.lm-product-purchase' ) ) {
+		showProductError( messages );
+	} else {
+		const productName = getProductName( control );
+		closeMiniCart();
+		showStoreFeedback( messages, productName );
+		window.setTimeout( () => {
+			const nativeMessages = collectNativeStoreErrors();
+			if ( nativeMessages.length ) {
+				showStoreFeedback(
+					[ ...messages, ...nativeMessages ],
+					productName
+				);
+			}
+		}, 0 );
+	}
 	announce( 'No se pudo agregar el producto al carrito.' );
 };
 
@@ -1500,6 +1699,7 @@ const handleBodyMutation = () => {
 	const visibleError = hasVisibleError();
 	connectMiniCart();
 	syncCartButtonLabels();
+	syncWooLabels();
 	syncProductGalleryTriggers();
 	initProductReviews();
 	normalizeNativeProductFeedback();
@@ -1592,6 +1792,76 @@ const bindProductPurchaseControls = () => {
 	}
 };
 
+const setContactStatus = ( form, message, state = '' ) => {
+	const status = form.querySelector( CONTACT_STATUS_SELECTOR );
+	if ( ! isElement( status ) ) {
+		return;
+	}
+	status.classList.remove( 'is-pending', 'is-success', 'is-error' );
+	if ( state ) {
+		status.classList.add( `is-${ state }` );
+	}
+	status.textContent = message;
+};
+
+const handleContactSubmit = async ( event ) => {
+	const form = event.target;
+	if (
+		! isElement( form ) ||
+		! form.matches( CONTACT_FORM_SELECTOR ) ||
+		event.defaultPrevented ||
+		typeof window.fetch !== 'function'
+	) {
+		return;
+	}
+
+	event.preventDefault();
+	const button = form.querySelector( '[data-lm-contact-submit]' );
+	const data = new FormData( form );
+	data.set( 'lm_async', '1' );
+	form.classList.add( 'is-pending' );
+	form.setAttribute( 'aria-busy', 'true' );
+	if ( isElement( button ) ) {
+		button.disabled = true;
+	}
+	setContactStatus( form, 'Enviando tu mensaje…', 'pending' );
+
+	try {
+		const response = await window.fetch( form.getAttribute( 'action' ), {
+			body: data,
+			credentials: 'same-origin',
+			headers: { Accept: 'application/json' },
+			method: 'POST',
+		} );
+		const payload = await response.json();
+		const message =
+			payload?.data?.message ||
+			( response.ok
+				? 'Recibimos tu mensaje.'
+				: 'No fue posible enviar tu mensaje.' );
+		if ( ! response.ok || ! payload?.success ) {
+			throw new Error( message );
+		}
+		form.reset();
+		setContactStatus( form, message, 'success' );
+		announce( message );
+	} catch ( error ) {
+		const message =
+			error instanceof Error
+				? error.message
+				: 'No fue posible enviar tu mensaje. Inténtalo nuevamente.';
+		setContactStatus( form, message, 'error' );
+		form.querySelector( CONTACT_STATUS_SELECTOR )?.focus();
+		announce( message );
+	} finally {
+		form.classList.remove( 'is-pending' );
+		form.removeAttribute( 'aria-busy' );
+		if ( isElement( button ) ) {
+			button.disabled = false;
+		}
+	}
+};
+
 const bindWooEvents = () => {
 	const body = document.body;
 	if ( window.jQuery ) {
@@ -1621,8 +1891,11 @@ const bindWooEvents = () => {
 		syncCartButtonLabels();
 		syncCartButtonQuantities( 0, true );
 	} );
-	body.addEventListener( 'wc-blocks_add_to_cart_failed', handleFailedAdd );
+	body.addEventListener( 'wc-blocks_add_to_cart_failed', ( event ) =>
+		handleFailedAdd( event, event.detail?.button, event.detail?.control )
+	);
 	body.addEventListener( 'click', handleInteraction, true );
+	body.addEventListener( 'submit', handleContactSubmit, true );
 	body.addEventListener( 'submit', handleProductSubmit, true );
 	body.addEventListener( 'submit', handleSubmit, true );
 
@@ -1642,6 +1915,7 @@ const initInteractions = () => {
 
 	syncCartButtonLabels();
 	syncCartButtonQuantities();
+	syncWooLabels();
 	connectMiniCart();
 	initProductReviews();
 	bindProductPurchaseControls();
