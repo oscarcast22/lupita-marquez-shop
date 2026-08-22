@@ -60,8 +60,6 @@
         { "slug": "drawer-padding", "size": "clamp(1.5rem, 6vw, 2.25rem)", "name": "Relleno de cajón" },
         { "slug": "hero-copy-tablet", "size": "clamp(2.5rem, 8vw, 4rem)", "name": "Relleno hero adaptable" },
         { "slug": "hero-copy-mobile", "size": "2.4rem", "name": "Relleno hero móvil" },
-        { "slug": "trust-strip", "size": "clamp(2.5rem, 4vw, 3rem)", "name": "Relleno de beneficios" },
-        { "slug": "trust-item", "size": "clamp(0.75rem, 2.5vw, 2.25rem)", "name": "Relleno de beneficio" },
         { "slug": "footer-padding", "size": "clamp(2.5rem, 5vw, 3.5rem)", "name": "Relleno superior de pie" }
       ]
     },
