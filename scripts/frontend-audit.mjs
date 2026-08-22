@@ -20,6 +20,12 @@ const routes = [
 	[ 'carrito-lleno', '/carrito/', 'fill-cart' ],
 	[ 'checkout', '/finalizar-compra/' ],
 	[ 'cuenta', '/mi-cuenta/' ],
+	[ 'nosotros', '/nosotros/' ],
+	[ 'contacto', '/contacto/' ],
+	[ 'preguntas-frecuentes', '/preguntas-frecuentes/' ],
+	[ 'envios-devoluciones', '/envios-y-devoluciones/' ],
+	[ 'aviso-privacidad', '/aviso-de-privacidad/' ],
+	[ 'terminos', '/terminos-y-condiciones/' ],
 	[ 'busqueda', '/?s=altar&post_type=product' ],
 	[ 'error-404', '/esta-ruta-no-existe/' ],
 ];
@@ -27,8 +33,40 @@ const requiredContent = {
 	'carrito-vacio': '.wp-block-woocommerce-empty-cart-block',
 	'producto-variable': '.single_add_to_cart_button',
 	'producto-bajo-pedido': '.single_add_to_cart_button',
-	'carrito-lleno': '.wc-block-cart-item__product',
+	'carrito-lleno':
+		'.wc-block-cart-item__product .wc-block-components-product-name',
 	checkout: '.wc-block-components-checkout-place-order-button',
+	nosotros: '.lm-about-story__content',
+	contacto: '[data-lm-contact-form]',
+	'preguntas-frecuentes': '.lm-faq-list details',
+	'envios-devoluciones': '.lm-document',
+	'aviso-privacidad': '.lm-document',
+	terminos: '.lm-document',
+};
+
+const waitForCommerceBlock = async ( page, rootSelector, contentSelector ) => {
+	await page
+		.locator( contentSelector )
+		.first()
+		.waitFor( {
+			state: 'visible',
+			timeout: 20_000,
+		} )
+		.catch( () => {} );
+	await page
+		.waitForFunction(
+			( selectors ) => {
+				const root = document.querySelector( selectors.root );
+				return Boolean(
+					root &&
+						! root.classList.contains( 'is-loading' ) &&
+						! root.querySelector( '.wc-block-components-skeleton' )
+				);
+			},
+			{ root: rootSelector },
+			{ timeout: 20_000 }
+		)
+		.catch( () => {} );
 };
 
 const collectFiles = async ( directory ) => {
@@ -142,6 +180,1057 @@ const report = {
 		integrationSelectorViolations,
 	},
 	pages: [],
+	commerceInteractions: {
+		catalog: [],
+		cart: [],
+		checkout: [],
+		account: [],
+		contact: [],
+	},
+};
+
+const getStoreBadgeCount = async ( page ) =>
+	page.evaluate( () => {
+		const badge = document.querySelector( '.wc-block-mini-cart__badge' );
+		const value = Number( badge?.textContent.trim() || 0 );
+		return Number.isFinite( value ) ? value : 0;
+	} );
+
+const waitForStoreBadge = async ( page, expected ) => {
+	await page
+		.waitForFunction(
+			( value ) => {
+				const badge = document.querySelector(
+					'.wc-block-mini-cart__badge'
+				);
+				const count = Number( badge?.textContent.trim() || 0 );
+				return Number.isFinite( count ) && count === value;
+			},
+			expected,
+			{ timeout: 20_000 }
+		)
+		.catch( () => {} );
+};
+
+const waitForMiniCart = async ( page, expectedOpen ) => {
+	await page
+		.waitForFunction(
+			( open ) => {
+				const trigger = document.querySelector(
+					'.wc-block-mini-cart__button'
+				);
+				const expanded =
+					trigger?.getAttribute( 'aria-expanded' ) === 'true';
+				const overlay = document.querySelector(
+					'.wc-block-components-drawer__screen-overlay'
+				);
+				const overlayStyle = overlay
+					? window.getComputedStyle( overlay )
+					: null;
+				const visible = Boolean(
+					overlay &&
+						! overlay.classList.contains(
+							'wc-block-components-drawer__screen-overlay--is-hidden'
+						) &&
+						overlayStyle?.opacity !== '0' &&
+						overlayStyle?.pointerEvents !== 'none' &&
+						( overlay.getAttribute( 'aria-hidden' ) === 'false' ||
+							overlay.classList.contains( 'is-open' ) ||
+							overlay.classList.contains(
+								'wc-block-components-drawer__screen-overlay--with-slide-in'
+							) )
+				);
+				return open ? expanded || visible : ! expanded && ! visible;
+			},
+			expectedOpen,
+			{ timeout: 15_000 }
+		)
+		.catch( () => {} );
+};
+
+const addSimpleProductForAudit = async ( page ) => {
+	await page.goto( new URL( '/tienda/', baseURL ).href, {
+		waitUntil: 'networkidle',
+		timeout: 45_000,
+	} );
+	const card = page
+		.locator( '.wc-block-product' )
+		.filter( { hasText: 'Altar para mascotas' } )
+		.first();
+	const button = card.locator(
+		'.wc-block-components-product-button__button'
+	);
+	if ( ! ( await button.count() ) ) {
+		return false;
+	}
+	await button.evaluate( ( element ) => element.click() );
+	await waitForStoreBadge( page, 1 );
+	await page
+		.waitForFunction(
+			async () => {
+				const response = await fetch( '/wp-json/wc/store/v1/cart', {
+					cache: 'no-store',
+				} );
+				const cart = await response.json();
+				return Boolean( cart.items?.length );
+			},
+			undefined,
+			{ timeout: 15_000 }
+		)
+		.catch( () => {} );
+	return ( await getStoreBadgeCount( page ) ) === 1;
+};
+
+const addDirectProductForAudit = async ( page ) => {
+	await page.goto(
+		new URL( '/producto/altar-para-mascotas/', baseURL ).href,
+		{
+			waitUntil: 'networkidle',
+			timeout: 45_000,
+		}
+	);
+	const button = page.locator( '.single_add_to_cart_button' );
+	if ( ! ( await button.count() ) ) {
+		return false;
+	}
+	await button.evaluate( ( element ) => element.click() );
+	await waitForStoreBadge( page, 1 );
+	await page
+		.waitForFunction(
+			async () => {
+				const response = await fetch( '/wp-json/wc/store/v1/cart', {
+					cache: 'no-store',
+				} );
+				const cart = await response.json();
+				return Boolean( cart.items?.length );
+			},
+			undefined,
+			{ timeout: 15_000 }
+		)
+		.catch( () => {} );
+	return ( await getStoreBadgeCount( page ) ) > 0;
+};
+
+const auditTextFieldFocus = async ( locator ) => {
+	const readPresentation = () =>
+		locator.evaluate( ( element ) => {
+			const style = window.getComputedStyle( element );
+			return {
+				active: element === element.ownerDocument.activeElement,
+				borderColor: style.borderColor,
+				boxShadow: style.boxShadow,
+				outlineStyle: style.outlineStyle,
+			};
+		} );
+	const rest = await readPresentation();
+	await locator.focus();
+	await locator.page().waitForTimeout( 180 );
+	const focus = await readPresentation();
+	return {
+		focus,
+		passed:
+			focus.active &&
+			focus.borderColor !== rest.borderColor &&
+			focus.boxShadow !== 'none' &&
+			focus.outlineStyle === 'none',
+		rest,
+	};
+};
+
+const auditFormPresentation = async ( page, rootSelector = 'main' ) => {
+	const controls = page.locator(
+		`${ rootSelector } input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([aria-hidden="true"]), ${ rootSelector } select:not([aria-hidden="true"]), ${ rootSelector } textarea:not([aria-hidden="true"])`
+	);
+	const results = [];
+	const count = await controls.count();
+	for ( let index = 0; index < count; index++ ) {
+		const control = controls.nth( index );
+		if ( ! ( await control.isVisible().catch( () => false ) ) ) {
+			continue;
+		}
+		if (
+			await control.evaluate( ( element ) =>
+				Boolean( element.closest( '[aria-hidden="true"]' ) )
+			)
+		) {
+			continue;
+		}
+		const readPresentation = () =>
+			control.evaluate( ( element ) => {
+				const explicitLabel = element.id
+					? document.querySelector(
+							`label[for="${ window.CSS.escape( element.id ) }"]`
+					  )
+					: null;
+				const label = explicitLabel || element.closest( 'label' );
+				const bounds = element.getBoundingClientRect();
+				const style = window.getComputedStyle( element );
+				const labelBounds = label?.getBoundingClientRect();
+				const labelStyle = label && window.getComputedStyle( label );
+				const compact = Boolean(
+					element.matches(
+						'.qty, .orderby, [data-lm-variation-source], .wc-block-components-quantity-selector__input'
+					) ||
+						element.closest(
+							'.lm-quantity__actions, .lm-variation-option'
+						)
+				);
+				const choice = element.matches(
+					'input[type="checkbox"], input[type="radio"]'
+				);
+				return {
+					active: element.ownerDocument.activeElement === element,
+					choice,
+					compact,
+					disabled: element.matches( ':disabled, [readonly]' ),
+					label: labelStyle
+						? {
+								color: labelStyle.color,
+								fontSize: labelStyle.fontSize,
+								fontWeight: labelStyle.fontWeight,
+								left: labelStyle.left,
+								position: labelStyle.position,
+								top: labelStyle.top,
+								transform: labelStyle.transform,
+						  }
+						: null,
+					labelBounds: labelBounds
+						? {
+								bottom: labelBounds.bottom,
+								height: labelBounds.height,
+								top: labelBounds.top,
+								width: labelBounds.width,
+						  }
+						: null,
+					name:
+						element.getAttribute( 'name' ) ||
+						element.id ||
+						element.className ||
+						element.tagName.toLowerCase(),
+					rect: {
+						bottom: bounds.bottom,
+						height: bounds.height,
+						top: bounds.top,
+						width: bounds.width,
+					},
+					style: {
+						borderColor: style.borderColor,
+						boxShadow: style.boxShadow,
+						fontSize: style.fontSize,
+						lineHeight: style.lineHeight,
+						outlineStyle: style.outlineStyle,
+						outlineWidth: style.outlineWidth,
+						paddingBottom: style.paddingBottom,
+						paddingLeft: style.paddingLeft,
+						paddingRight: style.paddingRight,
+						paddingTop: style.paddingTop,
+					},
+					tag: element.tagName.toLowerCase(),
+					type: element.getAttribute( 'type' ) || '',
+					visuallyHidden: bounds.width <= 1.5 || bounds.height <= 1.5,
+				};
+			} );
+		const rest = await readPresentation();
+		let focus = null;
+		if ( ! rest.disabled && ! rest.visuallyHidden ) {
+			await control.focus();
+			await page.waitForTimeout( 180 );
+			focus = await readPresentation();
+			await control.evaluate( ( element ) => element.blur() );
+		}
+		const visualLabel = Boolean(
+			rest.labelBounds?.width > 1 && rest.labelBounds?.height > 1
+		);
+		const labelStable = Boolean(
+			rest.visuallyHidden ||
+				! visualLabel ||
+				( focus &&
+					Object.keys( rest.label ).every(
+						( property ) =>
+							rest.label[ property ] === focus.label?.[ property ]
+					) )
+		);
+		const layoutStable = Boolean(
+			! focus ||
+				( Math.abs( rest.rect.height - focus.rect.height ) <= 0.5 &&
+					Math.abs( rest.rect.width - focus.rect.width ) <= 0.5 &&
+					[
+						'paddingBottom',
+						'paddingLeft',
+						'paddingRight',
+						'paddingTop',
+					].every(
+						( property ) =>
+							rest.style[ property ] === focus.style[ property ]
+					) )
+		);
+		const standardControl = ! rest.choice && ! rest.compact;
+		const expectedSize = Boolean(
+			rest.visuallyHidden ||
+				( rest.choice
+					? Math.abs( rest.rect.width - 20 ) <= 1 &&
+					  Math.abs( rest.rect.height - 20 ) <= 1
+					: ! standardControl ||
+					  ( rest.tag === 'textarea'
+							? rest.rect.height >= 120
+							: Math.abs( rest.rect.height - 52 ) <= 1 ) )
+		);
+		const expectedPadding = Boolean(
+			! standardControl ||
+				Number.parseFloat( rest.style.paddingLeft ) >= 15.5
+		);
+		const readableLineHeight = Boolean(
+			! standardControl || Number.parseFloat( rest.style.lineHeight ) > 0
+		);
+		const labelClearance = Boolean(
+			! visualLabel ||
+				rest.choice ||
+				rest.compact ||
+				rest.labelBounds.bottom + 4 <= rest.rect.top
+		);
+		const labelTypography = Boolean(
+			! visualLabel ||
+				rest.choice ||
+				rest.compact ||
+				( Number.parseFloat( rest.label.fontSize ) >= 13 &&
+					Number.parseFloat( rest.label.fontSize ) <= 15 &&
+					Number.parseFloat( rest.label.fontWeight ) === 600 )
+		);
+		const focusVisible = Boolean(
+			rest.disabled ||
+				rest.visuallyHidden ||
+				( standardControl
+					? focus?.active &&
+					  focus.style.borderColor !== rest.style.borderColor &&
+					  focus.style.boxShadow !== 'none'
+					: focus?.active &&
+					  ( focus.style.borderColor !== rest.style.borderColor ||
+							focus.style.boxShadow !== 'none' ||
+							focus.style.outlineStyle !== 'none' ) )
+		);
+		results.push( {
+			expectedPadding,
+			expectedSize,
+			focusVisible,
+			labelClearance,
+			labelStable,
+			labelTypography,
+			layoutStable,
+			name: rest.name,
+			readableLineHeight,
+			rest,
+		} );
+	}
+	await page.evaluate( () => {
+		const root = document.documentElement;
+		const activeElement = root.ownerDocument.activeElement;
+		if ( activeElement instanceof window.HTMLElement ) {
+			activeElement.blur();
+		}
+		window.scrollTo( 0, 0 );
+	} );
+	return {
+		controls: results,
+		passed: results.every(
+			( control ) =>
+				control.expectedPadding &&
+				control.expectedSize &&
+				control.focusVisible &&
+				control.labelClearance &&
+				control.labelStable &&
+				control.labelTypography &&
+				control.layoutStable &&
+				control.readableLineHeight
+		),
+	};
+};
+
+const auditCheckoutFieldLayout = async ( page ) =>
+	page.evaluate( () => {
+		const readRect = ( element ) => {
+			const rect = element?.getBoundingClientRect();
+			return (
+				rect && {
+					top: rect.top,
+					bottom: rect.bottom,
+					left: rect.left,
+					right: rect.right,
+				}
+			);
+		};
+		const readField = ( selector ) => document.querySelector( selector );
+		const email = readField(
+			'.wc-block-checkout__contact-fields .wc-block-components-text-input'
+		);
+		const emailInput = email?.querySelector( 'input' );
+		const emailLabel = email?.querySelector( 'label' );
+		const shippingForm = readField(
+			'.wc-block-checkout__shipping-fields .wc-block-components-address-form'
+		);
+		const city = shippingForm?.querySelector(
+			'.wc-block-components-address-form__city'
+		);
+		const state = shippingForm?.querySelector(
+			'.wc-block-components-address-form__state'
+		);
+		const stateSelect = state?.querySelector( 'select' );
+		const stateLabel = state?.querySelector( 'label' );
+		const emailInputRect = readRect( emailInput );
+		const emailLabelRect = readRect( emailLabel );
+		const cityRect = readRect( city );
+		const stateRect = readRect( state );
+		const formStyle =
+			shippingForm && window.getComputedStyle( shippingForm );
+		const readLabelPresentation = ( label ) => {
+			const style = label && window.getComputedStyle( label );
+			return (
+				style && {
+					color: style.color,
+					fontSize: style.fontSize,
+					fontWeight: style.fontWeight,
+					transform: style.transform,
+				}
+			);
+		};
+		const labelRest = readLabelPresentation( stateLabel );
+		stateSelect?.focus();
+		const labelFocus = readLabelPresentation( stateLabel );
+		const selectStyle =
+			stateSelect && window.getComputedStyle( stateSelect );
+		const twoColumns = window.innerWidth > 640;
+		return {
+			labelClearance: Boolean(
+				emailInputRect &&
+					emailLabelRect &&
+					emailLabelRect.bottom + 4 <= emailInputRect.top
+			),
+			pairedFieldsAligned: Boolean(
+				cityRect &&
+					stateRect &&
+					( ! twoColumns ||
+						Math.abs( cityRect.top - stateRect.top ) < 1 )
+			),
+			shippingGrid: Boolean(
+				formStyle &&
+					formStyle.display === 'grid' &&
+					parseFloat( formStyle.rowGap ) > 0 &&
+					( ! twoColumns || parseFloat( formStyle.columnGap ) > 0 )
+			),
+			labelStable: Boolean(
+				labelRest &&
+					labelFocus &&
+					Object.keys( labelRest ).every(
+						( property ) =>
+							labelRest[ property ] === labelFocus[ property ]
+					)
+			),
+			selectVerticallyCentered: Boolean(
+				selectStyle &&
+					selectStyle.paddingTop === selectStyle.paddingBottom
+			),
+		};
+	} );
+
+const runCatalogInteractionAudit = async ( width ) => {
+	const result = {
+		width,
+		addNoNavigation: false,
+		drawerOpened: false,
+		successLabel: false,
+		removeNoNavigation: false,
+		errorFeedbackVisible: false,
+		errorControlRecovered: false,
+		passed: false,
+	};
+	const context = await browser.newContext( {
+		viewport: { width, height: 900 },
+	} );
+	const page = await context.newPage();
+	let navigations = 0;
+	let routeActive = false;
+	page.on( 'framenavigated', ( frame ) => {
+		if ( frame === page.mainFrame() ) {
+			navigations += 1;
+		}
+	} );
+	try {
+		await page.goto( new URL( '/tienda/', baseURL ).href, {
+			waitUntil: 'networkidle',
+			timeout: 45_000,
+		} );
+		navigations = 0;
+		const card = page
+			.locator( '.wc-block-product' )
+			.filter( { hasText: 'Altar para mascotas' } )
+			.first();
+		const button = card.locator(
+			'.wc-block-components-product-button__button'
+		);
+		if ( ! ( await button.count() ) ) {
+			throw new Error( 'No se encontró el botón simple del catálogo.' );
+		}
+
+		await button.evaluate( ( element ) => element.click() );
+		await waitForStoreBadge( page, 1 );
+		await waitForMiniCart( page, true );
+		await page
+			.waitForFunction(
+				() =>
+					document
+						.querySelector(
+							'.wc-block-product .wc-block-components-product-button__button [data-wp-text]'
+						)
+						?.textContent.includes( 'en carrito' ),
+				undefined,
+				{ timeout: 15_000 }
+			)
+			.catch( () => {} );
+		result.addNoNavigation = navigations === 0;
+		result.drawerOpened = await page.evaluate( () => {
+			const overlay = document.querySelector(
+				'.wc-block-components-drawer__screen-overlay'
+			);
+			const style = overlay ? window.getComputedStyle( overlay ) : null;
+			return Boolean(
+				overlay &&
+					! overlay.classList.contains(
+						'wc-block-components-drawer__screen-overlay--is-hidden'
+					) &&
+					style?.opacity !== '0' &&
+					style?.pointerEvents !== 'none'
+			);
+		} );
+		result.successLabel = ( await button.textContent() )
+			.trim()
+			.toLowerCase()
+			.includes( 'en carrito' );
+
+		const closeButton = page.locator(
+			'.wc-block-mini-cart__drawer .wc-block-components-drawer__close'
+		);
+		await closeButton.first().evaluate( ( element ) => element.click() );
+		await waitForMiniCart( page, false );
+		await page
+			.locator( '.wc-block-mini-cart__button' )
+			.first()
+			.evaluate( ( element ) => element.click() );
+		await waitForMiniCart( page, true );
+		const removeButton = page.locator(
+			'.wc-block-mini-cart__drawer [aria-label^="Eliminar"]'
+		);
+		navigations = 0;
+		await removeButton.first().evaluate( ( element ) => element.click() );
+		await waitForStoreBadge( page, 0 );
+		result.removeNoNavigation = navigations === 0;
+
+		await page.route( '**/wp-json/wc/store/v1/batch**', ( route ) =>
+			route.abort()
+		);
+		routeActive = true;
+		const failingButton = card.locator(
+			'.wc-block-components-product-button__button'
+		);
+		navigations = 0;
+		await failingButton.evaluate( ( element ) => element.click() );
+		await page.waitForTimeout( 180 );
+		await page.evaluate( () => {
+			const failedControl = document.querySelector(
+				'.wc-block-product .wc-block-components-product-button__button'
+			);
+			document.body.dispatchEvent(
+				new CustomEvent( 'wc-blocks_add_to_cart_failed', {
+					bubbles: true,
+					detail: { button: failedControl },
+				} )
+			);
+		} );
+		await page
+			.locator( '.lm-store-feedback.is-visible' )
+			.waitFor( { state: 'visible', timeout: 5_000 } );
+		result.errorFeedbackVisible = true;
+		await page.waitForTimeout( 2_400 );
+		result.errorControlRecovered = await failingButton.evaluate(
+			( element ) =>
+				! element.hasAttribute( 'aria-busy' ) &&
+				! element.classList.contains( 'lm-is-pending' ) &&
+				! element.classList.contains( 'lm-is-error' )
+		);
+		result.passed = Boolean(
+			result.addNoNavigation &&
+				result.drawerOpened &&
+				result.successLabel &&
+				result.removeNoNavigation &&
+				result.errorFeedbackVisible &&
+				result.errorControlRecovered
+		);
+	} catch ( error ) {
+		result.error = error.message;
+	} finally {
+		if ( routeActive ) {
+			await page.unroute( '**/wp-json/wc/store/v1/batch**' );
+		}
+		await context.close();
+	}
+	return result;
+};
+
+const runCartInteractionAudit = async ( width ) => {
+	const result = {
+		width,
+		cartHydrated: false,
+		quantityNoNavigation: false,
+		removeNoNavigation: false,
+		passed: false,
+	};
+	const context = await browser.newContext( {
+		viewport: { width, height: 900 },
+	} );
+	const page = await context.newPage();
+	let navigations = 0;
+	page.on( 'framenavigated', ( frame ) => {
+		if ( frame === page.mainFrame() ) {
+			navigations += 1;
+		}
+	} );
+	try {
+		if ( ! ( await addSimpleProductForAudit( page ) ) ) {
+			throw new Error( 'No se pudo preparar el carrito de auditoría.' );
+		}
+		await page.goto( new URL( '/carrito/', baseURL ).href, {
+			waitUntil: 'networkidle',
+			timeout: 45_000,
+		} );
+		navigations = 0;
+		await waitForCommerceBlock(
+			page,
+			'.wp-block-woocommerce-cart',
+			requiredContent[ 'carrito-lleno' ]
+		);
+		result.cartHydrated = await page.evaluate( () => {
+			const root = document.querySelector( '.wc-block-cart' );
+			return Boolean(
+				root?.querySelector( '.wc-block-cart-item__product' ) &&
+					! root.querySelector( '.wc-block-components-skeleton' )
+			);
+		} );
+		if ( ! result.cartHydrated ) {
+			await page.reload( { waitUntil: 'networkidle', timeout: 45_000 } );
+			navigations = 0;
+			await waitForCommerceBlock(
+				page,
+				'.wp-block-woocommerce-cart',
+				requiredContent[ 'carrito-lleno' ]
+			);
+			result.cartHydrated = await page.evaluate( () => {
+				const root = document.querySelector( '.wc-block-cart' );
+				return Boolean(
+					root?.querySelector( '.wc-block-cart-item__product' ) &&
+						! root.querySelector( '.wc-block-components-skeleton' )
+				);
+			} );
+		}
+		const quantityInput = page.locator(
+			'.wc-block-cart input.wc-block-components-quantity-selector__input'
+		);
+		const plusButton = page.locator(
+			'.wc-block-cart .wc-block-components-quantity-selector__button--plus'
+		);
+		await quantityInput.waitFor( { state: 'visible', timeout: 15_000 } );
+		const beforeQuantity = await quantityInput.inputValue();
+		await plusButton.first().evaluate( ( element ) => element.click() );
+		await page.waitForFunction(
+			( value ) =>
+				document.querySelector(
+					'.wc-block-cart input.wc-block-components-quantity-selector__input'
+				)?.value !== value,
+			beforeQuantity,
+			{ timeout: 15_000 }
+		);
+		result.quantityNoNavigation = navigations === 0;
+		const removeButton = page.locator(
+			'.wc-block-cart [aria-label^="Eliminar"]'
+		);
+		await removeButton.first().evaluate( ( element ) => element.click() );
+		await page
+			.locator( '.wp-block-woocommerce-empty-cart-block' )
+			.waitFor( { state: 'visible', timeout: 15_000 } );
+		result.removeNoNavigation = navigations === 0;
+		result.passed = Boolean(
+			result.cartHydrated &&
+				result.quantityNoNavigation &&
+				result.removeNoNavigation
+		);
+	} catch ( error ) {
+		result.error = error.message;
+	} finally {
+		await context.close();
+	}
+	return result;
+};
+
+const runCheckoutInteractionAudit = async ( width ) => {
+	const result = {
+		width,
+		blockHydrated: false,
+		fieldFocus: null,
+		fieldLayout: null,
+		loginHrefPreserved: false,
+		englishLabelCount: 0,
+		passed: false,
+	};
+	const context = await browser.newContext( {
+		viewport: { width, height: 900 },
+	} );
+	const page = await context.newPage();
+	try {
+		if (
+			! ( await addSimpleProductForAudit( page ) ) &&
+			! ( await addDirectProductForAudit( page ) )
+		) {
+			throw new Error( 'No se pudo preparar el checkout de auditoría.' );
+		}
+		const checkoutUrl = new URL( '/finalizar-compra/', baseURL ).href;
+		await page.goto( checkoutUrl, {
+			waitUntil: 'networkidle',
+			timeout: 45_000,
+		} );
+		if ( ! page.url().includes( '/finalizar-compra/' ) ) {
+			if (
+				! ( await addSimpleProductForAudit( page ) ) &&
+				! ( await addDirectProductForAudit( page ) )
+			) {
+				throw new Error( 'El carrito de checkout quedó vacío.' );
+			}
+			await page.goto( checkoutUrl, {
+				waitUntil: 'networkidle',
+				timeout: 45_000,
+			} );
+		}
+		await waitForCommerceBlock(
+			page,
+			'.wc-block-checkout',
+			requiredContent.checkout
+		);
+		const readCheckoutState = () =>
+			page.evaluate( () => {
+				const root = document.querySelector( '.wc-block-checkout' );
+				const login = root?.querySelector(
+					'.wc-block-checkout__login-prompt'
+				);
+				return {
+					hydrated: Boolean(
+						root &&
+							root.querySelector(
+								'.wc-block-components-checkout-place-order-button'
+							) &&
+							! root.querySelector(
+								'.wc-block-components-skeleton'
+							)
+					),
+					loginHref: login?.getAttribute( 'href' ) || '',
+					englishLabelCount: [
+						...document.querySelectorAll( 'label' ),
+					].filter( ( label ) =>
+						label.textContent.includes(
+							'Create an account with Lupita Márquez'
+						)
+					).length,
+				};
+			} );
+		let state = await readCheckoutState();
+		if ( ! state.hydrated ) {
+			await page.waitForTimeout( 1_200 );
+			state = await readCheckoutState();
+		}
+		if ( ! state.hydrated ) {
+			await page.reload( { waitUntil: 'networkidle', timeout: 45_000 } );
+			await waitForCommerceBlock(
+				page,
+				'.wc-block-checkout',
+				requiredContent.checkout
+			);
+			state = await readCheckoutState();
+		}
+		result.blockHydrated = state.hydrated;
+		const checkoutField = page
+			.locator( '.wc-block-components-text-input input' )
+			.first();
+		await checkoutField.waitFor( { state: 'visible', timeout: 15_000 } );
+		result.fieldFocus = await auditTextFieldFocus( checkoutField );
+		result.fieldLayout = await auditCheckoutFieldLayout( page );
+		result.loginHrefPreserved =
+			state.loginHref.includes( '/mi-cuenta/' ) &&
+			state.loginHref.includes( 'redirect_to=' );
+		result.englishLabelCount = state.englishLabelCount;
+		result.passed = Boolean(
+			result.blockHydrated &&
+				result.fieldFocus.passed &&
+				result.fieldLayout.labelClearance &&
+				result.fieldLayout.pairedFieldsAligned &&
+				result.fieldLayout.shippingGrid &&
+				result.fieldLayout.labelStable &&
+				result.fieldLayout.selectVerticallyCentered &&
+				result.loginHrefPreserved &&
+				result.englishLabelCount === 0
+		);
+	} catch ( error ) {
+		result.error = error.message;
+	} finally {
+		await context.close();
+	}
+	return result;
+};
+
+const runAccountInteractionAudit = async ( width ) => {
+	const result = {
+		width,
+		fieldFocus: null,
+		loginFormNative: false,
+		passwordRecoveryAvailable: false,
+		passed: false,
+	};
+	const context = await browser.newContext( {
+		viewport: { width, height: 900 },
+	} );
+	const page = await context.newPage();
+	try {
+		await page.goto( new URL( '/mi-cuenta/', baseURL ).href, {
+			waitUntil: 'networkidle',
+			timeout: 45_000,
+		} );
+		const state = await page.evaluate( () => {
+			const form = document.querySelector(
+				'form.woocommerce-form-login'
+			);
+			const recovery = document.querySelector(
+				'.woocommerce-LostPassword a'
+			);
+			return {
+				formAction:
+					form?.action || form?.getAttribute( 'action' ) || '',
+				formMethod:
+					form?.method || form?.getAttribute( 'method' ) || '',
+				recoveryHref: recovery?.getAttribute( 'href' ) || '',
+			};
+		} );
+		const accountField = page
+			.locator( '.woocommerce-form-login input[name="username"]' )
+			.first();
+		await accountField.waitFor( { state: 'visible', timeout: 15_000 } );
+		result.fieldFocus = await auditTextFieldFocus( accountField );
+		result.loginFormNative =
+			state.formMethod.toLowerCase() === 'post' &&
+			state.formAction.includes( '/mi-cuenta/' );
+		result.passwordRecoveryAvailable =
+			state.recoveryHref.includes( 'lost-password' );
+		result.passed = Boolean(
+			result.fieldFocus.passed &&
+				result.loginFormNative &&
+				result.passwordRecoveryAvailable
+		);
+	} catch ( error ) {
+		result.error = error.message;
+	} finally {
+		await context.close();
+	}
+	return result;
+};
+
+const runContactInteractionAudit = async ( width ) => {
+	const result = {
+		width,
+		fieldFocus: null,
+		layout: null,
+		nativeValidationAvailable: false,
+		invalidSubmissionBlocked: false,
+		asyncSuccessVisible: false,
+		fieldsResetAfterSuccess: false,
+		passed: false,
+	};
+	const context = await browser.newContext( {
+		viewport: { width, height: 900 },
+	} );
+	const page = await context.newPage();
+	try {
+		await page.goto( new URL( '/contacto/', baseURL ).href, {
+			waitUntil: 'networkidle',
+			timeout: 45_000,
+		} );
+		const form = page.locator( '[data-lm-contact-form]' );
+		result.fieldFocus = await auditTextFieldFocus(
+			form.locator( '[name="name"]' )
+		);
+		result.layout = await form.evaluate( ( element ) => {
+			const approximately = ( value, expected, tolerance = 0.75 ) =>
+				Math.abs( value - expected ) <= tolerance;
+			const bounds = ( target ) => target.getBoundingClientRect();
+			const fields = [
+				...element.querySelectorAll( '.lm-contact-form__field' ),
+			].map( ( field ) => {
+				const label = field.querySelector( 'label' );
+				const control = field.querySelector( 'input, textarea' );
+				const fieldBounds = bounds( field );
+				const labelBounds = bounds( label );
+				const controlBounds = bounds( control );
+				const labelStyle = window.getComputedStyle( label );
+
+				return {
+					bottom: fieldBounds.bottom,
+					control: control.name,
+					labelControlGap: controlBounds.top - labelBounds.bottom,
+					labelFontSize: Number.parseFloat( labelStyle.fontSize ),
+					labelFontWeight: Number.parseInt(
+						labelStyle.fontWeight,
+						10
+					),
+					labelLineHeight: Number.parseFloat( labelStyle.lineHeight ),
+					top: fieldBounds.top,
+				};
+			} );
+			const rows = [];
+			for ( const field of fields ) {
+				const row = rows.find( ( item ) =>
+					approximately( item.top, field.top, 1 )
+				);
+				if ( row ) {
+					row.bottom = Math.max( row.bottom, field.bottom );
+				} else {
+					rows.push( { bottom: field.bottom, top: field.top } );
+				}
+			}
+			rows.sort( ( first, second ) => first.top - second.top );
+			const fieldRowGaps = rows
+				.slice( 1 )
+				.map( ( row, index ) => row.top - rows[ index ].bottom );
+			const consent = element.querySelector(
+				'.lm-contact-form__consent'
+			);
+			const consentLabel = element.querySelector(
+				'.lm-contact-form__consent-label'
+			);
+			const actions = element.querySelector(
+				'.lm-contact-form__actions'
+			);
+			const message = element.querySelector(
+				'.lm-contact-form__field--wide'
+			);
+			const note = element.querySelector( '.lm-contact-form__note' );
+			const submit = element.querySelector( '[data-lm-contact-submit]' );
+			const consentBounds = bounds( consent );
+			const actionsBounds = bounds( actions );
+			const messageBounds = bounds( message );
+			const noteBounds = bounds( note );
+			const submitBounds = bounds( submit );
+			const actionsStyle = window.getComputedStyle( actions );
+			const consentStyle = window.getComputedStyle( consentLabel );
+			const actionGap =
+				actionsStyle.flexDirection === 'column'
+					? noteBounds.top - submitBounds.bottom
+					: noteBounds.left - submitBounds.right;
+			const unexpectedVisibleDirectChildren = [
+				...element.children,
+			].filter(
+				( child ) =>
+					child.getClientRects().length > 0 &&
+					! child.matches(
+						'.lm-contact-form__field, .lm-contact-form__trap, .lm-contact-form__consent, .lm-contact-form__status, .lm-contact-form__actions, input[type="hidden"]'
+					)
+			).length;
+			const labelFontSizes = fields.map(
+				( field ) => field.labelFontSize
+			);
+			const fieldLabelsConsistent = Boolean(
+				fields.length === 5 &&
+					Math.max( ...labelFontSizes ) -
+						Math.min( ...labelFontSizes ) <=
+						0.1 &&
+					fields.every(
+						( field ) =>
+							field.labelFontWeight === 600 &&
+							field.labelLineHeight >= 17 &&
+							field.labelLineHeight <= 19.5
+					)
+			);
+			const consentTypographyMatches = Boolean(
+				approximately(
+					Number.parseFloat( consentStyle.fontSize ),
+					labelFontSizes[ 0 ],
+					0.1
+				) && Number.parseInt( consentStyle.fontWeight, 10 ) === 600
+			);
+			const layoutResult = {
+				actionGap,
+				consentActionsGap: actionsBounds.top - consentBounds.bottom,
+				consentTypographyMatches,
+				emptyActionParagraphs: element.querySelectorAll(
+					'.lm-contact-form__actions > p:empty'
+				).length,
+				fieldLabelsConsistent,
+				fieldRowGaps,
+				fields,
+				lineBreaks: element.querySelectorAll( 'br' ).length,
+				messageConsentGap: consentBounds.top - messageBounds.bottom,
+				unexpectedVisibleDirectChildren,
+			};
+			layoutResult.passed = Boolean(
+				layoutResult.lineBreaks === 0 &&
+					layoutResult.emptyActionParagraphs === 0 &&
+					layoutResult.unexpectedVisibleDirectChildren === 0 &&
+					layoutResult.fieldLabelsConsistent &&
+					layoutResult.consentTypographyMatches &&
+					fields.every( ( field ) =>
+						approximately( field.labelControlGap, 8 )
+					) &&
+					fieldRowGaps.every( ( gap ) => approximately( gap, 20 ) ) &&
+					approximately( layoutResult.messageConsentGap, 20 ) &&
+					approximately( layoutResult.consentActionsGap, 20 ) &&
+					approximately( layoutResult.actionGap, 16 )
+			);
+
+			return layoutResult;
+		} );
+		result.nativeValidationAvailable = await form.evaluate(
+			( element ) =>
+				element.querySelectorAll( '[required]' ).length === 5 &&
+				typeof element.checkValidity === 'function'
+		);
+		await form.locator( '[name="name"]' ).fill( 'Auditoría frontend' );
+		await form
+			.locator( '[name="email"]' )
+			.fill( `auditoria-${ Date.now() }@example.test` );
+		await form.locator( '[name="subject"]' ).fill( 'Prueba automatizada' );
+		await form
+			.locator( '[name="message"]' )
+			.fill( 'Validación automática del formulario de contacto.' );
+		result.invalidSubmissionBlocked = await form.evaluate(
+			( element ) => ! element.checkValidity()
+		);
+		await form.locator( '[name="privacy"]' ).check();
+		await form.locator( '[data-lm-contact-submit]' ).click();
+		await form
+			.locator( '[data-lm-contact-status].is-success' )
+			.waitFor( { state: 'visible', timeout: 15_000 } );
+		result.asyncSuccessVisible = true;
+		result.fieldsResetAfterSuccess = await form.evaluate(
+			( element ) =>
+				[ 'name', 'email', 'subject', 'message' ].every(
+					( name ) => ! element.elements.namedItem( name )?.value
+				) && ! element.elements.namedItem( 'privacy' )?.checked
+		);
+		result.passed = Boolean(
+			result.fieldFocus.passed &&
+				result.layout.passed &&
+				result.nativeValidationAvailable &&
+				result.invalidSubmissionBlocked &&
+				result.asyncSuccessVisible &&
+				result.fieldsResetAfterSuccess
+		);
+	} catch ( error ) {
+		result.error = error.message;
+	} finally {
+		await context.close();
+	}
+	return result;
 };
 
 for ( const width of widths ) {
@@ -154,6 +1243,7 @@ for ( const width of widths ) {
 		const messages = [];
 		const pageErrors = [];
 		let interactionAudit = null;
+		let formAudit = null;
 		let mobileNavigationAudit = null;
 		let productMediaAudit = null;
 		let singleProductGalleryAudit = null;
@@ -839,6 +1929,7 @@ for ( const width of widths ) {
 						JSON.stringify( [
 							'Hecho en México',
 							'Envíos seguros',
+							'Compra segura',
 						] ) &&
 					variationAudit.cartSku === 'LM-ALT-CHI-PIN' &&
 					variationAudit.cartPrice === '71900' &&
@@ -846,17 +1937,18 @@ for ( const width of widths ) {
 			);
 		}
 		if ( name === 'carrito-lleno' || name === 'checkout' ) {
-			await page
-				.locator( '.wc-block-components-skeleton' )
-				.first()
-				.waitFor( { state: 'hidden', timeout: 15_000 } )
-				.catch( () => {} );
 			const hydratedSelector = requiredContent[ name ];
-			await page
-				.locator( hydratedSelector )
-				.first()
-				.waitFor( { state: 'visible', timeout: 15_000 } )
-				.catch( () => {} );
+			await waitForCommerceBlock(
+				page,
+				name === 'carrito-lleno'
+					? '.wp-block-woocommerce-cart'
+					: '.wc-block-checkout',
+				hydratedSelector
+			);
+			await page.evaluate( () => {
+				// Exclude the intentional WooCommerce skeleton-to-content hydration shift.
+				window.__lmCLS = 0;
+			} );
 		}
 
 		await page.evaluate( async () => {
@@ -1575,7 +2667,9 @@ for ( const width of widths ) {
 					),
 					heroTitle: fontSize( '.lm-hero h1' ),
 					featuredTitle: fontSize( '.lm-featured-heading h2' ),
-					pageTitle: fontSize( '.lm-page-header h1' ),
+					pageTitle: fontSize(
+						'.lm-page-intro h1, .lm-commerce-heading h1'
+					),
 					singleProductTitle: fontSize( '.lm-product-summary h1' ),
 					maximumProductTitle: maximumFontSize(
 						'.wc-block-product .wp-block-post-title'
@@ -2215,6 +3309,77 @@ for ( const width of widths ) {
 		const requiredContentMissing = requiredSelector
 			? ! ( await page.locator( requiredSelector ).first().isVisible() )
 			: false;
+		const pagePurposeAudit = await page.evaluate( ( pageName ) => {
+			const informationalPages = new Set( [
+				'nosotros',
+				'contacto',
+				'preguntas-frecuentes',
+				'envios-devoluciones',
+				'aviso-privacidad',
+				'terminos',
+			] );
+			const trustStripAbsent =
+				! document.querySelector( '.lm-trust-strip' );
+			if ( pageName === 'producto-variable' ) {
+				const assuranceLabels = [
+					...document.querySelectorAll(
+						'.lm-product-assurance span'
+					),
+				].map( ( item ) => item.textContent.trim() );
+				return {
+					assuranceLabels,
+					passed:
+						trustStripAbsent &&
+						[
+							'Hecho en México',
+							'Envíos seguros',
+							'Compra segura',
+						].every( ( label ) =>
+							assuranceLabels.includes( label )
+						),
+					trustStripAbsent,
+				};
+			}
+			if ( ! informationalPages.has( pageName ) ) {
+				return null;
+			}
+			const contextualLinks = [
+				...document.querySelectorAll(
+					'.lm-contextual-actions a, .lm-about-story__action a'
+				),
+			].map( ( link ) => link.getAttribute( 'href' ) || '' );
+			const expectedLinks = {
+				nosotros: [ '/tienda/' ],
+				contacto: [],
+				'preguntas-frecuentes': [ '/contacto/' ],
+				'envios-devoluciones': [
+					'/preguntas-frecuentes/',
+					'/contacto/',
+				],
+				'aviso-privacidad': [],
+				terminos: [],
+			}[ pageName ];
+			return {
+				contextualLinks,
+				passed:
+					trustStripAbsent &&
+					expectedLinks.every( ( link ) =>
+						contextualLinks.includes( link )
+					),
+				trustStripAbsent,
+			};
+		}, name );
+		if ( name === 'carrito-lleno' || name === 'checkout' ) {
+			await waitForCommerceBlock(
+				page,
+				name === 'carrito-lleno'
+					? '.wp-block-woocommerce-cart'
+					: '.wc-block-checkout',
+				requiredSelector
+			);
+			await page.waitForTimeout( 350 );
+		}
+		formAudit = await auditFormPresentation( page );
 
 		await page.screenshot( {
 			path: path.join( outputDirectory, `${ name }-${ width }.png` ),
@@ -2227,6 +3392,8 @@ for ( const width of widths ) {
 			status: response?.status() ?? null,
 			console: messages,
 			pageErrors,
+			pagePurposeAudit,
+			formAudit,
 			requiredContentMissing,
 			interactionAudit,
 			mobileNavigationAudit,
@@ -2514,6 +3681,10 @@ for ( const width of [ 1280, 390 ] ) {
 			} ),
 		};
 	} );
+	const reviewFormAudit = await auditFormPresentation(
+		page,
+		'.lm-product-reviews-content'
+	);
 	await reviewsSection.screenshot( {
 		path: path.join(
 			outputDirectory,
@@ -2584,6 +3755,7 @@ for ( const width of [ 1280, 390 ] ) {
 				openedReviews.starTargets.every(
 					( target ) => target.width >= 43.5 && target.height >= 43.5
 				) &&
+				reviewFormAudit.passed &&
 				ratingSelected === 'true' &&
 				closedAfterEscape.expanded === 'false' &&
 				closedAfterEscape.formHidden &&
@@ -2601,6 +3773,7 @@ for ( const width of [ 1280, 390 ] ) {
 		reviewIds,
 		reviewLinkTarget,
 		reviewTransition,
+		reviewFormAudit,
 		width,
 	} );
 	await context.close();
@@ -2612,7 +3785,10 @@ const emptyReviewsContext = await browser.newContext( {
 const emptyReviewsPage = await emptyReviewsContext.newPage();
 await emptyReviewsPage.goto(
 	new URL( '/producto/altar-gigante/', baseURL ).href,
-	{ waitUntil: 'networkidle', timeout: 45_000 }
+	{
+		waitUntil: 'networkidle',
+		timeout: 45_000,
+	}
 );
 report.productReviewsEmpty = await emptyReviewsPage
 	.locator( '.lm-product-reviews-section' )
@@ -2906,6 +4082,24 @@ report.withoutJavaScript.productNoticeFallback =
 	} );
 await noJavaScriptContext.close();
 
+for ( const width of [ 1280, 390 ] ) {
+	report.commerceInteractions.catalog.push(
+		await runCatalogInteractionAudit( width )
+	);
+	report.commerceInteractions.cart.push(
+		await runCartInteractionAudit( width )
+	);
+	report.commerceInteractions.checkout.push(
+		await runCheckoutInteractionAudit( width )
+	);
+	report.commerceInteractions.account.push(
+		await runAccountInteractionAudit( width )
+	);
+	report.commerceInteractions.contact.push(
+		await runContactInteractionAudit( width )
+	);
+}
+
 await browser.close();
 await fs.writeFile(
 	path.join( outputDirectory, 'report.json' ),
@@ -2946,6 +4140,7 @@ const failures = report.pages.filter(
 		page.pageErrors.length ||
 		page.console.some( ( message ) => message.type === 'error' ) ||
 		page.requiredContentMissing ||
+		( page.pagePurposeAudit && ! page.pagePurposeAudit.passed ) ||
 		( page.productMedia.count > 0 &&
 			( ! page.productMedia.consistentSurface ||
 				! page.productMedia.compositionValid ) ) ||
@@ -3010,6 +4205,7 @@ const failures = report.pages.filter(
 		page.missingImageAlt.length ||
 		page.unnamedControls.length ||
 		page.criticalSmallTargets.length ||
+		! page.formAudit?.passed ||
 		page.missingLanguage ||
 		page.mainLandmarks !== 1 ||
 		page.missingH1 ||
@@ -3041,6 +4237,21 @@ const enhancementFailures =
 	report.productReviews.some( ( reviews ) => ! reviews.passed ) ||
 	! report.productReviewsEmpty.passed ||
 	! report.productReviewsWithoutJavaScript.passed ||
+	report.commerceInteractions.catalog.some(
+		( interaction ) => ! interaction.passed
+	) ||
+	report.commerceInteractions.cart.some(
+		( interaction ) => ! interaction.passed
+	) ||
+	report.commerceInteractions.checkout.some(
+		( interaction ) => ! interaction.passed
+	) ||
+	report.commerceInteractions.account.some(
+		( interaction ) => ! interaction.passed
+	) ||
+	report.commerceInteractions.contact.some(
+		( interaction ) => ! interaction.passed
+	) ||
 	! report.withoutJavaScript.productNoticeFallback.present ||
 	! report.withoutJavaScript.productNoticeFallback.insidePurchase ||
 	report.withoutJavaScript.productNoticeFallback.topNoticeCount > 0 ||
