@@ -1,15 +1,27 @@
 <!-- wp:template-part {"slug":"header","tagName":"header"} /-->
 
-<!-- wp:group {"tagName":"main","className":"lm-section lm-main","layout":{"type":"default"}} -->
-<main class="wp-block-group lm-section lm-main">
-	<div class="lm-shell">
-		<header class="lm-page-header">
-			<!-- wp:post-title {"level":1,"fontSize":"x-large"} /-->
-		</header>
-		<div class="lm-reading">
-			<!-- wp:post-content /-->
+<!-- wp:group {"tagName":"main","className":"lm-main lm-page-main","layout":{"type":"default"}} -->
+<main class="wp-block-group lm-main lm-page-main">
+	<!-- wp:group {"tagName":"section","className":"lm-page-intro lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-page-intro lm-section lm-section--compact">
+		<div class="lm-shell">
+			<header class="lm-page-intro__copy">
+				<p class="lm-eyebrow">Lupita M&aacute;rquez</p>
+				<!-- wp:post-title {"level":1,"fontSize":"x-large"} /-->
+			</header>
 		</div>
-	</div>
+	</section>
+	<!-- /wp:group -->
+
+	<!-- wp:group {"tagName":"section","className":"lm-content-section lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-content-section lm-section lm-section--compact">
+		<div class="lm-shell">
+			<article class="lm-document lm-reading">
+				<!-- wp:post-content /-->
+			</article>
+		</div>
+	</section>
+	<!-- /wp:group -->
 </main>
 <!-- /wp:group -->
 

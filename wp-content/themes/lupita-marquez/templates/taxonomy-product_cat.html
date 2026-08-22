@@ -1,38 +1,48 @@
 <!-- wp:template-part {"slug":"header","tagName":"header"} /-->
 
-<!-- wp:group {"tagName":"main","className":"lm-section lm-section--compact lm-main","layout":{"type":"default"}} -->
-<main class="wp-block-group lm-section lm-section--compact lm-main">
-	<div class="lm-shell">
-		<!-- wp:woocommerce/breadcrumbs /-->
-		<header class="lm-page-header">
-			<p class="lm-eyebrow">Diseño mexicano</p>
-			<!-- wp:query-title {"type":"archive","showPrefix":false,"fontSize":"x-large"} /-->
-			<!-- wp:term-description /-->
-		</header>
-		<!-- wp:woocommerce/store-notices /-->
-		<div class="lm-catalog-toolbar">
-			<!-- wp:woocommerce/product-results-count /-->
-			<!-- wp:woocommerce/catalog-sorting /-->
+<!-- wp:group {"tagName":"main","className":"lm-main lm-catalog-main","layout":{"type":"default"}} -->
+<main class="wp-block-group lm-main lm-catalog-main">
+	<!-- wp:group {"tagName":"section","className":"lm-page-intro lm-page-intro--catalog lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-page-intro lm-page-intro--catalog lm-section lm-section--compact">
+		<div class="lm-shell">
+			<!-- wp:woocommerce/breadcrumbs /-->
+			<header class="lm-page-intro__copy">
+				<p class="lm-eyebrow">Diseño mexicano</p>
+				<!-- wp:query-title {"type":"archive","showPrefix":false,"fontSize":"x-large"} /-->
+				<!-- wp:term-description /-->
+			</header>
 		</div>
-		<!-- wp:woocommerce/product-collection {"queryId":0,"query":{"woocommerceAttributes":[],"woocommerceStockStatus":["instock","outofstock","onbackorder"],"taxQuery":{},"isProductCollectionBlock":true,"perPage":12,"pages":0,"offset":0,"postType":"product","order":"asc","orderBy":"title","search":"","exclude":[],"inherit":true},"displayLayout":{"type":"flex","columns":4,"shrinkColumns":true},"queryContextIncludes":["collection"]} -->
-		<div class="wp-block-woocommerce-product-collection lm-product-grid">
-			<!-- wp:woocommerce/product-template -->
-			<!-- wp:woocommerce/product-image {"showSaleBadge":false,"imageSizing":"thumbnail","isDescendentOfQueryLoop":true,"scale":"contain","aspectRatio":"1"} /-->
-			<!-- wp:post-title {"textAlign":"left","level":2,"isLink":true,"fontSize":"large","__woocommerceNamespace":"woocommerce/product-collection/product-title"} /-->
-			<!-- wp:woocommerce/product-price {"textAlign":"left","fontSize":"small"} /-->
-			<!-- wp:woocommerce/product-button {"textAlign":"left"} /-->
-			<!-- /wp:woocommerce/product-template -->
-			<!-- wp:query-pagination {"layout":{"type":"flex","justifyContent":"center"}} -->
-			<!-- wp:query-pagination-previous /-->
-			<!-- wp:query-pagination-numbers /-->
-			<!-- wp:query-pagination-next /-->
-			<!-- /wp:query-pagination -->
-			<!-- wp:woocommerce/product-collection-no-results -->
-			<p class="lm-state">Todavía no hay piezas en esta categoría.</p>
-			<!-- /wp:woocommerce/product-collection-no-results -->
+	</section>
+	<!-- /wp:group -->
+	<!-- wp:group {"tagName":"section","className":"lm-catalog-section lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-catalog-section lm-section lm-section--compact">
+		<div class="lm-shell">
+			<!-- wp:woocommerce/store-notices /-->
+			<div class="lm-catalog-toolbar">
+				<!-- wp:woocommerce/product-results-count /-->
+				<!-- wp:woocommerce/catalog-sorting /-->
+			</div>
+			<!-- wp:woocommerce/product-collection {"queryId":0,"query":{"woocommerceAttributes":[],"woocommerceStockStatus":["instock","outofstock","onbackorder"],"taxQuery":{},"isProductCollectionBlock":true,"perPage":12,"pages":0,"offset":0,"postType":"product","order":"asc","orderBy":"title","search":"","exclude":[],"inherit":true},"displayLayout":{"type":"flex","columns":4,"shrinkColumns":true},"queryContextIncludes":["collection"]} -->
+			<div class="wp-block-woocommerce-product-collection lm-product-grid">
+				<!-- wp:woocommerce/product-template -->
+				<!-- wp:woocommerce/product-image {"showSaleBadge":false,"imageSizing":"thumbnail","isDescendentOfQueryLoop":true,"scale":"contain","aspectRatio":"1"} /-->
+				<!-- wp:post-title {"textAlign":"left","level":2,"isLink":true,"fontSize":"large","__woocommerceNamespace":"woocommerce/product-collection/product-title"} /-->
+				<!-- wp:woocommerce/product-price {"textAlign":"left","fontSize":"small"} /-->
+				<!-- wp:woocommerce/product-button {"textAlign":"left"} /-->
+				<!-- /wp:woocommerce/product-template -->
+				<!-- wp:query-pagination {"layout":{"type":"flex","justifyContent":"center"}} -->
+				<!-- wp:query-pagination-previous /-->
+				<!-- wp:query-pagination-numbers /-->
+				<!-- wp:query-pagination-next /-->
+				<!-- /wp:query-pagination -->
+				<!-- wp:woocommerce/product-collection-no-results -->
+				<p class="lm-state">Todavía no hay piezas en esta categoría.</p>
+				<!-- /wp:woocommerce/product-collection-no-results -->
+			</div>
+			<!-- /wp:woocommerce/product-collection -->
 		</div>
-		<!-- /wp:woocommerce/product-collection -->
-	</div>
+	</section>
+	<!-- /wp:group -->
 </main>
 <!-- /wp:group -->
 

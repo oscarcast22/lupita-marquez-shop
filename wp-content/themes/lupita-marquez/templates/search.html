@@ -1,31 +1,44 @@
 <!-- wp:template-part {"slug":"header","tagName":"header"} /-->
 
-<!-- wp:group {"tagName":"main","className":"lm-section lm-section--compact lm-main","layout":{"type":"default"}} -->
-<main class="wp-block-group lm-section lm-section--compact lm-main">
-	<div class="lm-shell">
-		<header class="lm-page-header">
-			<p class="lm-eyebrow">Resultados de búsqueda</p>
-			<!-- wp:query-title {"type":"search","showPrefix":false,"fontSize":"x-large"} /-->
-		</header>
-		<!-- wp:search {"label":"Buscar productos","showLabel":false,"placeholder":"Busca una pieza…","buttonText":"Buscar"} /-->
-		<!-- wp:query {"queryId":2,"query":{"perPage":12,"postType":"product","order":"desc","orderBy":"date","inherit":true}} -->
-		<div class="wp-block-query">
-			<!-- wp:post-template {"className":"lm-search-results"} -->
-			<!-- wp:post-featured-image {"isLink":true} /-->
-			<!-- wp:post-title {"isLink":true,"level":2,"fontSize":"large"} /-->
-			<!-- wp:post-excerpt {"moreText":"Ver pieza"} /-->
-			<!-- /wp:post-template -->
-			<!-- wp:query-no-results -->
-			<div class="lm-state"><h2>No encontramos esa pieza.</h2><p>Intenta otra búsqueda o explora la colección completa.</p></div>
-			<!-- /wp:query-no-results -->
-			<!-- wp:query-pagination {"layout":{"type":"flex","justifyContent":"center"}} -->
-			<!-- wp:query-pagination-previous {"label":"Anterior"} /-->
-			<!-- wp:query-pagination-numbers /-->
-			<!-- wp:query-pagination-next {"label":"Siguiente"} /-->
-			<!-- /wp:query-pagination -->
+<!-- wp:group {"tagName":"main","className":"lm-main lm-search-page","layout":{"type":"default"}} -->
+<main class="wp-block-group lm-main lm-search-page">
+	<!-- wp:group {"tagName":"section","className":"lm-page-intro lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-page-intro lm-section lm-section--compact">
+		<div class="lm-shell">
+			<header class="lm-page-intro__copy">
+				<p class="lm-eyebrow">Resultados de búsqueda</p>
+				<!-- wp:query-title {"type":"search","showPrefix":false,"fontSize":"x-large"} /-->
+			</header>
 		</div>
-		<!-- /wp:query -->
-	</div>
+	</section>
+	<!-- /wp:group -->
+	<!-- wp:group {"tagName":"section","className":"lm-search-section lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-search-section lm-section lm-section--compact">
+		<div class="lm-shell">
+			<!-- wp:search {"label":"Buscar productos","showLabel":false,"placeholder":"Busca una pieza…","buttonText":"Buscar"} /-->
+			<!-- wp:query {"queryId":2,"query":{"perPage":12,"postType":"product","order":"desc","orderBy":"date","inherit":true}} -->
+			<div class="wp-block-query">
+				<!-- wp:post-template {"className":"lm-search-results"} -->
+				<!-- wp:post-featured-image {"isLink":true} /-->
+				<!-- wp:post-title {"isLink":true,"level":2,"fontSize":"large"} /-->
+				<!-- wp:post-excerpt {"moreText":"Ver pieza"} /-->
+				<!-- /wp:post-template -->
+				<!-- wp:query-no-results -->
+				<div class="lm-state">
+					<h2>No encontramos esa pieza.</h2>
+					<p>Intenta otra búsqueda o explora la colección completa.</p>
+				</div>
+				<!-- /wp:query-no-results -->
+				<!-- wp:query-pagination {"layout":{"type":"flex","justifyContent":"center"}} -->
+				<!-- wp:query-pagination-previous {"label":"Anterior"} /-->
+				<!-- wp:query-pagination-numbers /-->
+				<!-- wp:query-pagination-next {"label":"Siguiente"} /-->
+				<!-- /wp:query-pagination -->
+			</div>
+			<!-- /wp:query -->
+		</div>
+	</section>
+	<!-- /wp:group -->
 </main>
 <!-- /wp:group -->
 

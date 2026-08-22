@@ -1,15 +1,26 @@
 <!-- wp:template-part {"slug":"header","tagName":"header"} /-->
 
-<!-- wp:group {"tagName":"main","className":"lm-section lm-section--compact lm-main","layout":{"type":"default"}} -->
-<main class="wp-block-group lm-section lm-section--compact lm-main">
-	<div class="lm-shell">
-		<header class="lm-page-header">
-			<p class="lm-eyebrow">Tu espacio</p>
-			<!-- wp:post-title {"level":1,"fontSize":"x-large"} /-->
-		</header>
-		<!-- wp:woocommerce/store-notices /-->
-		<!-- wp:post-content /-->
-	</div>
+<!-- wp:group {"tagName":"main","className":"lm-main lm-account-page","layout":{"type":"default"}} -->
+<main class="wp-block-group lm-main lm-account-page">
+	<!-- wp:group {"tagName":"section","className":"lm-page-intro lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-page-intro lm-section lm-section--compact">
+		<div class="lm-shell">
+			<header class="lm-page-intro__copy">
+				<p class="lm-eyebrow">Tu espacio</p>
+				<!-- wp:post-title {"level":1,"fontSize":"x-large"} /-->
+				<p class="lm-page-intro__lede">Consulta tus pedidos y mantén tus datos de compra en un solo lugar.</p>
+			</header>
+		</div>
+	</section>
+	<!-- /wp:group -->
+	<!-- wp:group {"tagName":"section","className":"lm-account-section lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-account-section lm-section lm-section--compact">
+		<div class="lm-shell">
+			<!-- wp:woocommerce/store-notices /-->
+			<!-- wp:post-content /-->
+		</div>
+	</section>
+	<!-- /wp:group -->
 </main>
 <!-- /wp:group -->
 

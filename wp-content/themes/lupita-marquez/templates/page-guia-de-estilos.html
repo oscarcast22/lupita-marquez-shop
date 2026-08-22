@@ -1,45 +1,70 @@
 <!-- wp:template-part {"slug":"header","tagName":"header"} /-->
 
-<!-- wp:group {"tagName":"main","className":"lm-section lm-main","layout":{"type":"default"}} -->
-<main class="wp-block-group lm-section lm-main">
-	<div class="lm-shell">
-		<header class="lm-page-header">
-			<p class="lm-eyebrow">Sistema visual</p>
-			<h1>Guía de estilos</h1>
-			<p>Referencia local para mantener una tienda coherente y predecible.</p>
-		</header>
+<!-- wp:group {"tagName":"main","className":"lm-main lm-page-main","layout":{"type":"default"}} -->
+<main class="wp-block-group lm-main lm-page-main">
+	<!-- wp:group {"tagName":"section","className":"lm-page-intro lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-page-intro lm-section lm-section--compact">
+		<div class="lm-shell">
+			<header class="lm-page-intro__copy">
+				<p class="lm-eyebrow">Sistema visual</p>
+				<h1>Guía de estilos</h1>
+				<p class="lm-page-intro__lede">Referencia local para mantener una tienda coherente y predecible.</p>
+			</header>
+		</div>
+	</section>
+	<!-- /wp:group -->
 
-		<section class="lm-section lm-section--compact">
-			<p class="lm-eyebrow">Tipografía</p>
-			<h2>Título editorial de gran escala.</h2>
-			<h3>Encabezado de componente</h3>
-			<p class="lm-reading">Manrope sostiene textos, etiquetas y controles; Fraunces comunica la voz cálida y cultural de la marca.</p>
-		</section>
+	<!-- wp:group {"tagName":"section","className":"lm-content-section lm-section lm-section--compact","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-content-section lm-section lm-section--compact">
+		<div class="lm-shell">
+			<section class="lm-guide-section">
+				<p class="lm-eyebrow">Tipografía</p>
+				<h2>Título editorial de gran escala.</h2>
+				<h3>Encabezado de componente</h3>
+				<p class="lm-reading">Manrope sostiene textos, etiquetas y controles; Fraunces comunica la voz cálida y
+					cultural de la marca.</p>
+			</section>
 
-		<section class="lm-section lm-section--compact">
-			<p class="lm-eyebrow">Acciones y formulario</p>
-			<!-- wp:buttons -->
-			<div class="wp-block-buttons">
-				<!-- wp:button -->
-				<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="#">Acción principal</a></div>
-				<!-- /wp:button -->
-				<!-- wp:button {"className":"is-style-outline"} -->
-				<div class="wp-block-button is-style-outline"><a class="wp-block-button__link wp-element-button" href="#">Acción secundaria</a></div>
-				<!-- /wp:button -->
-			</div>
-			<!-- /wp:buttons -->
-			<p><label for="lm-guide-name">Nombre</label><input id="lm-guide-name" type="text" placeholder="Escribe aquí"></p>
-			<p><label for="lm-guide-finish">Acabado</label><select id="lm-guide-finish"><option>Natural</option><option>Pintado</option></select></p>
-		</section>
+			<section class="lm-guide-section">
+				<p class="lm-eyebrow">Acciones y formulario</p>
+				<!-- wp:buttons -->
+				<div class="wp-block-buttons">
+					<!-- wp:button -->
+					<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="#">Acción
+							principal</a></div>
+					<!-- /wp:button -->
+					<!-- wp:button {"className":"is-style-outline"} -->
+					<div class="wp-block-button is-style-outline"><a class="wp-block-button__link wp-element-button"
+							href="#">Acción secundaria</a></div>
+					<!-- /wp:button -->
+				</div>
+				<!-- /wp:buttons -->
+				<p><label for="lm-guide-name">Nombre</label><input id="lm-guide-name" type="text"
+						placeholder="Escribe aquí"></p>
+				<p><label for="lm-guide-finish">Acabado</label><select id="lm-guide-finish">
+						<option>Natural</option>
+						<option>Pintado</option>
+					</select></p>
+			</section>
 
-		<section class="lm-section lm-section--compact">
-			<p class="lm-eyebrow">Contenido</p>
-			<div class="lm-category-index">
-				<article class="lm-category-card"><span class="lm-eyebrow">01</span><h3>Tarjeta editorial</h3><p>El contenido respira; una línea construye jerarquía sin encerrar la pieza.</p><a href="#"><strong>Ver ejemplo</strong></a></article>
-				<article class="lm-category-card"><span class="lm-eyebrow">02</span><h3>Estado vacío</h3><p>No encontramos piezas. Prueba con otra búsqueda.</p><a href="/tienda/"><strong>Ir a la tienda</strong></a></article>
-			</div>
-		</section>
-	</div>
+			<section class="lm-guide-section">
+				<p class="lm-eyebrow">Contenido</p>
+				<div class="lm-category-index">
+					<article class="lm-category-card"><span class="lm-eyebrow">01</span>
+						<h3>Tarjeta editorial</h3>
+						<p>El contenido respira; una línea construye jerarquía sin encerrar la pieza.</p><a
+							href="#"><strong>Ver ejemplo</strong></a>
+					</article>
+					<article class="lm-category-card"><span class="lm-eyebrow">02</span>
+						<h3>Estado vacío</h3>
+						<p>No encontramos piezas. Prueba con otra búsqueda.</p><a href="/tienda/"><strong>Ir a la
+								tienda</strong></a>
+					</article>
+				</div>
+			</section>
+		</div>
+	</section>
+	<!-- /wp:group -->
 </main>
 <!-- /wp:group -->
 

@@ -1,21 +1,26 @@
 <!-- wp:template-part {"slug":"header","tagName":"header"} /-->
 
-<!-- wp:group {"tagName":"main","className":"lm-section lm-main","layout":{"type":"default"}} -->
-<main class="wp-block-group lm-section lm-main">
-	<div class="lm-shell">
-		<div class="lm-state">
-			<p class="lm-eyebrow">Error 404</p>
-			<h1>Esta pieza no está aquí.</h1>
-			<p>Quizá encuentres lo que buscas dentro de nuestra colección.</p>
-			<!-- wp:buttons {"layout":{"type":"flex","justifyContent":"center"}} -->
-			<div class="wp-block-buttons">
-				<!-- wp:button -->
-				<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="/tienda/">Ir a la tienda</a></div>
-				<!-- /wp:button -->
+<!-- wp:group {"tagName":"main","className":"lm-main lm-state-page","layout":{"type":"default"}} -->
+<main class="wp-block-group lm-main lm-state-page">
+	<!-- wp:group {"tagName":"section","className":"lm-state-section lm-section","layout":{"type":"default"}} -->
+	<section class="wp-block-group lm-state-section lm-section">
+		<div class="lm-shell">
+			<div class="lm-state lm-state--framed">
+				<p class="lm-eyebrow">Error 404</p>
+				<h1>Esta pieza no está aquí.</h1>
+				<p>Quizá encuentres lo que buscas dentro de nuestra colección.</p>
+				<!-- wp:buttons {"layout":{"type":"flex","justifyContent":"center"}} -->
+				<div class="wp-block-buttons">
+					<!-- wp:button -->
+					<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="/tienda/">Ir a
+							la tienda</a></div>
+					<!-- /wp:button -->
+				</div>
+				<!-- /wp:buttons -->
 			</div>
-			<!-- /wp:buttons -->
 		</div>
-	</div>
+	</section>
+	<!-- /wp:group -->
 </main>
 <!-- /wp:group -->
 
