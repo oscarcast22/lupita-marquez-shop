@@ -164,7 +164,7 @@ final class LM_Demo
             'carrito' => array('Carrito', '<!-- wp:woocommerce/cart /-->'),
             'finalizar-compra' => array('Finalizar compra', '<!-- wp:woocommerce/checkout /-->'),
             'mi-cuenta' => array('Mi cuenta', '[woocommerce_my_account]'),
-            'nosotros' => array('Nosotros', '<!-- wp:heading --><h2 class="wp-block-heading">Nuestra esencia</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Transformamos ideas en experiencias únicas mediante piezas de madera hechas en México. Trabajamos con pasión, creatividad y compromiso para reflejar la esencia de cada persona y cada recuerdo.</p><!-- /wp:paragraph --><!-- wp:heading {"level":3} --><h3 class="wp-block-heading">Visión</h3><!-- /wp:heading --><!-- wp:paragraph --><p>Ser una marca reconocida por la calidad, originalidad y calidez de sus productos personalizados.</p><!-- /wp:paragraph -->'),
+            'nosotros' => array('Nosotros', self::about_page_content()),
             'contacto' => array('Contacto', '<!-- wp:heading --><h2 class="wp-block-heading">Hablemos de tu pieza</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Comparte los detalles de tu consulta. Los campos esenciales nos ayudarán a responderte de forma clara.</p><!-- /wp:paragraph -->'),
             'preguntas-frecuentes' => array('Preguntas frecuentes', '<!-- wp:html --><details><summary>¿Cuándo se despacha una pieza disponible?</summary><p>Las piezas disponibles se despachan al confirmar el pago.</p></details><details><summary>¿Cómo sé cuánto tarda una pieza hecha bajo pedido?</summary><p>Las piezas hechas bajo pedido muestran su tiempo estimado de elaboración en la ficha de producto.</p></details><!-- /wp:html -->'),
             'envios-y-devoluciones' => array('Envíos y devoluciones', '<!-- wp:paragraph --><p><strong>Contenido provisional:</strong> los envíos se realizan dentro de México mediante Estafeta. La política definitiva de cambios, daños y devoluciones debe validarse con la clienta antes de publicar.</p><!-- /wp:paragraph -->'),
@@ -190,6 +190,37 @@ final class LM_Demo
         update_option('woocommerce_checkout_page_id', $ids['finalizar-compra']);
         update_option('woocommerce_myaccount_page_id', $ids['mi-cuenta']);
         update_option('wp_page_for_privacy_policy', $ids['aviso-de-privacidad']);
+    }
+
+    private static function about_page_content(): string
+    {
+        return <<<'HTML'
+<!-- wp:group {"className":"lm-about-process"} -->
+<div class="wp-block-group lm-about-process">
+<!-- wp:group {"className":"lm-about-process__item"} -->
+<div class="wp-block-group lm-about-process__item">
+<!-- wp:paragraph {"className":"lm-about-process__index"} --><p class="lm-about-process__index">01</p><!-- /wp:paragraph -->
+<!-- wp:heading {"level":3} --><h3 class="wp-block-heading">Dise&ntilde;o personalizado</h3><!-- /wp:heading -->
+<!-- wp:paragraph --><p>Partimos de la idea, el momento y los detalles que hacen significativa cada pieza.</p><!-- /wp:paragraph -->
+</div>
+<!-- /wp:group -->
+<!-- wp:group {"className":"lm-about-process__item"} -->
+<div class="wp-block-group lm-about-process__item">
+<!-- wp:paragraph {"className":"lm-about-process__index"} --><p class="lm-about-process__index">02</p><!-- /wp:paragraph -->
+<!-- wp:heading {"level":3} --><h3 class="wp-block-heading">Corte y estructura CNC</h3><!-- /wp:heading -->
+<!-- wp:paragraph --><p>La precisi&oacute;n CNC da forma a la madera y asegura una estructura cuidada desde el origen.</p><!-- /wp:paragraph -->
+</div>
+<!-- /wp:group -->
+<!-- wp:group {"className":"lm-about-process__item"} -->
+<div class="wp-block-group lm-about-process__item">
+<!-- wp:paragraph {"className":"lm-about-process__index"} --><p class="lm-about-process__index">03</p><!-- /wp:paragraph -->
+<!-- wp:heading {"level":3} --><h3 class="wp-block-heading">Color y detalle manual</h3><!-- /wp:heading -->
+<!-- wp:paragraph --><p>Los acabados, la pintura y la personalizaci&oacute;n aportan el car&aacute;cter propio de cada creaci&oacute;n.</p><!-- /wp:paragraph -->
+</div>
+<!-- /wp:group -->
+</div>
+<!-- /wp:group -->
+HTML;
     }
 
     private static function create_tax(): void

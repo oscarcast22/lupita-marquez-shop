@@ -36,12 +36,36 @@ const requiredContent = {
 	'carrito-lleno':
 		'.wc-block-cart-item__product .wc-block-components-product-name',
 	checkout: '.wc-block-components-checkout-place-order-button',
-	nosotros: '.lm-about-story__content',
+	nosotros: '.lm-about-editorial__content',
 	contacto: '[data-lm-contact-form]',
 	'preguntas-frecuentes': '.lm-faq-list details',
 	'envios-devoluciones': '.lm-document',
 	'aviso-privacidad': '.lm-document',
 	terminos: '.lm-document',
+};
+
+const actionAuditSelectors = {
+	inicio: [
+		{ selector: '.lm-hero .wp-element-button', variant: 'primary' },
+		{
+			selector: '.lm-featured-cta .wp-element-button',
+			variant: 'secondary',
+		},
+	],
+	'carrito-vacio': [
+		{
+			selector:
+				'.wp-block-woocommerce-empty-cart-block .wp-element-button',
+			variant: 'primary',
+		},
+	],
+	'producto-bajo-pedido': [
+		{ selector: '.single_add_to_cart_button', variant: 'primary' },
+	],
+	cuenta: [
+		{ selector: '.woocommerce-form-login__submit', variant: 'primary' },
+	],
+	nosotros: [ { selector: '.lm-about-cta .lm-button', variant: 'inverted' } ],
 };
 
 const waitForCommerceBlock = async ( page, rootSelector, contentSelector ) => {
@@ -248,6 +272,29 @@ const waitForMiniCart = async ( page, expectedOpen ) => {
 		.catch( () => {} );
 };
 
+const auditDocumentScrollRestored = async ( page ) =>
+	page.evaluate( () => {
+		const root = document.documentElement;
+		const initialScrollY = window.scrollY;
+		const maximumScrollY = Math.max(
+			0,
+			document.documentElement.scrollHeight - window.innerHeight
+		);
+		const targetScrollY = Math.min( maximumScrollY, 160 );
+		window.scrollTo( 0, 0 );
+		window.scrollTo( 0, targetScrollY );
+		const moved = targetScrollY > 0 && window.scrollY === targetScrollY;
+		window.scrollTo( 0, initialScrollY );
+		return {
+			moved,
+			passed:
+				! root.classList.contains( 'lm-drawer-is-open' ) &&
+				( maximumScrollY === 0 || moved ),
+			themeScrollLockActive:
+				root.classList.contains( 'lm-drawer-is-open' ),
+		};
+	} );
+
 const addSimpleProductForAudit = async ( page ) => {
 	await page.goto( new URL( '/tienda/', baseURL ).href, {
 		waitUntil: 'networkidle',
@@ -334,6 +381,64 @@ const auditTextFieldFocus = async ( locator ) => {
 			focus.boxShadow !== 'none' &&
 			focus.outlineStyle === 'none',
 		rest,
+	};
+};
+
+const auditActionPresentation = async ( page, { selector, variant } ) => {
+	const locator = page.locator( selector ).first();
+	if ( ! ( await locator.isVisible().catch( () => false ) ) ) {
+		return { available: false, passed: false, selector, variant };
+	}
+	await locator.scrollIntoViewIfNeeded();
+	const readPresentation = () =>
+		locator.evaluate( ( element ) => {
+			const style = window.getComputedStyle( element );
+			return {
+				active: element === element.ownerDocument.activeElement,
+				background: style.backgroundColor,
+				boxShadow: style.boxShadow,
+				color: style.color,
+			};
+		} );
+	const rest = await readPresentation();
+	await locator.hover();
+	await page.waitForTimeout( 220 );
+	const hover = await readPresentation();
+	await locator.focus();
+	await page.waitForTimeout( 220 );
+	const focus = await readPresentation();
+	await locator.evaluate( ( element ) => element.blur() );
+	const colors = {
+		charcoal: 'rgb(41, 37, 34)',
+		fuchsia: 'rgb(189, 21, 93)',
+		ivory: 'rgb(251, 248, 242)',
+		transparent: 'rgba(0, 0, 0, 0)',
+		white: 'rgb(255, 255, 255)',
+	};
+	const restMatchesVariant =
+		variant === 'primary' || variant === 'inverted'
+			? rest.background === colors.fuchsia && rest.color === colors.white
+			: rest.background === colors.transparent &&
+			  rest.color === colors.charcoal;
+	const interactiveState =
+		variant === 'inverted'
+			? { background: colors.ivory, color: colors.charcoal }
+			: { background: colors.charcoal, color: colors.white };
+	return {
+		available: true,
+		focus,
+		hover,
+		passed:
+			restMatchesVariant &&
+			hover.background === interactiveState.background &&
+			hover.color === interactiveState.color &&
+			focus.active &&
+			focus.background === interactiveState.background &&
+			focus.color === interactiveState.color &&
+			focus.boxShadow !== 'none',
+		rest,
+		selector,
+		variant,
 	};
 };
 
@@ -636,6 +741,7 @@ const runCatalogInteractionAudit = async ( width ) => {
 		width,
 		addNoNavigation: false,
 		drawerOpened: false,
+		scrollRestoredAfterClose: null,
 		successLabel: false,
 		removeNoNavigation: false,
 		errorFeedbackVisible: false,
@@ -710,6 +816,9 @@ const runCatalogInteractionAudit = async ( width ) => {
 		);
 		await closeButton.first().evaluate( ( element ) => element.click() );
 		await waitForMiniCart( page, false );
+		await page.waitForTimeout( 160 );
+		result.scrollRestoredAfterClose =
+			await auditDocumentScrollRestored( page );
 		await page
 			.locator( '.wc-block-mini-cart__button' )
 			.first()
@@ -758,6 +867,7 @@ const runCatalogInteractionAudit = async ( width ) => {
 		result.passed = Boolean(
 			result.addNoNavigation &&
 				result.drawerOpened &&
+				result.scrollRestoredAfterClose?.passed &&
 				result.successLabel &&
 				result.removeNoNavigation &&
 				result.errorFeedbackVisible &&
@@ -1243,6 +1353,7 @@ for ( const width of widths ) {
 		const messages = [];
 		const pageErrors = [];
 		let interactionAudit = null;
+		const actionAudit = [];
 		let formAudit = null;
 		let mobileNavigationAudit = null;
 		let productMediaAudit = null;
@@ -1648,6 +1759,9 @@ for ( const width of widths ) {
 						'.wc-block-components-drawer__screen-overlay.is-open, .wc-block-components-drawer__screen-overlay[aria-hidden="false"], .wc-block-components-drawer__screen-overlay--with-slide-in'
 					)
 			);
+			await page.waitForTimeout( 160 );
+			const scrollRestoredAfterClose =
+				await auditDocumentScrollRestored( page );
 			await page.waitForFunction(
 				() => {
 					const button = document.querySelector(
@@ -1799,6 +1913,7 @@ for ( const width of widths ) {
 					beforeAdd,
 					buttonRestored,
 					drawerClosedWithEscape,
+					scrollRestoredAfterClose,
 				},
 				cartQuantityDelta:
 					Number( cartItem?.quantity || 0 ) -
@@ -1904,6 +2019,7 @@ for ( const width of widths ) {
 					! afterAdd.successNoticeVisible &&
 					buttonRestored &&
 					drawerClosedWithEscape &&
+					scrollRestoredAfterClose.passed &&
 					variationAudit.cartQuantityDelta === 1 &&
 					beforeError.documentStartedAt ===
 						productError.documentStartedAt &&
@@ -3345,7 +3461,7 @@ for ( const width of widths ) {
 			}
 			const contextualLinks = [
 				...document.querySelectorAll(
-					'.lm-contextual-actions a, .lm-about-story__action a'
+					'.lm-contextual-actions a, .lm-about-cta__inner a'
 				),
 			].map( ( link ) => link.getAttribute( 'href' ) || '' );
 			const expectedLinks = {
@@ -3380,6 +3496,9 @@ for ( const width of widths ) {
 			await page.waitForTimeout( 350 );
 		}
 		formAudit = await auditFormPresentation( page );
+		for ( const action of actionAuditSelectors[ name ] || [] ) {
+			actionAudit.push( await auditActionPresentation( page, action ) );
+		}
 
 		await page.screenshot( {
 			path: path.join( outputDirectory, `${ name }-${ width }.png` ),
@@ -3393,6 +3512,7 @@ for ( const width of widths ) {
 			console: messages,
 			pageErrors,
 			pagePurposeAudit,
+			actionAudit,
 			formAudit,
 			requiredContentMissing,
 			interactionAudit,
@@ -4140,6 +4260,7 @@ const failures = report.pages.filter(
 		page.pageErrors.length ||
 		page.console.some( ( message ) => message.type === 'error' ) ||
 		page.requiredContentMissing ||
+		page.actionAudit.some( ( action ) => ! action.passed ) ||
 		( page.pagePurposeAudit && ! page.pagePurposeAudit.passed ) ||
 		( page.productMedia.count > 0 &&
 			( ! page.productMedia.consistentSurface ||
