@@ -56,8 +56,6 @@
 	}
 }
 
-.lm-interactions-ready .lm-hero__copy a,
-.lm-interactions-ready .lm-featured-cta a,
 .lm-interactions-ready .lm-footer-social svg {
 	transition: background-color var(--lm-motion-fast) ease-out,
 		border-color var(--lm-motion-fast) ease-out,
@@ -79,36 +77,15 @@
 	background: color-mix(in srgb, var(--wp--preset--color--mist) 44%, transparent);
 }
 
-.lm-interactions-ready .lm-hero__copy a:focus-visible,
-.lm-interactions-ready .lm-featured-cta a:focus-visible,
 .lm-interactions-ready .lm-footer-social a:focus-visible svg {
 	box-shadow: 0 0 0 var(--lm-focus-ring-size) color-mix(in srgb, var(--wp--preset--color--fuchsia) 18%, transparent);
 }
 
-.lm-interactions-ready .lm-hero__copy a:active,
-.lm-interactions-ready .lm-featured-cta a:active,
 .lm-interactions-ready .lm-footer-social a:active svg {
 	transform: scale(0.97);
 }
 
 @media (hover: hover) and (pointer: fine) {
-
-	.lm-interactions-ready .lm-hero__copy a:hover,
-	.lm-interactions-ready .lm-featured-cta a:hover {
-		box-shadow: var(--lm-shadow-card);
-		transform: translateY(calc(var(--lm-button-lift) * -1));
-	}
-
-	.lm-interactions-ready .lm-hero__copy a:hover {
-		background: var(--wp--preset--color--charcoal);
-		border-color: var(--wp--preset--color--charcoal);
-	}
-
-	.lm-interactions-ready .lm-featured-cta a:hover {
-		background: var(--wp--preset--color--fuchsia);
-		border-color: var(--wp--preset--color--fuchsia);
-		color: var(--wp--preset--color--white);
-	}
 
 	.lm-interactions-ready .lm-site-footer nav a:hover {
 		background-size: 100% 1px;
@@ -118,10 +95,6 @@
 		box-shadow: var(--lm-shadow-card);
 		transform: translateY(calc(var(--lm-button-lift) * -1)) scale(1.03);
 	}
-}
-
-.lm-interactions-ready.lm-drawer-is-open body {
-	overflow: hidden;
 }
 
 .lm-interactions-ready .lm-contact-form,
