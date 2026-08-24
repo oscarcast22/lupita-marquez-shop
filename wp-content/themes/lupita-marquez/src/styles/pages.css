@@ -270,15 +270,22 @@
 
 .lm-contact-flow { display: grid; gap: var(--wp--preset--spacing--45); }
 
-.lm-contact-copy { max-width: 42rem; }
+.lm-contact-copy { margin-inline: auto; max-width: 42rem; text-align: center; }
 
-.lm-contact-copy h2 {
-	font-size: var(--wp--preset--font-size--section-title);
-	margin-block: 0 var(--wp--preset--spacing--25);
+.lm-contact-copy h1 {
+	color: var(--wp--preset--color--charcoal);
+	font-size: var(--wp--preset--font-size--display);
+	margin: 0 auto var(--wp--preset--spacing--20);
 	text-wrap: balance;
 }
 
-.lm-contact-copy p { color: var(--wp--preset--color--muted); }
+.lm-contact-copy p {
+	color: var(--wp--preset--color--muted);
+	font-size: var(--wp--preset--font-size--lead);
+	line-height: 1.55;
+	margin: 0 auto;
+	max-width: 38ch;
+}
 
 .lm-contact-form-panel {
 	max-width: 48rem;
@@ -330,8 +337,13 @@
 .lm-contact-form__consent a { text-decoration: underline; }
 
 .lm-contact-form__status {
+	background: color-mix(in srgb, var(--wp--preset--color--ivory) 72%, var(--wp--preset--color--white));
+	border: 1px solid color-mix(in srgb, var(--wp--preset--color--wood) 30%, var(--wp--preset--color--sand));
 	border-left: var(--lm-tab-indicator) solid var(--wp--preset--color--wood);
 	border-radius: var(--lm-radius-xs);
+	color: var(--wp--preset--color--charcoal);
+	font-size: var(--wp--preset--font-size--small);
+	line-height: 1.55;
 	margin: 0;
 	padding: var(--wp--preset--spacing--15) var(--wp--preset--spacing--20);
 }
@@ -339,17 +351,17 @@
 .lm-contact-form__status:not(.is-pending):not(.is-success):not(.is-error) { display: none; }
 
 .lm-contact-form__status.is-pending {
-	background: color-mix(in srgb, var(--wp--preset--color--notice-background) 32%, var(--wp--preset--color--white));
-	border-left-color: var(--wp--preset--color--notice-border);
+	border-color: color-mix(in srgb, var(--wp--preset--color--wood) 34%, var(--wp--preset--color--sand));
+	border-left-color: var(--wp--preset--color--wood);
 }
 
 .lm-contact-form__status.is-success {
-	background: color-mix(in srgb, var(--wp--preset--color--success) 7%, var(--wp--preset--color--white));
+	border-color: color-mix(in srgb, var(--wp--preset--color--success) 30%, var(--wp--preset--color--sand));
 	border-left-color: var(--wp--preset--color--success);
 }
 
 .lm-contact-form__status.is-error {
-	background: color-mix(in srgb, var(--wp--preset--color--error) 7%, var(--wp--preset--color--white));
+	border-color: color-mix(in srgb, var(--wp--preset--color--error) 32%, var(--wp--preset--color--sand));
 	border-left-color: var(--wp--preset--color--error);
 }
 
