@@ -171,30 +171,30 @@
 
 .lm-store-feedback__notice {
 	align-items: start;
-	background: color-mix(in srgb, var(--wp--preset--color--error) 7%, var(--wp--preset--color--white));
-	border: 1px solid color-mix(in srgb, var(--wp--preset--color--error) 36%, var(--wp--preset--color--sand));
+	background: color-mix(in srgb, var(--wp--preset--color--ivory) 72%, var(--wp--preset--color--white));
+	border: 1px solid color-mix(in srgb, var(--wp--preset--color--error) 28%, var(--wp--preset--color--sand));
 	border-left: var(--lm-tab-indicator) solid var(--wp--preset--color--error);
 	border-radius: var(--lm-radius-xs);
-	box-shadow: var(--lm-shadow-soft);
+	box-shadow: var(--lm-shadow-card);
 	color: var(--wp--preset--color--charcoal);
 	display: grid;
 	font-size: var(--wp--preset--font-size--caption);
 	gap: var(--wp--preset--spacing--10);
-	grid-template-columns: var(--lm-inline-control-height) minmax(0, 1fr) var(--lm-icon-button);
+	grid-template-columns: 1rem minmax(0, 1fr) var(--lm-icon-button);
 	line-height: 1.5;
 	padding: var(--wp--preset--spacing--15) 0 var(--wp--preset--spacing--15) var(--wp--preset--spacing--15);
 }
 
 .lm-store-feedback__marker {
 	align-items: center;
-	background: var(--wp--preset--color--error);
-	border-radius: 50%;
-	color: var(--wp--preset--color--white);
+	color: var(--wp--preset--color--error);
 	display: inline-flex;
-	font-weight: 800;
+	font-family: var(--wp--preset--font-family--serif);
+	font-size: var(--wp--preset--font-size--large);
+	font-weight: 700;
 	height: var(--lm-inline-control-height);
 	justify-content: center;
-	width: var(--lm-inline-control-height);
+	width: 1rem;
 }
 
 .lm-store-feedback__content { padding-block: var(--wp--preset--spacing--05); }
@@ -216,7 +216,13 @@
 	width: var(--lm-icon-button);
 }
 
-.lm-store-feedback__dismiss:hover { color: var(--wp--preset--color--error); }
+.lm-store-feedback__dismiss:hover { color: var(--wp--preset--color--fuchsia); }
+
+.lm-store-feedback__dismiss:focus-visible {
+	border-radius: var(--lm-radius-xs);
+	box-shadow: inset 0 0 0 var(--lm-focus-ring-size) color-mix(in srgb, var(--wp--preset--color--fuchsia) 28%, transparent);
+	outline: 0;
+}
 
 @media (max-width: 520px) {
 
