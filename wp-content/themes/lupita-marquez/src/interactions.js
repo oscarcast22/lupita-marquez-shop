@@ -1,4 +1,4 @@
-/* global Element, HTMLInputElement, MutationObserver */
+/* global Element, HTMLElement, HTMLInputElement, MutationObserver */
 
 const ADD_CONTROL_SELECTOR = [
 	'.single_add_to_cart_button',
@@ -61,8 +61,55 @@ const PRODUCT_OFFER_PRICE_SELECTOR =
 	'.lm-product-offer .wp-block-woocommerce-product-price';
 const CONTACT_FORM_SELECTOR = '[data-lm-contact-form]';
 const CONTACT_STATUS_SELECTOR = '[data-lm-contact-status]';
+const ACCOUNT_AUTH_SELECTOR = '[data-lm-account-auth]';
+const PASSWORD_VISIBILITY_SELECTOR = '.password-input .show-password-input';
 
 const isElement = ( value ) => value instanceof Element;
+
+const syncPasswordVisibilityControl = ( control ) => {
+	if ( ! isElement( control ) ) {
+		return;
+	}
+
+	const input = control
+		.closest( '.password-input' )
+		?.querySelector( 'input' );
+	if ( ! ( input instanceof HTMLInputElement ) ) {
+		return;
+	}
+
+	const isVisible = input.type === 'text';
+	control.classList.toggle( 'lm-password-toggle--visible', isVisible );
+	control.setAttribute(
+		'aria-label',
+		isVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'
+	);
+	control.setAttribute( 'aria-pressed', String( isVisible ) );
+	if ( input.id ) {
+		control.setAttribute( 'aria-controls', input.id );
+	}
+	control.removeAttribute( 'aria-describedby' );
+};
+
+const syncPasswordVisibilityControls = () => {
+	document
+		.querySelectorAll( PASSWORD_VISIBILITY_SELECTOR )
+		.forEach( syncPasswordVisibilityControl );
+};
+
+const handlePasswordVisibilityControl = ( event ) => {
+	const control = isElement( event.target )
+		? event.target.closest( PASSWORD_VISIBILITY_SELECTOR )
+		: null;
+	if ( ! control ) {
+		return;
+	}
+
+	/* WooCommerce toggles the field at the control target; sync after that native action. */
+	window.requestAnimationFrame( () =>
+		syncPasswordVisibilityControl( control )
+	);
+};
 
 const getNumericAttribute = ( input, attribute, fallback ) => {
 	const value = Number( input.getAttribute( attribute ) );
@@ -520,6 +567,57 @@ const initProductReviews = () => {
 	button.addEventListener( 'click', state.handleClick );
 	button.addEventListener( 'keydown', state.handleButtonKeydown );
 	wrapper.addEventListener( 'keydown', state.handleWrapperKeydown );
+};
+
+const initAccountAuth = () => {
+	const root = document.querySelector( ACCOUNT_AUTH_SELECTOR );
+	if ( ! isElement( root ) || root.dataset.lmAccountAuthReady === 'true' ) {
+		return;
+	}
+
+	const panels = [ ...root.querySelectorAll( '[data-lm-account-panel]' ) ];
+	const switchers = [
+		...root.querySelectorAll( '[data-lm-account-view-target]' ),
+	];
+	const availableViews = new Set(
+		panels.map( ( panel ) => panel.dataset.lmAccountPanel )
+	);
+
+	const showView = ( view ) => {
+		if ( ! availableViews.has( view ) ) {
+			return;
+		}
+
+		panels.forEach( ( panel ) => {
+			panel.hidden = panel.dataset.lmAccountPanel !== view;
+		} );
+		root.dataset.lmActiveView = view;
+
+		const heading = root.querySelector(
+			`[data-lm-account-panel="${ view }"] [data-lm-account-panel-title]`
+		);
+		if ( heading instanceof HTMLElement ) {
+			heading.focus();
+		}
+	};
+
+	switchers.forEach( ( switcher ) => {
+		switcher.addEventListener( 'click', ( event ) => {
+			if (
+				event.metaKey ||
+				event.ctrlKey ||
+				event.shiftKey ||
+				event.altKey
+			) {
+				return;
+			}
+
+			event.preventDefault();
+			showView( switcher.dataset.lmAccountViewTarget );
+		} );
+	} );
+
+	root.dataset.lmAccountAuthReady = 'true';
 };
 
 const handleQuantityStep = ( event ) => {
@@ -1687,6 +1785,7 @@ const handleBodyMutation = () => {
 	connectMiniCart();
 	syncCartButtonLabels();
 	syncWooLabels();
+	syncPasswordVisibilityControls();
 	syncProductGalleryTriggers();
 	initProductReviews();
 	normalizeNativeProductFeedback();
@@ -1882,6 +1981,7 @@ const bindWooEvents = () => {
 		handleFailedAdd( event, event.detail?.button, event.detail?.control )
 	);
 	body.addEventListener( 'click', handleInteraction, true );
+	document.addEventListener( 'click', handlePasswordVisibilityControl );
 	body.addEventListener( 'submit', handleContactSubmit, true );
 	body.addEventListener( 'submit', handleProductSubmit, true );
 	body.addEventListener( 'submit', handleSubmit, true );
@@ -1903,8 +2003,10 @@ const initInteractions = () => {
 	syncCartButtonLabels();
 	syncCartButtonQuantities();
 	syncWooLabels();
+	syncPasswordVisibilityControls();
 	connectMiniCart();
 	initProductReviews();
+	initAccountAuth();
 	bindProductPurchaseControls();
 	bindWooEvents();
 };
