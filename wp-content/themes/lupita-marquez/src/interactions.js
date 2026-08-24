@@ -1224,7 +1224,6 @@ const isDrawerOpen = ( root ) => {
 	const overlayStyle = overlay ? window.getComputedStyle( overlay ) : null;
 	return Boolean(
 		root?.classList.contains( 'is-open' ) ||
-			root?.classList.contains( 'lm-is-open' ) ||
 			trigger?.getAttribute( 'aria-expanded' ) === 'true' ||
 			( overlay &&
 				! overlay.classList.contains(
@@ -1233,16 +1232,6 @@ const isDrawerOpen = ( root ) => {
 				overlayStyle?.opacity !== '0' &&
 				overlayStyle?.pointerEvents !== 'none' )
 	);
-};
-
-const syncDrawerState = () => {
-	if ( ! miniCartRoot ) {
-		return;
-	}
-
-	const open = isDrawerOpen( miniCartRoot );
-	miniCartRoot.classList.toggle( 'lm-is-open', open );
-	document.documentElement.classList.toggle( 'lm-drawer-is-open', open );
 };
 
 const openMiniCart = () => {
@@ -1413,7 +1402,6 @@ const connectMiniCart = () => {
 	hasBadgeSnapshot = false;
 	lastBadgeText = '';
 	miniCartObserver = new MutationObserver( () => {
-		syncDrawerState();
 		observeBadge();
 	} );
 	miniCartObserver.observe( root, {
@@ -1422,7 +1410,6 @@ const connectMiniCart = () => {
 		childList: true,
 		subtree: true,
 	} );
-	syncDrawerState();
 	observeBadge();
 };
 
