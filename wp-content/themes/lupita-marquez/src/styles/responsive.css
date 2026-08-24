@@ -242,6 +242,12 @@
 	.lm-footer-social { grid-column: 1 / -1; }
 
 	.lm-search-results { grid-template-columns: repeat(2, 1fr); }
+
+	.lm-about-gallery__stage { gap: var(--wp--preset--spacing--35); }
+
+	.lm-about-process__item { padding-inline: var(--wp--preset--spacing--35); }
+
+	.lm-about-principle { padding-inline: var(--wp--preset--spacing--35); }
 }
 
 @media (max-width: 520px) {
@@ -258,11 +264,26 @@
 
 	.lm-product-layout { gap: var(--wp--preset--spacing--20); }
 
-	.lm-about-story__action { align-items: stretch; flex-direction: column; }
+	.lm-about-gallery__stage { gap: var(--wp--preset--spacing--25); grid-template-columns: 1fr; }
 
-	.lm-about-story__buttons,
-	.lm-about-story__buttons > div,
-	.lm-about-story__action .wp-element-button { width: 100%; }
+	.lm-about-process,
+	.lm-about-principles { grid-template-columns: 1fr; }
+
+	.lm-about-process__item,
+	.lm-about-process__item:first-child,
+	.lm-about-process__item:last-child,
+	.lm-about-principle,
+	.lm-about-principle:first-child,
+	.lm-about-principle:last-child { padding-inline: 0; }
+
+	.lm-about-process__item + .lm-about-process__item,
+	.lm-about-principle + .lm-about-principle { border-left: 0; border-top: var(--lm-border); margin-top: var(--wp--preset--spacing--35); padding-top: var(--wp--preset--spacing--35); }
+
+	.lm-about-cta__inner { align-items: stretch; flex-direction: column; }
+
+	.lm-about-cta__buttons,
+	.lm-about-cta__buttons > div,
+	.lm-about-cta__buttons .lm-button { width: 100%; }
 
 	.lm-contact-form { grid-template-columns: 1fr; }
 

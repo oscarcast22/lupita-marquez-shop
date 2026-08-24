@@ -71,6 +71,8 @@
 	--lm-inline-control-height: 1.5rem;
 	--lm-textarea-min-height: 7.5rem;
 	--lm-hero-button-min-width: 12rem;
+	--lm-about-gallery-frame-aspect: 4 / 5;
+	--lm-about-gallery-frame-inset: clamp(0.875rem, 2.25vw, 1.875rem);
 	--lm-ornament-size: 9.375rem;
 	--lm-ornament-size-mobile: 6rem;
 	--lm-logo-stroke: 0.09375rem;

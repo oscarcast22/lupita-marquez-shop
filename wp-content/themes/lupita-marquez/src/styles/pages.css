@@ -72,6 +72,20 @@
 
 .lm-page-intro--catalog .lm-page-intro__copy { max-width: 52rem; }
 
+.lm-page-intro--about { background: var(--wp--preset--color--mist); }
+
+.lm-page-intro--about.lm-section--compact { padding-block: var(--wp--preset--spacing--55); }
+
+.lm-page-intro--about .lm-shell { border-bottom: 0; padding-bottom: 0; }
+
+.lm-page-intro--about .lm-page-intro__copy { margin-inline: auto; max-width: 44rem; text-align: center; }
+
+.lm-page-intro--about .lm-page-intro__copy h1 { color: var(--wp--preset--color--wood); font-size: var(--wp--preset--font-size--display); margin-inline: auto; }
+
+.lm-page-intro--about .lm-page-intro__copy .lm-eyebrow { color: var(--wp--preset--color--fuchsia); }
+
+.lm-page-intro--about .lm-page-intro__lede { color: var(--wp--preset--color--charcoal); margin-inline: auto; max-width: 38ch; }
+
 .lm-content-section,
 .lm-catalog-section,
 .lm-search-section,
@@ -103,60 +117,149 @@
 	padding: var(--wp--preset--spacing--25);
 }
 
-.lm-about-story { background: var(--wp--preset--color--ivory); }
+.lm-about-gallery { background: var(--wp--preset--color--ivory); overflow: clip; }
 
-.lm-about-story__content {
-	margin-inline: auto;
-	max-width: 44rem;
-}
+.lm-about-gallery__heading { margin-inline: auto; max-width: 42rem; text-align: center; }
 
-.lm-about-story__content > div {
-	display: grid;
-	gap: var(--wp--preset--spacing--25);
-}
+.lm-about-gallery__heading > * { margin: 0; }
 
-.lm-about-story__content > div > * { margin: 0; }
-
-.lm-about-story__content > div > h2 {
+.lm-about-gallery__heading h2 {
 	font-size: var(--wp--preset--font-size--section-title);
-	max-width: 14ch;
+	margin-block-start: var(--wp--preset--spacing--15);
 }
 
-.lm-about-story__content > div > h2 + p {
-	color: var(--wp--preset--color--muted);
-	font-size: var(--wp--preset--font-size--lead);
-	line-height: 1.75;
-	max-width: 42rem;
+.lm-about-gallery__stage {
+	display: grid;
+	gap: var(--wp--preset--spacing--50);
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	margin-block-start: var(--wp--preset--spacing--45);
 }
 
-.lm-about-story__content > div > h3 {
-	color: var(--wp--preset--color--fuchsia);
-	font-family: var(--wp--preset--font-family--sans);
-	font-size: var(--wp--preset--font-size--micro);
-	font-weight: 800;
-	letter-spacing: 0.16em;
-	margin-top: var(--wp--preset--spacing--25);
+.lm-about-gallery__piece {
+	align-items: center;
+	aspect-ratio: var(--lm-about-gallery-frame-aspect);
+	background: var(--wp--preset--color--mist);
+	display: grid;
+	justify-items: center;
+	margin: 0;
+	min-width: 0;
+	overflow: hidden;
+	padding: var(--lm-about-gallery-frame-inset);
+}
+
+.lm-about-gallery__piece img {
+	display: block;
+	height: 100%;
+	max-height: 100%;
+	max-width: 100%;
+	object-fit: contain;
+	width: 100%;
+}
+
+.lm-about-editorial { background: var(--wp--preset--color--ivory); }
+
+.lm-about-editorial__content { max-width: none; }
+
+.lm-about-editorial__heading { margin-block-end: var(--wp--preset--spacing--55); text-align: center; }
+
+.lm-about-editorial__heading h2 { font-size: var(--wp--preset--font-size--section-title); margin: 0; }
+
+.lm-about-process {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lm-about-process__item {
+	min-width: 0;
+	padding-inline: var(--wp--preset--spacing--45);
+}
+
+.lm-about-process__item:first-child { padding-inline-start: 0; }
+
+.lm-about-process__item + .lm-about-process__item { border-left: var(--lm-border); }
+
+.lm-about-process__item:last-child { padding-inline-end: 0; }
+
+.lm-about-process__item > * { margin: 0; }
+
+.lm-about-process__index {
+	color: var(--wp--preset--color--wood);
+	font-family: var(--wp--preset--font-family--serif);
+	font-size: var(--wp--preset--font-size--section-title);
+	line-height: 1;
+}
+
+.lm-about-process__item h3 {
+	font-size: var(--wp--preset--font-size--product-section-title);
+	line-height: 1.08;
+	margin-block: var(--wp--preset--spacing--20) var(--wp--preset--spacing--15);
+}
+
+.lm-about-process__item p:last-child { color: var(--wp--preset--color--charcoal); line-height: 1.5; max-width: 29ch; }
+
+.lm-about-principles-band { background: var(--wp--preset--color--mist); }
+
+.lm-about-principles {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lm-about-principle { display: grid; gap: var(--wp--preset--spacing--20); min-width: 0; padding-inline: var(--wp--preset--spacing--55); }
+
+.lm-about-principle:first-child { padding-inline-start: 0; }
+
+.lm-about-principle + .lm-about-principle { border-left: var(--lm-border); }
+
+.lm-about-principle:last-child { padding-inline-end: 0; }
+
+.lm-about-principle > * { margin: 0; }
+
+.lm-about-principle h2 {
+	font-size: var(--wp--preset--font-size--product-section-title);
+	line-height: 1;
 	text-transform: uppercase;
 }
 
-.lm-about-story__content > div > h3 + p {
+.lm-about-principle p {
 	color: var(--wp--preset--color--charcoal);
-	font-family: var(--wp--preset--font-family--serif);
-	font-size: var(--wp--preset--font-size--product-section-title);
-	line-height: 1.35;
-	max-width: 24ch;
+	font-size: var(--wp--preset--font-size--medium);
+	line-height: 1.55;
 }
 
-.lm-about-story__action {
+.lm-about-cta { background: var(--wp--preset--color--charcoal); }
+
+.lm-about-cta__inner {
 	align-items: center;
 	display: flex;
 	gap: var(--wp--preset--spacing--30);
 	justify-content: space-between;
-	margin: var(--wp--preset--spacing--50) auto 0;
-	max-width: 44rem;
+	margin-inline: auto;
+	max-width: 52rem;
 }
 
-.lm-about-story__action p { color: var(--wp--preset--color--muted); margin: 0; }
+.lm-about-cta__inner p {
+	color: var(--wp--preset--color--ivory);
+	font-family: var(--wp--preset--font-family--serif);
+	font-size: var(--wp--preset--font-size--product-section-title);
+	line-height: 1.3;
+	margin: 0;
+	max-width: 22ch;
+}
+
+@media (hover: hover) and (pointer: fine) {
+
+	.lm-main .lm-about-cta .lm-button:hover {
+		background: var(--wp--preset--color--ivory);
+		border-color: var(--wp--preset--color--ivory);
+		color: var(--wp--preset--color--charcoal);
+	}
+}
+
+.lm-main .lm-about-cta .lm-button:focus-visible {
+	background: var(--wp--preset--color--ivory);
+	border-color: var(--wp--preset--color--ivory);
+	color: var(--wp--preset--color--charcoal);
+}
 
 .lm-contact-section { background: var(--wp--preset--color--ivory); }
 
