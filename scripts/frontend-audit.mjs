@@ -1091,12 +1091,109 @@ const runCheckoutInteractionAudit = async ( width ) => {
 	return result;
 };
 
+const auditPasswordVisibilityControl = async ( page ) => {
+	const control = page
+		.locator( '.password-input .show-password-input' )
+		.first();
+	await control.waitFor( { state: 'visible', timeout: 15_000 } );
+
+	const readState = async () =>
+		control.evaluate( ( button ) => {
+			const field = button.parentElement?.querySelector( 'input' );
+			const buttonBounds = button.getBoundingClientRect();
+			const fieldBounds = field?.getBoundingClientRect();
+			return {
+				ariaControls: button.getAttribute( 'aria-controls' ),
+				ariaLabel: button.getAttribute( 'aria-label' ),
+				ariaPressed: button.getAttribute( 'aria-pressed' ),
+				contained: Boolean(
+					fieldBounds &&
+						buttonBounds.left >= fieldBounds.left &&
+						buttonBounds.right <= fieldBounds.right
+				),
+				height: buttonBounds.height,
+				inputId: field?.id || '',
+				isVisible: button.classList.contains(
+					'lm-password-toggle--visible'
+				),
+				type: field?.type || '',
+				width: buttonBounds.width,
+			};
+		} );
+
+	const hidden = await readState();
+	await control.click();
+	await page.waitForFunction(
+		() => {
+			const button = document.querySelector(
+				'.password-input .show-password-input'
+			);
+			const field = button?.parentElement?.querySelector( 'input' );
+			return Boolean(
+				button?.classList.contains( 'lm-password-toggle--visible' ) &&
+					field?.type === 'text'
+			);
+		},
+		{ timeout: 10_000 }
+	);
+	const shown = await readState();
+	await control.click();
+	await page.waitForFunction(
+		() => {
+			const button = document.querySelector(
+				'.password-input .show-password-input'
+			);
+			const field = button?.parentElement?.querySelector( 'input' );
+			return Boolean(
+				! button?.classList.contains( 'lm-password-toggle--visible' ) &&
+					field?.type === 'password'
+			);
+		},
+		{ timeout: 10_000 }
+	);
+	const restored = await readState();
+
+	return {
+		hidden,
+		passed:
+			hidden.type === 'password' &&
+			hidden.ariaLabel === 'Mostrar contraseña' &&
+			hidden.ariaPressed === 'false' &&
+			hidden.ariaControls === hidden.inputId &&
+			hidden.contained &&
+			hidden.width >= 43.5 &&
+			hidden.height >= 43.5 &&
+			shown.type === 'text' &&
+			shown.isVisible &&
+			shown.ariaLabel === 'Ocultar contraseña' &&
+			shown.ariaPressed === 'true' &&
+			restored.type === 'password' &&
+			! restored.isVisible &&
+			restored.ariaLabel === 'Mostrar contraseña' &&
+			restored.ariaPressed === 'false',
+		restored,
+		shown,
+	};
+};
+
 const runAccountInteractionAudit = async ( width ) => {
 	const result = {
 		width,
 		fieldFocus: null,
+		passwordVisibility: null,
 		loginFormNative: false,
 		passwordRecoveryAvailable: false,
+		singleFormDefault: false,
+		registrationSwitchAvailable: false,
+		registrationViewAccessible: false,
+		loginViewRestored: false,
+		registrationFallbackAvailable: false,
+		registrationErrorLocalized: false,
+		loginErrorLocalized: false,
+		authNoticeAligned: false,
+		accountIntroAbsent: false,
+		semanticTitlePresent: false,
+		authenticatedAccount: null,
 		passed: false,
 	};
 	const context = await browser.newContext( {
@@ -1116,13 +1213,22 @@ const runAccountInteractionAudit = async ( width ) => {
 				'.woocommerce-LostPassword a'
 			);
 			return {
+				accountIntroPresent: Boolean(
+					document.querySelector( '.lm-account-page .lm-page-intro' )
+				),
 				formAction:
 					form?.action || form?.getAttribute( 'action' ) || '',
 				formMethod:
 					form?.method || form?.getAttribute( 'method' ) || '',
 				recoveryHref: recovery?.getAttribute( 'href' ) || '',
+				semanticTitle:
+					document
+						.querySelector( '.lm-account-page h1.lm-sr-only' )
+						?.textContent?.trim() || '',
 			};
 		} );
+		result.accountIntroAbsent = ! state.accountIntroPresent;
+		result.semanticTitlePresent = state.semanticTitle === 'Mi cuenta';
 		const accountField = page
 			.locator( '.woocommerce-form-login input[name="username"]' )
 			.first();
@@ -1133,10 +1239,177 @@ const runAccountInteractionAudit = async ( width ) => {
 			state.formAction.includes( '/mi-cuenta/' );
 		result.passwordRecoveryAvailable =
 			state.recoveryHref.includes( 'lost-password' );
+		result.passwordVisibility =
+			await auditPasswordVisibilityControl( page );
+		const loginForm = page.locator( '.woocommerce-form-login' );
+		const registrationForm = page.locator( '.woocommerce-form-register' );
+		const registrationSwitch = page.locator(
+			'[data-lm-account-view-target="register"]'
+		);
+		result.singleFormDefault =
+			( await loginForm.isVisible() ) &&
+			! ( await registrationForm.isVisible() );
+		result.registrationSwitchAvailable =
+			await registrationSwitch.isVisible();
+		await registrationSwitch.click();
+		result.registrationViewAccessible =
+			( await registrationForm.isVisible() ) &&
+			! ( await loginForm.isVisible() ) &&
+			( await page
+				.locator(
+					'[data-lm-account-panel="register"] [data-lm-account-panel-title]'
+				)
+				.evaluate(
+					( heading ) =>
+						heading === heading.ownerDocument.activeElement
+				) );
+		await page.locator( '[data-lm-account-view-target="login"]' ).click();
+		result.loginViewRestored =
+			( await loginForm.isVisible() ) &&
+			! ( await registrationForm.isVisible() );
+		const registrationURL = new URL( '/mi-cuenta/', baseURL );
+		registrationURL.searchParams.set( 'lm-account-view', 'register' );
+		await page.goto( registrationURL.href, {
+			waitUntil: 'networkidle',
+			timeout: 45_000,
+		} );
+		result.registrationFallbackAvailable =
+			( await page
+				.locator( '.woocommerce-form-register' )
+				.isVisible() ) &&
+			! ( await page.locator( '.woocommerce-form-login' ).isVisible() );
+		await page
+			.locator( '.woocommerce-form-register input[name="email"]' )
+			.fill( 'admin@example.test' );
+		await page
+			.locator( '.woocommerce-form-register button[name="register"]' )
+			.click();
+		await page.waitForLoadState( 'networkidle' );
+		const registrationError = await page.evaluate( () => {
+			const notice = document.querySelector(
+				'.lm-account-section .wc-block-components-notice-banner.is-error'
+			);
+			const auth = document.querySelector( '.lm-account-auth' );
+			const noticeRect = notice?.getBoundingClientRect();
+			const authRect = auth?.getBoundingClientRect();
+			const text =
+				notice?.textContent?.replace( /\s+/g, ' ' ).trim() || '';
+			return {
+				text,
+				aligned: Boolean(
+					noticeRect &&
+						authRect &&
+						Math.abs( noticeRect.width - authRect.width ) < 2 &&
+						Math.abs( noticeRect.left - authRect.left ) < 2
+				),
+			};
+		} );
+		result.registrationErrorLocalized =
+			registrationError.text.includes(
+				'Ya existe una cuenta asociada'
+			) &&
+			! /an account is already registered/i.test(
+				registrationError.text
+			);
+		result.authNoticeAligned = registrationError.aligned;
+		await page.goto( new URL( '/mi-cuenta/', baseURL ).href, {
+			waitUntil: 'networkidle',
+			timeout: 45_000,
+		} );
+		await accountField.fill( 'admin' );
+		await page
+			.locator( '.woocommerce-form-login input[name="password"]' )
+			.fill( 'incorrect-password' );
+		await page
+			.locator( '.woocommerce-form-login button[name="login"]' )
+			.click();
+		await page.waitForLoadState( 'networkidle' );
+		result.loginErrorLocalized = await page.evaluate( () => {
+			const text =
+				document.querySelector(
+					'.lm-account-section .wc-block-components-notice-banner.is-error'
+				)?.textContent || '';
+			return (
+				/(contraseña|correo|sesión)/i.test( text ) &&
+				! /the password you entered|an account is already registered/i.test(
+					text
+				)
+			);
+		} );
+		await page.goto( new URL( '/mi-cuenta/', baseURL ).href, {
+			waitUntil: 'networkidle',
+			timeout: 45_000,
+		} );
+		await accountField.fill( 'admin' );
+		await page
+			.locator( '.woocommerce-form-login input[name="password"]' )
+			.fill( 'admin-local-only' );
+		await page
+			.locator( '.woocommerce-form-login button[name="login"]' )
+			.click();
+		await page.waitForLoadState( 'networkidle' );
+		result.authenticatedAccount = await page.evaluate( () => {
+			const navigation = document.querySelector(
+				'.woocommerce-MyAccount-navigation'
+			);
+			const links = [ ...( navigation?.querySelectorAll( 'a' ) || [] ) ];
+			const navigationLabels = links.map( ( link ) =>
+				link.textContent?.trim().toLowerCase()
+			);
+			return {
+				profileSummaryPresent: Boolean(
+					document.querySelector( '.lm-account-profile__identity' )
+				),
+				twoPrimaryTabs:
+					navigationLabels.length === 2 &&
+					navigationLabels.includes( 'pedidos' ) &&
+					navigationLabels.includes( 'mi perfil' ),
+				navigationVisible: Boolean(
+					navigation?.getClientRects().length
+				),
+			};
+		} );
+		await page.goto( new URL( '/mi-cuenta/orders/', baseURL ).href, {
+			waitUntil: 'networkidle',
+			timeout: 45_000,
+		} );
+		Object.assign(
+			result.authenticatedAccount,
+			await page.evaluate( () => ( {
+				englishNoticeCount: [
+					...document.querySelectorAll(
+						'.wc-block-components-notice-banner'
+					),
+				].filter( ( notice ) =>
+					/confirm your email address|confirm email address|temporary password|\bresend\b/i.test(
+						notice.textContent || ''
+					)
+				).length,
+				ordersListPresent: Boolean(
+					document.querySelector( '.lm-account-orders' )
+				),
+			} ) )
+		);
 		result.passed = Boolean(
 			result.fieldFocus.passed &&
+				result.passwordVisibility.passed &&
 				result.loginFormNative &&
-				result.passwordRecoveryAvailable
+				result.passwordRecoveryAvailable &&
+				result.singleFormDefault &&
+				result.registrationSwitchAvailable &&
+				result.registrationViewAccessible &&
+				result.loginViewRestored &&
+				result.registrationFallbackAvailable &&
+				result.registrationErrorLocalized &&
+				result.loginErrorLocalized &&
+				result.authNoticeAligned &&
+				result.accountIntroAbsent &&
+				result.semanticTitlePresent &&
+				result.authenticatedAccount.profileSummaryPresent &&
+				result.authenticatedAccount.twoPrimaryTabs &&
+				result.authenticatedAccount.navigationVisible &&
+				result.authenticatedAccount.englishNoticeCount === 0 &&
+				result.authenticatedAccount.ordersListPresent
 		);
 	} catch ( error ) {
 		result.error = error.message;
@@ -1155,6 +1428,7 @@ const runContactInteractionAudit = async ( width ) => {
 		invalidSubmissionBlocked: false,
 		asyncSuccessVisible: false,
 		fieldsResetAfterSuccess: false,
+		heading: null,
 		passed: false,
 	};
 	const context = await browser.newContext( {
@@ -1167,6 +1441,24 @@ const runContactInteractionAudit = async ( width ) => {
 			timeout: 45_000,
 		} );
 		const form = page.locator( '[data-lm-contact-form]' );
+		result.heading = await page.evaluate( () => {
+			const heading = document.querySelector( '.lm-contact-copy h1' );
+			const copy = document.querySelector( '.lm-contact-copy' );
+			return {
+				centered: Boolean(
+					heading &&
+						copy &&
+						window.getComputedStyle( copy ).textAlign === 'center'
+				),
+				duplicateHeadingAbsent:
+					document.querySelectorAll( '.lm-contact-copy h1' )
+						.length === 1 &&
+					document.querySelectorAll( '.lm-page-intro--contact' )
+						.length === 0 &&
+					document.querySelectorAll( '.lm-eyebrow' ).length === 0,
+				text: heading?.textContent?.trim() || '',
+			};
+		} );
 		result.fieldFocus = await auditTextFieldFocus(
 			form.locator( '[name="name"]' )
 		);
@@ -1330,6 +1622,9 @@ const runContactInteractionAudit = async ( width ) => {
 		result.passed = Boolean(
 			result.fieldFocus.passed &&
 				result.layout.passed &&
+				result.heading.centered &&
+				result.heading.duplicateHeadingAbsent &&
+				result.heading.text === 'Contacto' &&
 				result.nativeValidationAvailable &&
 				result.invalidSubmissionBlocked &&
 				result.asyncSuccessVisible &&
