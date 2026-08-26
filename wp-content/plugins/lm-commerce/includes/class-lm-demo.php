@@ -168,9 +168,9 @@ final class LM_Demo
             'nosotros' => array('Nosotros', self::about_page_content()),
             'contacto' => array('Contacto', ''),
             'preguntas-frecuentes' => array('Preguntas frecuentes', '<!-- wp:html --><details><summary>¿Cuándo se despacha una pieza disponible?</summary><p>Las piezas disponibles se despachan al confirmar el pago.</p></details><details><summary>¿Cómo sé cuánto tarda una pieza hecha bajo pedido?</summary><p>Las piezas hechas bajo pedido muestran su tiempo estimado de elaboración en la ficha de producto.</p></details><!-- /wp:html -->'),
-            'envios-y-devoluciones' => array('Envíos y devoluciones', '<!-- wp:paragraph --><p><strong>Contenido provisional:</strong> los envíos se realizan dentro de México mediante Estafeta. La política definitiva de cambios, daños y devoluciones debe validarse con la clienta antes de publicar.</p><!-- /wp:paragraph -->'),
-            'aviso-de-privacidad' => array('Aviso de privacidad', '<!-- wp:paragraph --><p><strong>Borrador pendiente de revisión legal.</strong> El tratamiento de datos de contacto, pago y envío debe validarse antes de publicar la tienda.</p><!-- /wp:paragraph -->'),
-            'terminos-y-condiciones' => array('Términos y condiciones', '<!-- wp:paragraph --><p><strong>Borrador pendiente de revisión legal.</strong> Los precios, tiempos de elaboración y políticas finales deben ser aprobados antes de producción.</p><!-- /wp:paragraph -->'),
+            'envios-y-devoluciones' => array('Envíos y devoluciones', self::shipping_page_content()),
+            'aviso-de-privacidad' => array('Aviso de privacidad', self::privacy_page_content()),
+            'terminos-y-condiciones' => array('Términos y condiciones', self::terms_page_content()),
             'guia-de-estilos' => array('Guía de estilos', ''),
         );
         $ids = array();
@@ -191,6 +191,186 @@ final class LM_Demo
         update_option('woocommerce_checkout_page_id', $ids['finalizar-compra']);
         update_option('woocommerce_myaccount_page_id', $ids['mi-cuenta']);
         update_option('wp_page_for_privacy_policy', $ids['aviso-de-privacidad']);
+        update_option('woocommerce_terms_page_id', $ids['terminos-y-condiciones']);
+    }
+
+    private static function shipping_page_content(): string
+    {
+        return <<<'HTML'
+<!-- wp:paragraph -->
+<p>Esta política explica cómo preparamos y enviamos las piezas de Lupita Márquez. Te recomendamos revisarla antes de finalizar tu compra, especialmente cuando elijas una pieza hecha bajo pedido o personalizada.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"resumen-del-envio"} -->
+<h2 class="wp-block-heading" id="resumen-del-envio">Resumen del envío</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Realizamos envíos dentro de México mediante Estafeta. La tarifa disponible y el importe estimado se muestran durante la compra, de acuerdo con la dirección de entrega, las características del pedido y la cobertura de la paquetería.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"piezas-bajo-pedido"} -->
+<h2 class="wp-block-heading" id="piezas-bajo-pedido">Piezas bajo pedido</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Algunas piezas se elaboran especialmente para ti. El tiempo estimado de preparación se indica en la ficha de cada producto y se suma al tiempo de traslado de la paquetería. Si necesitas confirmar una fecha antes de comprar, escríbenos a <strong class="lm-legal-placeholder">[CORREO DE ATENCIÓN]</strong>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"seguimiento-y-entrega"} -->
+<h2 class="wp-block-heading" id="seguimiento-y-entrega">Seguimiento y entrega</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Cuando tu pedido esté listo para enviarse, recibirás la información de seguimiento disponible. Antes de realizar el pago, revisa cuidadosamente el nombre, teléfono, dirección, código postal y referencias de entrega; los cambios posteriores pueden afectar el tiempo de envío o generar cargos adicionales.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"cambios-y-devoluciones"} -->
+<h2 class="wp-block-heading" id="cambios-y-devoluciones">Cambios, cancelaciones y devoluciones</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Las condiciones aplicables a cancelaciones, cambios y devoluciones son: <strong class="lm-legal-placeholder">[POLÍTICA DE CANCELACIONES, CAMBIOS Y DEVOLUCIONES]</strong>. Las piezas personalizadas o elaboradas bajo pedido pueden tener condiciones distintas; confírmalas antes de finalizar tu compra.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"incidencias"} -->
+<h2 class="wp-block-heading" id="incidencias">Daños o incidencias</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Si tu pedido presenta un daño o incidencia al recibirlo, conserva el empaque y comunícate con nosotros en un plazo de <strong class="lm-legal-placeholder">[PLAZO PARA REPORTAR INCIDENCIAS]</strong>, incluyendo tu número de pedido y fotografías de la pieza. Revisaremos tu caso conforme a <strong class="lm-legal-placeholder">[PROCEDIMIENTO DE ATENCIÓN]</strong>.</p>
+<!-- /wp:paragraph -->
+HTML;
+    }
+
+    private static function privacy_page_content(): string
+    {
+        return <<<'HTML'
+<!-- wp:paragraph -->
+<p>En Lupita Márquez tratamos los datos personales necesarios para atender tus consultas, procesar compras y mantener tu cuenta. Este aviso describe el tratamiento aplicable cuando navegas, creas una cuenta, realizas un pedido o te comunicas con nosotros.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"responsable"} -->
+<h2 class="wp-block-heading" id="responsable">Responsable del tratamiento</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p><strong class="lm-legal-placeholder">[NOMBRE O RAZÓN SOCIAL]</strong>, con domicilio en <strong class="lm-legal-placeholder">[DOMICILIO COMPLETO]</strong>, es responsable del tratamiento de los datos personales recabados a través de esta tienda. Para cualquier asunto de privacidad puedes escribir a <strong class="lm-legal-placeholder">[CORREO DE PRIVACIDAD]</strong>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"datos-personales"} -->
+<h2 class="wp-block-heading" id="datos-personales">Datos personales que tratamos</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Según la interacción que realices, podemos tratar datos de identificación y contacto, dirección de envío y facturación, información de tu pedido, preferencias de personalización, mensajes que nos compartas y datos técnicos necesarios para operar el carrito y la sesión. No solicitamos datos personales sensibles como parte del proceso ordinario de compra.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"finalidades"} -->
+<h2 class="wp-block-heading" id="finalidades">Finalidades del tratamiento</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Utilizamos tus datos para responder consultas, crear y administrar tu cuenta, procesar pagos, preparar pedidos, coordinar la entrega, proporcionar seguimiento y brindar atención posterior a la compra. Cuando aplique, podremos usar tus datos para enviarte novedades o comunicaciones comerciales; puedes solicitar que dejemos de enviarlas a <strong class="lm-legal-placeholder">[CORREO DE PRIVACIDAD]</strong>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"transferencias"} -->
+<h2 class="wp-block-heading" id="transferencias">Servicios y transferencias necesarias</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Para completar una compra, podemos compartir únicamente la información necesaria con proveedores que intervienen en el pago, hospedaje de la tienda, mensajería y entrega. Actualmente, el envío se coordina mediante Estafeta. Los proveedores de pago y otros encargados aplicables son: <strong class="lm-legal-placeholder">[LISTADO DE PROVEEDORES DE PAGO, HOSPEDAJE Y ANALÍTICA, SI APLICA]</strong>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"cookies"} -->
+<h2 class="wp-block-heading" id="cookies">Cookies y tecnologías similares</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>La tienda utiliza tecnologías necesarias para recordar tu carrito, mantener la sesión y permitir que el proceso de compra funcione correctamente. Las herramientas adicionales de medición o publicidad, si se utilizan, serán: <strong class="lm-legal-placeholder">[HERRAMIENTAS DE MEDICIÓN O PUBLICIDAD, SI APLICAN]</strong>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"derechos-arco"} -->
+<h2 class="wp-block-heading" id="derechos-arco">Derechos ARCO y limitación de uso</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Puedes solicitar acceso, rectificación, cancelación u oposición al tratamiento de tus datos personales enviando una solicitud a <strong class="lm-legal-placeholder">[CORREO ARCO]</strong>. Incluye tu nombre, un medio para recibir respuesta, la descripción clara de tu solicitud y, cuando corresponda, los documentos que acrediten tu identidad o representación. También puedes solicitar la limitación del uso de tus datos para fines promocionales.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"actualizaciones"} -->
+<h2 class="wp-block-heading" id="actualizaciones">Cambios a este aviso</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Podemos actualizar este aviso para reflejar cambios en nuestra operación o en las disposiciones aplicables. La versión vigente se publicará en esta misma página con su fecha de última actualización.</p>
+<!-- /wp:paragraph -->
+HTML;
+    }
+
+    private static function terms_page_content(): string
+    {
+        return <<<'HTML'
+<!-- wp:paragraph -->
+<p>Estos términos regulan las compras realizadas en Lupita Márquez. Al utilizar la tienda y finalizar un pedido, confirmas que leíste la información de la pieza seleccionada, el importe total mostrado durante la compra y las condiciones publicadas en esta página.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"proveedor-y-aceptacion"} -->
+<h2 class="wp-block-heading" id="proveedor-y-aceptacion">Proveedor y aceptación</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>La tienda es operada por <strong class="lm-legal-placeholder">[NOMBRE O RAZÓN SOCIAL]</strong>, con domicilio en <strong class="lm-legal-placeholder">[DOMICILIO COMPLETO]</strong> y medios de contacto en <strong class="lm-legal-placeholder">[CORREO Y TELÉFONO DE ATENCIÓN]</strong>. Estas condiciones aplican a las compras realizadas desde este sitio.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"piezas-y-personalizacion"} -->
+<h2 class="wp-block-heading" id="piezas-y-personalizacion">Piezas y personalización</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>El catálogo incluye piezas disponibles y piezas elaboradas bajo pedido. La ficha de cada producto indica sus opciones, medidas aproximadas, precio y, cuando corresponda, tiempo estimado de preparación. Los detalles de personalización se confirman con la información proporcionada para cada pedido.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"precios-y-pago"} -->
+<h2 class="wp-block-heading" id="precios-y-pago">Precios, pago y confirmación</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Los precios se muestran en pesos mexicanos e incluyen los impuestos aplicables que se indiquen durante la compra. El costo de envío se calcula de acuerdo con la dirección de entrega y se presenta antes de finalizar el pago. Los métodos de pago disponibles se muestran en checkout. Tu pedido se considera confirmado conforme a <strong class="lm-legal-placeholder">[CRITERIO DE CONFIRMACIÓN DEL PEDIDO Y PAGO]</strong>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"materiales-y-acabados"} -->
+<h2 class="wp-block-heading" id="materiales-y-acabados">Materiales y acabados</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Cada pieza combina corte CNC, madera, pintura y acabados manuales. Las vetas, tonos y pequeños matices propios de los materiales pueden variar respecto a las fotografías. Estas variaciones no afectan el carácter ni la función esencial de la pieza.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"envio-y-entrega"} -->
+<h2 class="wp-block-heading" id="envio-y-entrega">Envío y entrega</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Los envíos se realizan dentro de México mediante Estafeta. Los tiempos de preparación y las condiciones de entrega se explican en <a href="/envios-y-devoluciones/">Envíos y devoluciones</a>. Es responsabilidad de la persona compradora proporcionar datos completos y correctos para la entrega.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"cancelaciones-y-devoluciones"} -->
+<h2 class="wp-block-heading" id="cancelaciones-y-devoluciones">Cancelaciones, cambios y devoluciones</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Las solicitudes de cancelación, cambio, devolución o garantía se atenderán conforme a <strong class="lm-legal-placeholder">[POLÍTICA DE CANCELACIONES, CAMBIOS, DEVOLUCIONES Y GARANTÍAS]</strong>. Para solicitar atención, comunícate a <strong class="lm-legal-placeholder">[CORREO DE ATENCIÓN]</strong> con tu número de pedido y la información necesaria para revisar el caso.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading {"level":2,"anchor":"contacto-y-actualizaciones"} -->
+<h2 class="wp-block-heading" id="contacto-y-actualizaciones">Contacto y actualizaciones</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Para dudas sobre estas condiciones, escríbenos a <strong class="lm-legal-placeholder">[CORREO DE ATENCIÓN]</strong>. Podemos actualizar estos términos para reflejar cambios en la operación de la tienda o en la normativa aplicable; la versión vigente será la publicada en esta página.</p>
+<!-- /wp:paragraph -->
+HTML;
     }
 
     private static function about_page_content(): string
