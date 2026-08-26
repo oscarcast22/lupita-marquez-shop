@@ -96,6 +96,8 @@
         { "slug": "x-large", "size": "2.75rem", "fluid": { "min": "2rem", "max": "2.75rem" }, "name": "Título" },
         { "slug": "product-title", "size": "3rem", "fluid": { "min": "2.25rem", "max": "3rem" }, "name": "Título de producto" },
         { "slug": "product-section-title", "size": "2rem", "fluid": { "min": "1.5rem", "max": "2rem" }, "name": "Título de sección de producto" },
+        { "slug": "product-utility-title", "size": "1.75rem", "fluid": { "min": "1.5rem", "max": "1.75rem" }, "name": "Título funcional de producto" },
+        { "slug": "mini-cart-title", "size": "1.5rem", "fluid": { "min": "1.375rem", "max": "1.5rem" }, "name": "Título de minicart" },
         { "slug": "product-price", "size": "2.25rem", "fluid": { "min": "1.75rem", "max": "2.25rem" }, "name": "Precio de producto" },
         { "slug": "price", "size": "1.6rem", "fluid": { "min": "1.25rem", "max": "1.6rem" }, "name": "Precio" },
         { "slug": "display", "size": "4rem", "fluid": { "min": "2.5rem", "max": "4rem" }, "name": "Portada" }
