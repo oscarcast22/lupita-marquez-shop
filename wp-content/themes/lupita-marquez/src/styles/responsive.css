@@ -127,7 +127,7 @@
 		border-bottom: var(--lm-border);
 		color: var(--wp--preset--color--charcoal);
 		display: grid;
-		font-family: var(--wp--preset--font-family--serif);
+		font-family: var(--wp--preset--font-family--sans);
 		font-size: var(--wp--preset--font-size--drawer-link);
 		font-weight: 650;
 		gap: var(--wp--preset--spacing--20);

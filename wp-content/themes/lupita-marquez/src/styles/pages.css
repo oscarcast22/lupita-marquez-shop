@@ -385,7 +385,7 @@
 	align-items: center;
 	cursor: pointer;
 	display: grid;
-	font-family: var(--wp--preset--font-family--serif);
+	font-family: var(--wp--preset--font-family--sans);
 	font-size: var(--wp--preset--font-size--large);
 	font-weight: 650;
 	gap: var(--wp--preset--spacing--25);
