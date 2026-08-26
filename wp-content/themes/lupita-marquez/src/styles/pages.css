@@ -117,6 +117,156 @@
 	padding: var(--wp--preset--spacing--25);
 }
 
+.lm-legal-intro { background: var(--wp--preset--color--mist); }
+
+.lm-legal-intro.lm-section--compact { padding-block: var(--wp--preset--spacing--50) var(--wp--preset--spacing--45); }
+
+.lm-legal-intro__copy {
+	margin-inline: auto;
+	max-width: 52rem;
+	text-align: center;
+}
+
+.lm-legal-intro__copy .lm-eyebrow { margin: 0 0 var(--wp--preset--spacing--15); }
+
+.lm-legal-intro__copy h1 {
+	font-family: var(--wp--preset--font-family--sans);
+	font-size: var(--wp--preset--font-size--x-large);
+	font-weight: 750;
+	letter-spacing: -0.045em;
+	line-height: 1.03;
+	margin: 0;
+	max-width: none;
+}
+
+.lm-legal-intro__updated {
+	color: var(--wp--preset--color--muted);
+	font-size: var(--wp--preset--font-size--small);
+	margin: var(--wp--preset--spacing--25) 0 0;
+}
+
+.lm-legal-intro__updated span,
+.lm-legal-placeholder,
+.lm-legal-help__placeholder {
+	color: var(--wp--preset--color--wood);
+	font-family: var(--wp--preset--font-family--sans);
+	font-size: var(--wp--preset--font-size--caption);
+	font-weight: 800;
+	letter-spacing: 0.02em;
+}
+
+.lm-legal-content { background: var(--wp--preset--color--ivory); }
+
+.lm-legal-layout {
+	align-items: start;
+	display: grid;
+	gap: var(--wp--preset--spacing--65);
+	grid-template-columns: minmax(10rem, 12rem) minmax(0, 44rem);
+	justify-content: center;
+}
+
+.lm-legal-navigation {
+	align-self: start;
+	border-top: var(--lm-border);
+	display: grid;
+	padding-top: var(--wp--preset--spacing--20);
+	position: sticky;
+	top: var(--wp--preset--spacing--35);
+}
+
+.lm-legal-navigation p {
+	color: var(--wp--preset--color--muted);
+	font-size: var(--wp--preset--font-size--caption);
+	font-weight: 750;
+	letter-spacing: 0.08em;
+	margin: 0 0 var(--wp--preset--spacing--15);
+	text-transform: uppercase;
+}
+
+.lm-legal-navigation a {
+	border-bottom: var(--lm-border);
+	color: var(--wp--preset--color--charcoal);
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 650;
+	line-height: 1.35;
+	padding-block: var(--wp--preset--spacing--15);
+	text-decoration: none;
+}
+
+.lm-legal-navigation a:hover { color: var(--wp--preset--color--fuchsia); }
+
+.lm-legal-navigation a:focus-visible {
+	border-radius: var(--lm-radius-xs);
+	box-shadow: 0 0 0 var(--lm-focus-ring-size) color-mix(in srgb, var(--wp--preset--color--fuchsia) 28%, transparent);
+	outline: 0;
+}
+
+.lm-legal-document { margin: 0; }
+
+.lm-legal-document > p:first-child {
+	border-bottom: var(--lm-border);
+	color: var(--wp--preset--color--charcoal);
+	font-size: var(--wp--preset--font-size--lead);
+	line-height: 1.6;
+	margin-bottom: var(--wp--preset--spacing--45);
+	padding-bottom: var(--wp--preset--spacing--45);
+}
+
+.lm-legal-document h2 {
+	color: var(--wp--preset--color--charcoal);
+	font-family: var(--wp--preset--font-family--sans);
+	font-size: var(--wp--preset--font-size--large);
+	font-weight: 800;
+	letter-spacing: -0.025em;
+	line-height: 1.25;
+	margin-block: var(--wp--preset--spacing--50) var(--wp--preset--spacing--15);
+	scroll-margin-top: var(--wp--preset--spacing--55);
+}
+
+.lm-legal-document p {
+	color: var(--wp--preset--color--charcoal);
+	line-height: 1.72;
+}
+
+.lm-legal-document a {
+	color: var(--wp--preset--color--charcoal);
+	font-weight: 700;
+	text-decoration-color: var(--wp--preset--color--fuchsia);
+	text-decoration-thickness: 0.125rem;
+	text-underline-offset: 0.2rem;
+}
+
+.lm-legal-document a:hover { color: var(--wp--preset--color--fuchsia); }
+
+.lm-legal-help {
+	align-items: baseline;
+	border-top: var(--lm-border);
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wp--preset--spacing--15) var(--wp--preset--spacing--30);
+	margin: var(--wp--preset--spacing--60) auto 0;
+	max-width: 44rem;
+	padding-top: var(--wp--preset--spacing--25);
+}
+
+.lm-legal-help p {
+	color: var(--wp--preset--color--charcoal);
+	font-weight: 750;
+	margin: 0;
+}
+
+.lm-legal-help a {
+	color: var(--wp--preset--color--charcoal);
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 750;
+	text-decoration: underline;
+	text-decoration-color: var(--wp--preset--color--fuchsia);
+	text-decoration-thickness: 0.125rem;
+	text-underline-offset: 0.25rem;
+}
+
+.lm-legal-help a:hover { color: var(--wp--preset--color--fuchsia); }
+
 .lm-about-gallery { background: var(--wp--preset--color--ivory); overflow: clip; }
 
 .lm-about-gallery__heading { margin-inline: auto; max-width: 42rem; text-align: center; }
