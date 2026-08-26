@@ -3756,7 +3756,7 @@ for ( const width of widths ) {
 			}
 			const contextualLinks = [
 				...document.querySelectorAll(
-					'.lm-contextual-actions a, .lm-about-cta__inner a'
+					'.lm-contextual-actions a, .lm-legal-help a, .lm-about-cta__inner a'
 				),
 			].map( ( link ) => link.getAttribute( 'href' ) || '' );
 			const expectedLinks = {
