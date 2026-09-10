@@ -59,6 +59,10 @@ const PRODUCT_VARIATION_FORM_SELECTOR =
 const PRODUCT_QUANTITY_SELECTOR = '.lm-product-purchase form.cart .quantity';
 const PRODUCT_OFFER_PRICE_SELECTOR =
 	'.lm-product-offer .wp-block-woocommerce-product-price';
+const PRODUCT_GALLERY_ZOOM_ICON = `
+	<svg class="lm-product-gallery__zoom-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+		<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m17 17l4 4m-2-10a8 8 0 1 0-16 0a8 8 0 0 0 16 0M7.5 11h7M11 7.5v7" />
+	</svg>`;
 const CONTACT_FORM_SELECTOR = '[data-lm-contact-form]';
 const CONTACT_STATUS_SELECTOR = '[data-lm-contact-status]';
 const ACCOUNT_AUTH_SELECTOR = '[data-lm-account-auth]';
@@ -349,6 +353,9 @@ const syncProductGalleryTriggers = () => {
 		)
 		.forEach( ( trigger ) => {
 			trigger.setAttribute( 'aria-label', 'Ampliar imagen del producto' );
+			if ( ! trigger.querySelector( '.lm-product-gallery__zoom-icon' ) ) {
+				trigger.innerHTML = PRODUCT_GALLERY_ZOOM_ICON;
+			}
 		} );
 };
 
