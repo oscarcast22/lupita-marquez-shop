@@ -87,6 +87,11 @@
 
 @media (hover: hover) and (pointer: fine) {
 
+	.lm-interactions-ready .lm-hero__copy a:hover {
+		box-shadow: var(--lm-shadow-card);
+		transform: translateY(calc(var(--lm-button-lift) * -1));
+	}
+
 	.lm-interactions-ready .lm-site-footer nav a:hover {
 		background-size: 100% 1px;
 	}

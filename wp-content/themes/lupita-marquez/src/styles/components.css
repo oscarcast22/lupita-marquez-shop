@@ -58,16 +58,16 @@
 
 .lm-category-card a::after { content: "\2197"; font-size: var(--wp--preset--font-size--category-link-icon); margin-left: 0.55rem; }
 
-.lm-site-footer { background: var(--wp--preset--color--mist); color: var(--wp--preset--color--charcoal); overflow: clip; padding-block: var(--wp--preset--spacing--footer-padding) var(--wp--preset--spacing--50); position: relative; }
+.lm-site-footer { background: var(--wp--preset--color--charcoal); color: var(--wp--preset--color--ivory); overflow: clip; padding-block: var(--wp--preset--spacing--footer-padding) var(--wp--preset--spacing--50); position: relative; }
 
 .lm-site-footer::before,
 .lm-site-footer::after {
-	background: var(--wp--preset--color--wood);
+	background: var(--wp--preset--color--sand);
 	content: "";
 	height: var(--lm-ornament-size);
 	-webkit-mask: url(/wp-content/themes/lupita-marquez/assets/images/botanical-corner.svg) center / contain no-repeat;
 	mask: url(/wp-content/themes/lupita-marquez/assets/images/botanical-corner.svg) center / contain no-repeat;
-	opacity: 0.28;
+	opacity: 0.2;
 	pointer-events: none;
 	position: absolute;
 	top: 0;
@@ -78,7 +78,7 @@
 
 .lm-site-footer::after { right: 0; }
 
-.lm-footer-grid { display: grid; gap: var(--wp--preset--spacing--footer-gap); grid-template-columns: 1.1fr 1fr 1.2fr; position: relative; z-index: 1; }
+.lm-footer-grid { display: grid; gap: var(--wp--preset--spacing--footer-gap); grid-template-columns: 1.2fr 1.1fr 1fr; position: relative; z-index: 1; }
 
 .lm-site-footer h2 { font-family: var(--wp--preset--font-family--sans); font-size: var(--wp--preset--font-size--small); font-weight: 800; letter-spacing: 0; margin: 0 0 var(--wp--preset--spacing--20); }
 
@@ -88,29 +88,39 @@
 
 .lm-site-footer li:last-child { margin-bottom: 0; }
 
-.lm-site-footer a { color: var(--wp--preset--color--charcoal); }
+.lm-site-footer a { color: var(--wp--preset--color--ivory); }
 
-.lm-site-footer a:hover { color: var(--wp--preset--color--fuchsia); }
+.lm-site-footer a:hover { color: var(--wp--preset--color--sand); }
 
-.lm-footer-social > p { color: var(--wp--preset--color--muted); font-size: var(--wp--preset--font-size--caption); margin-block: calc(var(--wp--preset--spacing--05) * -1) var(--wp--preset--spacing--20); max-width: 28rem; }
+.lm-footer-social > p { color: color-mix(in srgb, var(--wp--preset--color--ivory) 72%, transparent); font-size: var(--wp--preset--font-size--caption); margin-block: calc(var(--wp--preset--spacing--05) * -1) var(--wp--preset--spacing--20); max-width: 28rem; }
 
 .lm-footer-brand-seal {
 	display: block;
 	margin-block: 0 var(--wp--preset--spacing--25);
 	max-width: 100%;
-	width: 10rem;
+	width: 8rem;
 }
+
+.lm-footer-brand { align-self: start; display: block; max-width: max-content; }
+
+.lm-footer-brand:focus-visible { border-radius: var(--lm-radius-xs); box-shadow: 0 0 0 var(--lm-focus-ring-size) color-mix(in srgb, var(--wp--preset--color--fuchsia) 28%, transparent); outline: 0; }
+
+.lm-footer-social { grid-column: 1; grid-row: 1; }
+
+.lm-footer-nav--quick { grid-column: 2; grid-row: 1; }
+
+.lm-footer-nav--information { grid-column: 3; grid-row: 1; }
 
 .lm-footer-social ul { display: flex; gap: var(--lm-social-gap); }
 
 .lm-footer-social li { margin: 0; }
 
-.lm-footer-social a { align-items: center; color: var(--wp--preset--color--white); display: flex; height: var(--lm-icon-button); justify-content: center; width: var(--lm-icon-button); }
+.lm-footer-social > ul a { align-items: center; color: var(--wp--preset--color--charcoal); display: flex; height: var(--lm-icon-button); justify-content: center; width: var(--lm-icon-button); }
 
-.lm-footer-social a:hover { color: var(--wp--preset--color--white); }
+.lm-footer-social > ul a:hover { color: var(--wp--preset--color--white); }
 
 .lm-footer-social svg {
-	background: var(--wp--preset--color--charcoal);
+	background: var(--wp--preset--color--ivory);
 	border-radius: 50%;
 	box-sizing: content-box;
 	fill: currentcolor;
@@ -119,15 +129,15 @@
 	width: var(--lm-social-glyph);
 }
 
-.lm-footer-social a:hover svg { background: var(--wp--preset--color--fuchsia); }
+.lm-footer-social > ul a:hover svg { background: var(--wp--preset--color--fuchsia); }
 
 .lm-footer-social svg rect,
 .lm-footer-social svg circle { fill: none; stroke: currentcolor; stroke-width: 1.8; }
 
 .lm-footer-meta {
 	align-items: center;
-	border-top: 1px solid color-mix(in srgb, var(--wp--preset--color--wood) 45%, transparent);
-	color: var(--wp--preset--color--muted);
+	border-top: 1px solid color-mix(in srgb, var(--wp--preset--color--sand) 32%, transparent);
+	color: color-mix(in srgb, var(--wp--preset--color--ivory) 68%, transparent);
 	display: flex;
 	font-size: var(--wp--preset--font-size--micro);
 	justify-content: center;
@@ -139,7 +149,7 @@
 
 .lm-footer-meta p { margin: 0; text-align: center; }
 
-.lm-footer-flower { color: var(--wp--preset--color--wood); position: absolute; right: 0; }
+.lm-footer-flower { color: var(--wp--preset--color--sand); position: absolute; right: 0; }
 
 .lm-footer-flower svg { fill: none; height: calc(var(--lm-ornament-size) / 4); stroke: currentcolor; stroke-linejoin: round; stroke-width: 1.5; width: calc(var(--lm-ornament-size) / 4); }
 
