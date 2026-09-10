@@ -65,7 +65,7 @@ const actionAuditSelectors = {
 	cuenta: [
 		{ selector: '.woocommerce-form-login__submit', variant: 'primary' },
 	],
-	nosotros: [ { selector: '.lm-about-cta .lm-button', variant: 'inverted' } ],
+	nosotros: [ { selector: '.lm-about-cta .lm-button', variant: 'primary' } ],
 };
 
 const waitForCommerceBlock = async ( page, rootSelector, contentSelector ) => {
@@ -986,6 +986,7 @@ const runCheckoutInteractionAudit = async ( width ) => {
 		fieldLayout: null,
 		loginHrefPreserved: false,
 		englishLabelCount: 0,
+		orderSummary: null,
 		passed: false,
 	};
 	const context = await browser.newContext( {
@@ -1027,6 +1028,28 @@ const runCheckoutInteractionAudit = async ( width ) => {
 				const login = root?.querySelector(
 					'.wc-block-checkout__login-prompt'
 				);
+				const inlineSummary = root?.querySelector(
+					'.checkout-order-summary-block-fill-wrapper'
+				);
+				const sidebarSummary = root?.querySelector(
+					'.wc-block-checkout__sidebar'
+				);
+				const mobileCheckout = root?.matches( '.is-mobile' )
+					? root
+					: root?.querySelector( '.wc-block-checkout.is-mobile' );
+				const isVisible = ( element ) =>
+					Boolean(
+						element &&
+							window.getComputedStyle( element ).display !==
+								'none' &&
+							element.getClientRects().length
+					);
+				const orderSummary = mobileCheckout
+					? inlineSummary
+					: sidebarSummary;
+				const orderSummaryStyle = orderSummary
+					? window.getComputedStyle( orderSummary )
+					: null;
 				return {
 					hydrated: Boolean(
 						root &&
@@ -1045,6 +1068,13 @@ const runCheckoutInteractionAudit = async ( width ) => {
 							'Create an account with Lupita Márquez'
 						)
 					).length,
+					orderSummary: {
+						background: orderSummaryStyle?.backgroundColor || '',
+						borderRadius: orderSummaryStyle?.borderRadius || '',
+						inlineVisible: isVisible( inlineSummary ),
+						mobile: Boolean( mobileCheckout ),
+						sidebarVisible: isVisible( sidebarSummary ),
+					},
 				};
 			} );
 		let state = await readCheckoutState();
@@ -1072,6 +1102,7 @@ const runCheckoutInteractionAudit = async ( width ) => {
 			state.loginHref.includes( '/mi-cuenta/' ) &&
 			state.loginHref.includes( 'redirect_to=' );
 		result.englishLabelCount = state.englishLabelCount;
+		result.orderSummary = state.orderSummary;
 		result.passed = Boolean(
 			result.blockHydrated &&
 				result.fieldFocus.passed &&
@@ -1081,7 +1112,14 @@ const runCheckoutInteractionAudit = async ( width ) => {
 				result.fieldLayout.labelStable &&
 				result.fieldLayout.selectVerticallyCentered &&
 				result.loginHrefPreserved &&
-				result.englishLabelCount === 0
+				result.englishLabelCount === 0 &&
+				result.orderSummary.background === 'rgb(255, 255, 255)' &&
+				result.orderSummary.borderRadius === '10px' &&
+				( result.orderSummary.mobile
+					? result.orderSummary.inlineVisible &&
+					  ! result.orderSummary.sidebarVisible
+					: result.orderSummary.sidebarVisible &&
+					  ! result.orderSummary.inlineVisible )
 		);
 	} catch ( error ) {
 		result.error = error.message;
