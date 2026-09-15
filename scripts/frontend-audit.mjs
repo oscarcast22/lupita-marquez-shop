@@ -694,6 +694,13 @@ const auditCheckoutFieldLayout = async ( page ) =>
 		const addressTwo = shippingForm?.querySelector(
 			'.wc-block-components-address-form__address_2'
 		);
+		const addressDetails = Array.from(
+			shippingForm?.querySelectorAll(
+				'.wc-block-components-text-input'
+			) || []
+		).find( ( field ) =>
+			field.textContent.includes( 'Interior, departamento o referencias' )
+		);
 		const state = shippingForm?.querySelector(
 			'.wc-block-components-address-form__state'
 		);
@@ -725,11 +732,12 @@ const auditCheckoutFieldLayout = async ( page ) =>
 		return {
 			addressDataFieldsPresent:
 				addressOne?.querySelector( 'input' )?.required === true &&
-				addressTwo?.querySelector( 'input' )?.required === false &&
+				addressDetails?.querySelector( 'input' )?.required === false &&
 				addressOne?.textContent.includes( 'Dirección' ) &&
-				addressTwo?.textContent.includes(
+				addressDetails?.textContent.includes(
 					'Interior, departamento o referencias'
-				),
+				) &&
+				! addressTwo,
 			labelClearance: Boolean(
 				emailInputRect &&
 					emailLabelRect &&

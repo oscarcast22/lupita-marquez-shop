@@ -3138,7 +3138,8 @@ body .wc-block-components-notice-banner:focus { outline: 0; }
 .lm-checkout-section .wc-block-components-address-form__country,
 .lm-checkout-section .wc-block-components-address-form__address_1,
 .lm-checkout-section .wc-block-components-address-form__address_2,
-.lm-checkout-section .wc-block-components-address-form__address_2-toggle { grid-column: 1 / -1; }
+.lm-checkout-section .wc-block-components-address-form__address_2-toggle,
+.lm-checkout-section .wc-block-checkout__shipping-fields .wc-block-components-address-form > :has(input[id*="delivery-details"]) { grid-column: 1 / -1; }
 
 @media (max-width: 640px) {
 
