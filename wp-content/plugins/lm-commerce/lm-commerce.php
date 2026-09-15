@@ -36,6 +36,7 @@ require_once LM_COMMERCE_DIR . 'includes/class-lm-product-notices.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-savings-goal.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-contact-form.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-account-experience.php';
+require_once LM_COMMERCE_DIR . 'includes/class-lm-checkout-address.php';
 
 /**
  * The official Envia extension owns checkout rates and fulfillment in the
@@ -63,6 +64,7 @@ add_action('plugins_loaded', static function (): void {
 
     LM_Envia_Admin_Compatibility::init();
     LM_Production_Operations::init();
+    LM_Checkout_Address::init();
     if (lm_commerce_uses_legacy_envia()) {
         require_once LM_COMMERCE_DIR . 'includes/class-lm-envia-client.php';
         require_once LM_COMMERCE_DIR . 'includes/class-lm-fulfillment.php';

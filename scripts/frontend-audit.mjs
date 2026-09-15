@@ -688,6 +688,12 @@ const auditCheckoutFieldLayout = async ( page ) =>
 		const city = shippingForm?.querySelector(
 			'.wc-block-components-address-form__city'
 		);
+		const addressOne = shippingForm?.querySelector(
+			'.wc-block-components-address-form__address_1'
+		);
+		const addressTwo = shippingForm?.querySelector(
+			'.wc-block-components-address-form__address_2'
+		);
 		const state = shippingForm?.querySelector(
 			'.wc-block-components-address-form__state'
 		);
@@ -717,6 +723,13 @@ const auditCheckoutFieldLayout = async ( page ) =>
 			stateSelect && window.getComputedStyle( stateSelect );
 		const twoColumns = window.innerWidth > 640;
 		return {
+			addressDataFieldsPresent:
+				addressOne?.querySelector( 'input' )?.required === true &&
+				addressTwo?.querySelector( 'input' )?.required === true &&
+				addressOne?.textContent.includes( 'Calle y número exterior' ) &&
+				addressTwo?.textContent.includes(
+					'Colonia, interior o referencias'
+				),
 			labelClearance: Boolean(
 				emailInputRect &&
 					emailLabelRect &&
@@ -1119,6 +1132,7 @@ const runCheckoutInteractionAudit = async ( width ) => {
 		result.passed = Boolean(
 			result.blockHydrated &&
 				result.fieldFocus.passed &&
+				result.fieldLayout.addressDataFieldsPresent &&
 				result.fieldLayout.labelClearance &&
 				result.fieldLayout.pairedFieldsAligned &&
 				result.fieldLayout.shippingGrid &&
