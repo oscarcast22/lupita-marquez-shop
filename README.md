@@ -1,6 +1,6 @@
 # Lupita Márquez Ecommerce
 
-Tienda WooCommerce desarrollada con un tema de bloques propio y un único plugin de negocio para catálogo y logística Estafeta mediante Envia.com.
+Tienda WooCommerce desarrollada con un tema de bloques propio y un plugin de negocio para catálogo y operación comercial.
 
 ## Inicio rápido
 
@@ -25,10 +25,10 @@ Los precios, dimensiones, existencias, fotografías faltantes y datos fiscales s
 - WooCommerce 10.9.4 y Mercado Pago 8.9.1 fijados para la matriz inicial.
 - Tema FSE `lupita-marquez`, sin tema padre ni constructor visual.
 - Frontend code-first con fuentes modulares en `src/` y un único build público generado por `@wordpress/scripts`.
-- Plugin `lm-commerce`: importación de catálogo, tarifa Estafeta, guías y estados de pedido.
-- Las credenciales nunca se versionan; se configuran en `.env`.
+- Plugin `lm-commerce`: importación de catálogo, reglas de tienda y compatibilidad administrativa con Envia.
+- Las credenciales nunca se versionan: Envia.com se administra desde la zona de envío, Mercado Pago desde su plugin oficial y el correo desde WP Mail SMTP.
 
-La tienda incluye checkout de una sola página, carrito/checkout de bloques y 12 familias: ocho productos variables con acabados Natural/Pintado y cuatro simples. Las variaciones usan la galería nativa opt-in de WooCommerce 10.9.4, sin plugins ni scripts de galería propios. También incluye inventario mixto, cupón demo, envío gratuito condicional y tarifa Estafeta con respaldo. Al cambiar un pedido a **Listo para enviar**, el plugin solicita una guía a Envia.com de forma asíncrona e idempotente.
+La tienda incluye checkout de una sola página, carrito/checkout de bloques y 12 familias: ocho productos variables con acabados Natural/Pintado y cuatro simples. Las variaciones usan la galería nativa opt-in de WooCommerce 10.9.4, sin plugins ni scripts de galería propios. También incluye inventario mixto, cupón demo y envío gratuito condicional. En producción, las tarifas, guías, cancelaciones y avisos de rastreo los opera exclusivamente el plugin oficial **Envia Shipping and Fulfillment**; `lm-commerce` no duplica esas solicitudes.
 
 ## Comandos
 
@@ -59,6 +59,6 @@ Las fotografías originales permanecen intactas en `productos/`. Las copias cata
 
 ## Producción
 
-Antes de desplegar se deben reemplazar los datos demo, confirmar IVA, origen, embalajes, tarifa de respaldo, textos legales y credenciales. La matriz de WordPress/WooCommerce/Mercado Pago debe repetirse contra las versiones soportadas en la fecha de lanzamiento.
+Antes de desplegar se deben reemplazar los datos demo, confirmar IVA, origen, embalajes, textos legales y credenciales. La matriz de WordPress/WooCommerce/Mercado Pago debe repetirse contra las versiones soportadas en la fecha de lanzamiento. Mercado Pago se vincula desde su plugin oficial; Envia.com se conecta sólo en producción mediante **Envia Shipping and Fulfillment**; y el correo de pedido se entrega desde WP Mail SMTP.
 
 Consulta [docs/launch-checklist.md](docs/launch-checklist.md) para el traspaso a Hostinger.
