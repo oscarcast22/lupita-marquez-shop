@@ -30,10 +30,6 @@ services:
       WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
       WORDPRESS_DB_USER: ${DB_USER:-wordpress}
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wordpress}
-      LM_ENVIA_ENV: ${LM_ENVIA_ENV:-sandbox}
-      LM_ENVIA_TOKEN: ${LM_ENVIA_TOKEN:-}
-      LM_MERCADOPAGO_PUBLIC_KEY: ${LM_MERCADOPAGO_PUBLIC_KEY:-}
-      LM_MERCADOPAGO_ACCESS_TOKEN: ${LM_MERCADOPAGO_ACCESS_TOKEN:-}
       WORDPRESS_DEBUG: "1"
       WORDPRESS_CONFIG_EXTRA: |
         define( 'WP_ENVIRONMENT_TYPE', 'local' );
@@ -44,10 +40,6 @@ services:
         define( 'WP_DEBUG_DISPLAY', false );
         define( 'DISALLOW_FILE_EDIT', true );
         define( 'WP_MEMORY_LIMIT', '256M' );
-        define( 'LM_ENVIA_ENV', getenv( 'LM_ENVIA_ENV' ) ?: 'sandbox' );
-        define( 'LM_ENVIA_TOKEN', getenv( 'LM_ENVIA_TOKEN' ) ?: '' );
-        define( 'LM_MERCADOPAGO_PUBLIC_KEY', getenv( 'LM_MERCADOPAGO_PUBLIC_KEY' ) ?: '' );
-        define( 'LM_MERCADOPAGO_ACCESS_TOKEN', getenv( 'LM_MERCADOPAGO_ACCESS_TOKEN' ) ?: '' );
         define( 'LM_CLIENT_ASSETS_DIR', getenv( 'LM_CLIENT_ASSETS_DIR' ) ?: '/client-assets' );
     volumes:
       - wordpress_data:/var/www/html
@@ -70,8 +62,6 @@ services:
       WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
       WORDPRESS_DB_USER: ${DB_USER:-wordpress}
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wordpress}
-      LM_ENVIA_ENV: ${LM_ENVIA_ENV:-sandbox}
-      LM_ENVIA_TOKEN: ${LM_ENVIA_TOKEN:-}
       LM_CLIENT_ASSETS_DIR: /client-assets
       WP_ENVIRONMENT_TYPE: local
     volumes:

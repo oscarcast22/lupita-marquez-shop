@@ -14,5 +14,5 @@ fi
 
 find wp-content -name '*.php' -print0 | xargs -0 -n1 php -l
 "${compose[@]}" run --rm wpcli core verify-checksums
-"${compose[@]}" run --rm wpcli plugin verify-checksums woocommerce woocommerce-mercadopago
-"${compose[@]}" run --rm wpcli lm doctor
+"${compose[@]}" run --rm --entrypoint php wpcli -d memory_limit=512M /usr/local/bin/wp plugin verify-checksums woocommerce woocommerce-mercadopago
+"${compose[@]}" run --rm --entrypoint php wpcli -d memory_limit=512M /usr/local/bin/wp lm doctor
