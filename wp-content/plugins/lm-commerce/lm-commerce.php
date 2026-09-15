@@ -33,6 +33,7 @@ require_once LM_COMMERCE_DIR . 'includes/class-lm-prelaunch-guard.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-test-catalog.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-validated-catalog.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-product-notices.php';
+require_once LM_COMMERCE_DIR . 'includes/class-lm-savings-goal.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-contact-form.php';
 require_once LM_COMMERCE_DIR . 'includes/class-lm-account-experience.php';
 
@@ -81,6 +82,7 @@ add_action('plugins_loaded', static function (): void {
     LM_Prelaunch_Guard::init();
     LM_Validated_Catalog::init();
     LM_Product_Notices::init();
+    LM_Savings_Goal::init();
     LM_Account_Experience::init();
 });
 
