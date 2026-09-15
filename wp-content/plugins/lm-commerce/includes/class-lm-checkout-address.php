@@ -32,16 +32,16 @@ final class LM_Checkout_Address
         $address_2 = isset($mexico['address_2']) && is_array($mexico['address_2']) ? $mexico['address_2'] : array();
 
         $mexico['address_1'] = array_merge($address_1, array(
-            'label' => __('Calle y número exterior', 'lm-commerce'),
-            'placeholder' => __('Ej. Emilio Carranza 107', 'lm-commerce'),
+            'label' => __('Dirección', 'lm-commerce'),
+            'placeholder' => __('Ej. Emilio Carranza 107, Col. Centro', 'lm-commerce'),
             'required' => true,
             'hidden' => false,
         ));
 
         $mexico['address_2'] = array_merge($address_2, array(
-            'label' => __('Colonia, interior o referencias', 'lm-commerce'),
-            'placeholder' => __('Ej. Col. Centro, Int. 4 o portón negro', 'lm-commerce'),
-            'required' => true,
+            'label' => __('Interior, departamento o referencias', 'lm-commerce'),
+            'placeholder' => __('Ej. Int. 4, portón negro', 'lm-commerce'),
+            'required' => false,
             'hidden' => false,
         ));
 

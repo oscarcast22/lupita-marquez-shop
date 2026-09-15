@@ -725,10 +725,10 @@ const auditCheckoutFieldLayout = async ( page ) =>
 		return {
 			addressDataFieldsPresent:
 				addressOne?.querySelector( 'input' )?.required === true &&
-				addressTwo?.querySelector( 'input' )?.required === true &&
-				addressOne?.textContent.includes( 'Calle y número exterior' ) &&
+				addressTwo?.querySelector( 'input' )?.required === false &&
+				addressOne?.textContent.includes( 'Dirección' ) &&
 				addressTwo?.textContent.includes(
-					'Colonia, interior o referencias'
+					'Interior, departamento o referencias'
 				),
 			labelClearance: Boolean(
 				emailInputRect &&
