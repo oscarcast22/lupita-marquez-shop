@@ -9,6 +9,16 @@ const outputDirectory = path.resolve(
 );
 const chromePath = process.env.CHROME_PATH;
 const widths = [ 1440, 1280, 1024, 768, 390 ];
+const orderConfirmationRoutes = [
+	process.env.LM_AUDIT_ORDER_RECEIPT_URL && [
+		'pedido-recibido',
+		process.env.LM_AUDIT_ORDER_RECEIPT_URL,
+	],
+	process.env.LM_AUDIT_ORDER_VERIFY_URL && [
+		'confirmar-correo-pedido',
+		process.env.LM_AUDIT_ORDER_VERIFY_URL,
+	],
+].filter( Boolean );
 const routes = [
 	[ 'inicio', '/' ],
 	[ 'tienda', '/tienda/' ],
@@ -28,6 +38,7 @@ const routes = [
 	[ 'terminos', '/terminos-y-condiciones/' ],
 	[ 'busqueda', '/?s=altar&post_type=product' ],
 	[ 'error-404', '/esta-ruta-no-existe/' ],
+	...orderConfirmationRoutes,
 ];
 const requiredContent = {
 	'carrito-vacio': '.wp-block-woocommerce-empty-cart-block',
@@ -42,6 +53,8 @@ const requiredContent = {
 	'envios-devoluciones': '.lm-document',
 	'aviso-privacidad': '.lm-document',
 	terminos: '.lm-document',
+	'pedido-recibido': '.wc-block-order-confirmation-totals__table',
+	'confirmar-correo-pedido': '.woocommerce-verify-email',
 };
 
 const actionAuditSelectors = {
