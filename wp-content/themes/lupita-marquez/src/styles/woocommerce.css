@@ -3141,6 +3141,19 @@ body .wc-block-components-notice-banner:focus { outline: 0; }
 .lm-checkout-section .wc-block-components-address-form__address_2-toggle,
 .lm-checkout-section .wc-block-checkout__shipping-fields .wc-block-components-address-form > :has(input[id*="delivery-details"]) { grid-column: 1 / -1; }
 
+.lm-checkout-section .wc-block-checkout__shipping-fields .wc-block-components-address-form__country { order: 1; }
+
+.lm-checkout-section .wc-block-checkout__shipping-fields .wc-block-components-address-form__first_name,
+.lm-checkout-section .wc-block-checkout__shipping-fields .wc-block-components-address-form__last_name { order: 2; }
+
+.lm-checkout-section .wc-block-checkout__shipping-fields .wc-block-components-address-form__address_1 { order: 3; }
+
+.lm-checkout-section .wc-block-checkout__shipping-fields .wc-block-components-address-form > :has(input[id*="delivery-details"]) { order: 4; }
+
+.lm-checkout-section .wc-block-checkout__shipping-fields :is(.wc-block-components-address-form__city, .wc-block-components-address-form__state) { order: 5; }
+
+.lm-checkout-section .wc-block-checkout__shipping-fields :is(.wc-block-components-address-form__postcode, .wc-block-components-address-form__phone) { order: 6; }
+
 @media (max-width: 640px) {
 
 	.lm-checkout-section .wc-block-checkout__shipping-fields .wc-block-components-address-form { grid-template-columns: minmax(0, 1fr); }
