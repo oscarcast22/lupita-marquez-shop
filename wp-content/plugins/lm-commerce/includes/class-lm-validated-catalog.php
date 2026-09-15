@@ -109,12 +109,30 @@ final class LM_Validated_Catalog
         }
         check_admin_referer(self::ACTION);
 
+        $result = self::sync_catalog();
+        wp_safe_redirect(add_query_arg(array('page' => 'lm-validated-catalog', 'updated' => $result['updated']), admin_url('tools.php')));
+        exit;
+    }
+
+    /**
+     * Applies the client-confirmed catalog without requiring an admin form.
+     *
+     * This is used by the narrowly scoped production operation after test
+     * orders have been removed. Product weights saved in WooCommerce include
+     * the carton tare because Envia must quote the packed shipment weight.
+     *
+     * @return array{updated: int, missing_skus: list<string>}
+     */
+    public static function sync_catalog(): array
+    {
         $updated = 0;
+        $missing_skus = array();
         $parents = array();
         foreach (self::ITEMS as $sku => $item) {
             $product_id = wc_get_product_id_by_sku($sku);
             $product = $product_id ? wc_get_product($product_id) : false;
             if (! $product instanceof WC_Product) {
+                $missing_skus[] = $sku;
                 continue;
             }
 
@@ -151,8 +169,127 @@ final class LM_Validated_Catalog
         }
 
         update_option('lm_validated_catalog_synced_at', gmdate('c'));
-        wp_safe_redirect(add_query_arg(array('page' => 'lm-validated-catalog', 'updated' => $updated), admin_url('tools.php')));
-        exit;
+
+        return array(
+            'updated' => $updated,
+            'missing_skus' => $missing_skus,
+        );
+    }
+
+    /**
+     * @return array{item_count: int, items: list<array{sku: string, price: float, stock: int, package: string, net_weight: float, packed_weight: float, dimensions_cm: array{length: int, width: int, height: int}}>}
+     */
+    public static function catalog_preview(): array
+    {
+        $items = array();
+        foreach (self::ITEMS as $sku => $item) {
+            $package = self::PACKAGES[$item['package']];
+            $items[] = array(
+                'sku' => $sku,
+                'price' => $item['price'],
+                'stock' => $item['stock'],
+                'package' => $item['package'],
+                'net_weight' => $item['net_weight'],
+                'packed_weight' => $item['net_weight'] + $package['tare'],
+                'dimensions_cm' => array(
+                    'length' => $package['length'],
+                    'width' => $package['width'],
+                    'height' => $package['height'],
+                ),
+            );
+        }
+
+        return array(
+            'item_count' => count($items),
+            'items' => $items,
+        );
+    }
+
+    /**
+     * Reads the live WooCommerce values that the official Envia plugin uses
+     * when requesting a quote. It intentionally does not mutate catalog data.
+     *
+     * @return array{verified: bool, item_count: int, matching_item_count: int, missing_skus: list<string>, mismatches: list<array<string, mixed>>, legacy_package_metadata_records: int}
+     */
+    public static function catalog_audit(): array
+    {
+        $missing_skus = array();
+        $mismatches = array();
+        $matching_item_count = 0;
+        $legacy_metadata_records = 0;
+
+        foreach (self::ITEMS as $sku => $item) {
+            $product_id = wc_get_product_id_by_sku($sku);
+            $product = $product_id ? wc_get_product($product_id) : false;
+            if (! $product instanceof WC_Product) {
+                $missing_skus[] = $sku;
+                continue;
+            }
+
+            $package = self::PACKAGES[$item['package']];
+            $expected_weight = $item['net_weight'] + $package['tare'];
+            $actual = array(
+                'price' => (float) $product->get_regular_price(),
+                'stock' => $product->get_stock_quantity(),
+                'weight' => (float) $product->get_weight(),
+                'dimensions_cm' => array(
+                    'length' => (float) $product->get_length(),
+                    'width' => (float) $product->get_width(),
+                    'height' => (float) $product->get_height(),
+                ),
+            );
+            $legacy_meta = array();
+            foreach (array(
+                '_lm_package_name',
+                '_lm_package_weight_kg',
+                '_lm_package_length_cm',
+                '_lm_package_width_cm',
+                '_lm_package_height_cm',
+            ) as $meta_key) {
+                if (metadata_exists('post', $product->get_id(), $meta_key)) {
+                    $legacy_meta[] = $meta_key;
+                }
+            }
+            $legacy_metadata_records += count($legacy_meta);
+
+            $matches = abs($actual['price'] - $item['price']) < 0.001
+                && (int) $actual['stock'] === $item['stock']
+                && abs($actual['weight'] - $expected_weight) < 0.001
+                && abs($actual['dimensions_cm']['length'] - $package['length']) < 0.001
+                && abs($actual['dimensions_cm']['width'] - $package['width']) < 0.001
+                && abs($actual['dimensions_cm']['height'] - $package['height']) < 0.001
+                && empty($legacy_meta);
+
+            if ($matches) {
+                ++$matching_item_count;
+                continue;
+            }
+
+            $mismatches[] = array(
+                'sku' => $sku,
+                'expected' => array(
+                    'price' => $item['price'],
+                    'stock' => $item['stock'],
+                    'weight' => $expected_weight,
+                    'dimensions_cm' => array(
+                        'length' => $package['length'],
+                        'width' => $package['width'],
+                        'height' => $package['height'],
+                    ),
+                ),
+                'actual' => $actual,
+                'legacy_package_metadata' => $legacy_meta,
+            );
+        }
+
+        return array(
+            'verified' => empty($missing_skus) && empty($mismatches),
+            'item_count' => count(self::ITEMS),
+            'matching_item_count' => $matching_item_count,
+            'missing_skus' => $missing_skus,
+            'mismatches' => $mismatches,
+            'legacy_package_metadata_records' => $legacy_metadata_records,
+        );
     }
 
     private static function can_manage_catalog(): bool
@@ -174,11 +311,18 @@ final class LM_Validated_Catalog
         $product->set_length((string) $package['length']);
         $product->set_width((string) $package['width']);
         $product->set_height((string) $package['height']);
-        $product->update_meta_data('_lm_package_name', $item['package']);
-        $product->update_meta_data('_lm_package_weight_kg', (string) $packed_weight);
-        $product->update_meta_data('_lm_package_length_cm', (string) $package['length']);
-        $product->update_meta_data('_lm_package_width_cm', (string) $package['width']);
-        $product->update_meta_data('_lm_package_height_cm', (string) $package['height']);
+        // Production quotes come from the official Envia extension, which
+        // consumes the native WooCommerce fields above. Do not recreate the
+        // old duplicate package metadata during a catalog sync.
+        foreach (array(
+            '_lm_package_name',
+            '_lm_package_weight_kg',
+            '_lm_package_length_cm',
+            '_lm_package_width_cm',
+            '_lm_package_height_cm',
+        ) as $meta_key) {
+            $product->delete_meta_data($meta_key);
+        }
     }
 
     /**

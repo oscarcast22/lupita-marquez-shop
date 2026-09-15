@@ -24,6 +24,10 @@ final class LM_Envia_Admin_Compatibility
     {
         // Envia 5.0 enqueues its metabox script while rendering the order screen.
         add_action('admin_print_footer_scripts', array(__CLASS__, 'dequeue_unsafe_metabox_script'), 0);
+        // Payment gateways keep technical reconciliation data as order meta. The
+        // generic WordPress editor exposes every non-protected key in an editable
+        // box, which is not part of the store's day-to-day fulfillment workflow.
+        add_action('add_meta_boxes', array(__CLASS__, 'hide_technical_custom_fields'), 1000);
 
         if (self::uses_official_production_integration()) {
             add_action('admin_init', array(__CLASS__, 'retire_legacy_production_integration'), 1);
@@ -100,5 +104,22 @@ final class LM_Envia_Admin_Compatibility
          * without this cosmetic reordering script.
          */
         wp_dequeue_script('orderBox');
+    }
+
+    /**
+     * Hide the generic Custom Fields metabox on WooCommerce order screens.
+     *
+     * This is a presentation-only change: Mercado Pago's payment IDs,
+     * reconciliation metadata, Envia data and every WooCommerce order meta
+     * record remain stored and available to their integrations. It also keeps
+     * operators from accidentally editing gateway-owned values by hand.
+     */
+    public static function hide_technical_custom_fields(): void
+    {
+        foreach (array('shop_order', 'woocommerce_page_wc-orders') as $screen_id) {
+            foreach (array('normal', 'advanced', 'side') as $context) {
+                remove_meta_box('postcustom', $screen_id, $context);
+            }
+        }
     }
 }
