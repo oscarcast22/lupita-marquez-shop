@@ -102,6 +102,7 @@ final class LM_Demo
 
     public static function doctor(array $args, array $assoc_args): void
     {
+        $production = 'production' === wp_get_environment_type();
         $checks = array(
             'WooCommerce activo' => class_exists('WooCommerce'),
             'Tema Lupita Márquez activo' => 'lupita-marquez' === get_stylesheet(),
@@ -111,18 +112,20 @@ final class LM_Demo
             'Galerías por variación activas' => 'yes' === get_option('wc_feature_woocommerce_additional_variation_images_enabled'),
             'Zona México configurada' => self::shipping_exists(),
             'HPOS habilitable' => class_exists(Automattic\WooCommerce\Utilities\OrderUtil::class),
+            'WP Mail SMTP instalado' => ! $production || defined('WPMS_PLUGIN_VER'),
         );
         $failed = 0;
         foreach ($checks as $label => $ok) {
             WP_CLI::log(($ok ? '[OK] ' : '[ERROR] ') . $label);
             $failed += $ok ? 0 : 1;
         }
-        if (! (new LM_Envia_Client())->configured()) {
-            WP_CLI::warning('LM_ENVIA_TOKEN vacío: se usará la tarifa demo y no se emitirán guías reales.');
+        if (! $production && ! (LM_Shipping_Method::instance()?->envia_client()->configured() ?? false)) {
+            WP_CLI::warning('Falta el token de Envia.com en WooCommerce > Ajustes > Envío > Zona México > Estafeta. No se mostrarán tarifas ni se emitirán guías.');
         }
-        if (! defined('LM_MERCADOPAGO_ACCESS_TOKEN') || '' === trim((string) LM_MERCADOPAGO_ACCESS_TOKEN)) {
-            WP_CLI::warning('Mercado Pago está instalado pero pendiente de credenciales de la clienta.');
+        if ($production) {
+            WP_CLI::log('Envia oficial se configura desde su propio plugin; lm-commerce no cotiza ni emite guías en producción.');
         }
+        WP_CLI::log('Mercado Pago se configura y valida desde WooCommerce > Mercado Pago.');
         $failed ? WP_CLI::error($failed . ' comprobaciones fallaron.') : WP_CLI::success('La instalación supera las comprobaciones básicas.');
     }
 
@@ -436,7 +439,6 @@ HTML;
         update_option('woocommerce_lm_estafeta_envia_' . $instance_id . '_settings', array(
             'enabled' => 'yes',
             'title' => 'Envío Estafeta',
-            'fallback_cost' => '299',
             'origin_name' => 'Lupita Márquez',
             'origin_phone' => '5555555555',
             'origin_email' => get_option('admin_email'),
@@ -559,10 +561,17 @@ HTML;
         if (! is_wp_error($category)) {
             $product->set_category_ids(array((int) (is_array($category) ? $category['term_id'] : $category)));
         }
-        self::stock($product, $row);
+        if ('variable' === $type) {
+            $product->set_manage_stock(false);
+            $product->set_stock_status('instock');
+            $product->set_backorders('no');
+        } else {
+            self::stock($product, $row);
+        }
         $product->update_meta_data('_lm_lead_days', absint($row['lead_days']));
         $product->update_meta_data('_lm_stock_mode', sanitize_key((string) $row['stock_mode']));
         $product->update_meta_data('_lm_ship_separately', (string) $row['ship_separately']);
+        LM_Packaging::apply_from_catalog($product, $row);
         $product->update_meta_data(self::CATALOG_MARKER, 'yes');
         // Retire known local demo metadata without touching historic order data or uploads.
         $product->delete_meta_data('_lm_personalization');
@@ -621,16 +630,11 @@ HTML;
             $variation->set_attributes(array('acabado' => $finish));
             $price_key = 'Natural' === $finish ? 'natural_price' : 'painted_price';
             $variation->set_regular_price((string) $row[$price_key]);
-            if ('made_to_order' === $row['stock_mode']) {
-                $variation->set_manage_stock(true);
-                $variation->set_stock_quantity(0);
-                $variation->set_stock_status('onbackorder');
-                $variation->set_backorders('yes');
-            } else {
-                $variation->set_manage_stock(false);
-                $variation->set_stock_status($parent->get_stock_status());
-                $variation->set_backorders('no');
-            }
+            $variation->set_manage_stock(true);
+            $variation->set_stock_quantity(absint($row['stock_qty']));
+            $variation->set_stock_status(absint($row['stock_qty']) > 0 ? 'instock' : 'outofstock');
+            $variation->set_backorders('no');
+            LM_Packaging::apply_from_catalog($variation, $row);
             $variation->set_description(
                 'Natural' === $finish
                     ? 'Madera al natural, con sus vetas y matices propios a la vista.'

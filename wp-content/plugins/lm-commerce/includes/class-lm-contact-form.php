@@ -23,22 +23,7 @@ final class LM_Contact_Form
         add_shortcode(self::SHORTCODE, array(__CLASS__, 'render'));
         add_action('admin_post_' . self::ACTION, array(__CLASS__, 'handle'));
         add_action('admin_post_nopriv_' . self::ACTION, array(__CLASS__, 'handle'));
-        add_action('phpmailer_init', array(__CLASS__, 'configure_local_mailer'));
         add_action('wp_mail_failed', array(__CLASS__, 'capture_mail_error'));
-    }
-
-    public static function configure_local_mailer(PHPMailer\PHPMailer\PHPMailer $mailer): void
-    {
-        if ('local' !== wp_get_environment_type()) {
-            return;
-        }
-
-        $mailer->isSMTP();
-        $mailer->Host = 'mailpit';
-        $mailer->Port = 1025;
-        $mailer->SMTPAuth = false;
-        $mailer->SMTPAutoTLS = false;
-        $mailer->SMTPSecure = '';
     }
 
     public static function capture_mail_error(WP_Error $error): void
